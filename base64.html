@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Base64 编码/解码工具</title>
+    <title>Base64 Encoder/Decoder</title>
     <style>
         * {
             margin: 0;
@@ -161,6 +161,19 @@
             border: 1px solid rgba(239, 68, 68, 0.3);
         }
 
+        .back-link {
+            display: inline-block;
+            margin-bottom: 20px;
+            color: #a0aec0;
+            text-decoration: none;
+            font-size: 14px;
+            transition: color 0.2s;
+        }
+
+        .back-link:hover {
+            color: #00d9ff;
+        }
+
         @media (max-width: 480px) {
             h1 {
                 font-size: 1.4rem;
@@ -183,28 +196,29 @@
 </head>
 <body>
     <div class="container">
-        <h1>🔐 Base64 编码/解码工具</h1>
+        <a href="index.html" class="back-link">← Back to Tools</a>
+        <h1>Base64 Encoder/Decoder</h1>
 
         <div class="card">
-            <label for="input">输入文本</label>
-            <textarea id="input" placeholder="在此输入要编码或解码的文本..."></textarea>
+            <label for="input">Input</label>
+            <textarea id="input" placeholder="Enter text to encode or decode..."></textarea>
         </div>
 
         <div class="button-group">
-            <button class="btn-encode" onclick="encode()">📤 编码 (Encode)</button>
-            <button class="btn-decode" onclick="decode()">📥 解码 (Decode)</button>
+            <button class="btn-encode" onclick="encode()">Encode</button>
+            <button class="btn-decode" onclick="decode()">Decode</button>
         </div>
 
         <div class="swap-btn">
-            <button onclick="swap()" title="交换输入和输出">⇅</button>
+            <button onclick="swap()" title="Swap input and output">⇅</button>
         </div>
 
         <div class="card">
-            <label for="output">输出结果</label>
-            <textarea id="output" readonly placeholder="结果将显示在这里..."></textarea>
+            <label for="output">Output</label>
+            <textarea id="output" readonly placeholder="Result will be shown here..."></textarea>
             <div class="button-group" style="margin-bottom: 0;">
-                <button class="btn-copy" onclick="copyResult()">📋 复制结果</button>
-                <button class="btn-clear" onclick="clearAll()">🗑️ 清空</button>
+                <button class="btn-copy" onclick="copyResult()">Copy</button>
+                <button class="btn-clear" onclick="clearAll()">Clear</button>
             </div>
             <div id="message" class="message"></div>
         </div>
@@ -226,32 +240,34 @@
         function encode() {
             const text = inputEl.value;
             if (!text) {
-                showMessage('请输入要编码的文本', 'error');
+                showMessage('Please enter text to encode', 'error');
                 return;
             }
             try {
-                // 支持 Unicode 字符
-                const encoded = btoa(unescape(encodeURIComponent(text)));
+                // Support Unicode characters
+                const bytes = new TextEncoder().encode(text);
+                const encoded = btoa(Array.from(bytes, b => String.fromCharCode(b)).join(''));
                 outputEl.value = encoded;
-                showMessage('编码成功！', 'success');
+                showMessage('Encoded successfully', 'success');
             } catch (e) {
-                showMessage('编码失败: ' + e.message, 'error');
+                showMessage('Encode failed: ' + e.message, 'error');
             }
         }
 
         function decode() {
             const text = inputEl.value;
             if (!text) {
-                showMessage('请输入要解码的文本', 'error');
+                showMessage('Please enter text to decode', 'error');
                 return;
             }
             try {
-                // 支持 Unicode 字符
-                const decoded = decodeURIComponent(escape(atob(text)));
+                // Support Unicode characters
+                const bytes = Uint8Array.from(atob(text), c => c.charCodeAt(0));
+                const decoded = new TextDecoder().decode(bytes);
                 outputEl.value = decoded;
-                showMessage('解码成功！', 'success');
+                showMessage('Decoded successfully', 'success');
             } catch (e) {
-                showMessage('解码失败: 请确保输入的是有效的 Base64 字符串', 'error');
+                showMessage('Decode failed: Please enter a valid Base64 string', 'error');
             }
         }
 
@@ -264,23 +280,23 @@
         function copyResult() {
             const text = outputEl.value;
             if (!text) {
-                showMessage('没有可复制的内容', 'error');
+                showMessage('Nothing to copy', 'error');
                 return;
             }
             navigator.clipboard.writeText(text).then(() => {
-                showMessage('已复制到剪贴板！', 'success');
+                showMessage('Copied to clipboard', 'success');
             }).catch(() => {
                 // Fallback
                 outputEl.select();
                 document.execCommand('copy');
-                showMessage('已复制到剪贴板！', 'success');
+                showMessage('Copied to clipboard', 'success');
             });
         }
 
         function clearAll() {
             inputEl.value = '';
             outputEl.value = '';
-            showMessage('已清空', 'success');
+            showMessage('Cleared', 'success');
         }
     </script>
 </body>
