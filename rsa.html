@@ -478,11 +478,18 @@ MIIEvgIBADANBgkqhkiG9w0BAQEFAASC...
         // Calculate bit length of a big integer
         function getBitLength(bytes) {
             let i = 0;
+            // Skip leading zero bytes
             while (i < bytes.length && bytes[i] === 0) i++;
             if (i >= bytes.length) return 0;
+
             const firstByte = bytes[i];
+            // Safety check for zero byte (should not happen after while loop, but defensive)
+            if (firstByte === 0) return 0;
+
             const remainingBytes = bytes.length - i - 1;
-            return remainingBytes * 8 + Math.floor(Math.log2(firstByte)) + 1;
+            // Calculate bits in the first non-zero byte
+            const firstByteBits = 32 - Math.clz32(firstByte);
+            return remainingBytes * 8 + firstByteBits;
         }
 
         // Parse RSA private key

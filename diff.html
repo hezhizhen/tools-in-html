@@ -503,12 +503,26 @@
             return diff;
         }
 
+        const MAX_LINES_WARNING = 5000;
+        const MAX_CHARS_WARNING = 100000;
+
         function compare() {
             const t1 = text1El.value;
             const t2 = text2El.value;
 
             if (!t1 && !t2) {
                 return;
+            }
+
+            // Performance warning for large texts
+            const lines1 = t1.split('\n').length;
+            const lines2 = t2.split('\n').length;
+            const totalChars = t1.length + t2.length;
+
+            if (lines1 > MAX_LINES_WARNING || lines2 > MAX_LINES_WARNING || totalChars > MAX_CHARS_WARNING) {
+                if (!confirm(`Warning: Large text detected (${Math.max(lines1, lines2)} lines, ${totalChars} characters). This may cause the browser to slow down. Continue?`)) {
+                    return;
+                }
             }
 
             lastText1 = t1;

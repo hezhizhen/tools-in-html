@@ -750,6 +750,7 @@ MIIDXTCCAkWgAwIBAgIJAJC1HiIAZAiU...
             // TBSCertificate SEQUENCE
             const tbsStart = asn.pos;
             const tbsLen = asn.readSequence();
+            const tbsEnd = asn.pos + tbsLen;
 
             // Version (optional, context tag [0])
             if (asn.peek() === 0xa0) {
@@ -805,7 +806,9 @@ MIIDXTCCAkWgAwIBAgIJAJC1HiIAZAiU...
                 let bitLen = 0;
                 for (let i = 0; i < modulus.length; i++) {
                     if (modulus[i] !== 0) {
-                        bitLen = (modulus.length - i) * 8;
+                        const firstByte = modulus[i];
+                        const firstByteBits = 32 - Math.clz32(firstByte);
+                        bitLen = (modulus.length - i - 1) * 8 + firstByteBits;
                         break;
                     }
                 }
@@ -820,7 +823,7 @@ MIIDXTCCAkWgAwIBAgIJAJC1HiIAZAiU...
             cert.extensions = [];
             cert.san = [];
 
-            while (asn.pos < der.length - 100) {
+            while (asn.pos < tbsEnd) {
                 if (asn.peek() === 0xa3) {
                     asn.readByte();
                     const extLen = asn.readLength();
@@ -921,7 +924,13 @@ MIIDXTCCAkWgAwIBAgIJAJC1HiIAZAiU...
                         }
                     }
                 }
-            } catch (e) { }
+            } catch (e) {
+                console.warn('SAN parsing incomplete:', e.message);
+                // Add a marker to indicate parsing was incomplete
+                if (sanList.length === 0) {
+                    sanList.push({ type: 'Warning', value: 'SAN parsing incomplete' });
+                }
+            }
         }
 
         async function calculateFingerprints(der) {
