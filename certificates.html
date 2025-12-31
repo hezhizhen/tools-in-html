@@ -564,6 +564,13 @@ MIIDXTCCAkWgAwIBAgIJAJC1HiIAZAiU...
             setTimeout(() => { messageEl.className = 'message'; }, 5000);
         }
 
+        // Escape HTML to prevent XSS
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
         // Base64 decode
         function base64Decode(str) {
             const binary = atob(str);
@@ -1037,8 +1044,8 @@ MIIDXTCCAkWgAwIBAgIJAJC1HiIAZAiU...
                 const label = OID_NAMES[key] || key;
                 subjectGrid.innerHTML += `
                     <div class="info-item">
-                        <div class="info-label">${label}</div>
-                        <div class="info-value">${value}</div>
+                        <div class="info-label">${escapeHtml(label)}</div>
+                        <div class="info-value">${escapeHtml(value)}</div>
                     </div>
                 `;
             }
@@ -1050,8 +1057,8 @@ MIIDXTCCAkWgAwIBAgIJAJC1HiIAZAiU...
                 const label = OID_NAMES[key] || key;
                 issuerGrid.innerHTML += `
                     <div class="info-item">
-                        <div class="info-label">${label}</div>
-                        <div class="info-value">${value}</div>
+                        <div class="info-label">${escapeHtml(label)}</div>
+                        <div class="info-value">${escapeHtml(value)}</div>
                     </div>
                 `;
             }
@@ -1071,7 +1078,7 @@ MIIDXTCCAkWgAwIBAgIJAJC1HiIAZAiU...
             const sanList = document.getElementById('sanList');
             if (cert.san.length > 0) {
                 sanCard.style.display = 'block';
-                sanList.innerHTML = cert.san.map(s => `<span class="san-item">${s.type}: ${s.value}</span>`).join('');
+                sanList.innerHTML = cert.san.map(s => `<span class="san-item">${escapeHtml(s.type)}: ${escapeHtml(s.value)}</span>`).join('');
             } else {
                 sanCard.style.display = 'none';
             }
@@ -1080,7 +1087,7 @@ MIIDXTCCAkWgAwIBAgIJAJC1HiIAZAiU...
             const extList = document.getElementById('extensionsList');
             extList.innerHTML = cert.extensions.map(ext => `
                 <div class="extension-item">
-                    <div class="extension-name">${ext.name} ${ext.critical ? '(Critical)' : ''}</div>
+                    <div class="extension-name">${escapeHtml(ext.name)} ${ext.critical ? '(Critical)' : ''}</div>
                     <div class="extension-value">${ext.value.substring(0, 100)}${ext.value.length > 100 ? '...' : ''}</div>
                 </div>
             `).join('');
