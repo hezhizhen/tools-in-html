@@ -904,7 +904,7 @@ MIIDXTCCAkWgAwIBAgIJAJC1HiIAZAiU...
                     else if (type === 6) sanList.push({ type: 'URI', value: str });
                     else if (type === 7) {
                         if (value.length === 4) {
-                            sanList.push({ type: 'IP', value: value.join('.') });
+                            sanList.push({ type: 'IP', value: Array.from(value).join('.') });
                         } else if (value.length === 16) {
                             const ipv6 = [];
                             for (let i = 0; i < 16; i += 2) {

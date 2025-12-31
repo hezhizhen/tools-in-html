@@ -1,0 +1,703 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Text Diff Tool</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #0f0f23 0%, #1a1a3e 100%);
+            min-height: 100vh;
+            padding: 20px;
+            color: #fff;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 10px;
+            font-size: 1.8rem;
+            background: linear-gradient(90deg, #f472b6, #c084fc);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #6b7280;
+            margin-bottom: 30px;
+            font-size: 14px;
+        }
+
+        .back-link {
+            display: inline-block;
+            margin-bottom: 20px;
+            color: #a0aec0;
+            text-decoration: none;
+            font-size: 14px;
+            transition: color 0.2s;
+        }
+
+        .back-link:hover {
+            color: #f472b6;
+        }
+
+        .card {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 16px;
+            padding: 24px;
+            margin-bottom: 20px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .card-title {
+            font-size: 1.1rem;
+            margin-bottom: 15px;
+            color: #f472b6;
+        }
+
+        .input-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        .input-section label {
+            display: block;
+            margin-bottom: 10px;
+            font-weight: 500;
+            color: #a0aec0;
+        }
+
+        .editor-container {
+            display: flex;
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            background: rgba(0, 0, 0, 0.4);
+            overflow: hidden;
+            transition: border-color 0.3s;
+        }
+
+        .editor-container:focus-within {
+            border-color: #f472b6;
+        }
+
+        .line-numbers {
+            padding: 16px 0;
+            background: rgba(0, 0, 0, 0.3);
+            color: #6b7280;
+            font-size: 13px;
+            font-family: 'Consolas', 'Monaco', monospace;
+            line-height: 1.5;
+            text-align: right;
+            user-select: none;
+            min-width: 40px;
+            border-right: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .line-numbers div {
+            padding: 0 8px;
+        }
+
+        textarea {
+            flex: 1;
+            height: 250px;
+            padding: 16px;
+            border: none;
+            background: transparent;
+            color: #fff;
+            font-size: 13px;
+            font-family: 'Consolas', 'Monaco', monospace;
+            resize: none;
+            line-height: 1.5;
+        }
+
+        textarea:focus {
+            outline: none;
+        }
+
+        textarea::placeholder {
+            color: #4a5568;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 12px;
+            margin: 20px 0;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        button {
+            padding: 14px 28px;
+            border: none;
+            border-radius: 10px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-compare {
+            background: linear-gradient(135deg, #f472b6, #c084fc);
+            color: #000;
+            min-width: 150px;
+        }
+
+        .btn-swap {
+            background: rgba(255, 255, 255, 0.1);
+            color: #fff;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .btn-clear {
+            background: rgba(239, 68, 68, 0.2);
+            color: #f87171;
+            border: 1px solid rgba(239, 68, 68, 0.3);
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        .result-section {
+            display: none;
+        }
+
+        .result-section.show {
+            display: block;
+        }
+
+        .stats {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .stat-item {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 12px 20px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .stat-item.added {
+            border-left: 3px solid #10b981;
+        }
+
+        .stat-item.removed {
+            border-left: 3px solid #ef4444;
+        }
+
+        .stat-item.unchanged {
+            border-left: 3px solid #6b7280;
+        }
+
+        .stat-value {
+            font-size: 20px;
+            font-weight: 700;
+        }
+
+        .stat-label {
+            font-size: 12px;
+            color: #6b7280;
+        }
+
+        .diff-output {
+            background: rgba(0, 0, 0, 0.4);
+            border-radius: 12px;
+            padding: 20px;
+            font-family: 'Consolas', 'Monaco', monospace;
+            font-size: 13px;
+            line-height: 1.6;
+            max-height: 500px;
+            overflow-y: auto;
+        }
+
+        .diff-line {
+            padding: 2px 8px;
+            margin: 1px 0;
+            border-radius: 4px;
+            white-space: pre-wrap;
+            word-break: break-all;
+            display: flex;
+            gap: 12px;
+        }
+
+        .line-num {
+            min-width: 36px;
+            color: #6b7280;
+            text-align: right;
+            user-select: none;
+            flex-shrink: 0;
+        }
+
+        .diff-line.added {
+            background: rgba(16, 185, 129, 0.2);
+            color: #34d399;
+        }
+
+        .diff-line.removed {
+            background: rgba(239, 68, 68, 0.2);
+            color: #f87171;
+        }
+
+        .diff-line.unchanged {
+            color: #9ca3af;
+        }
+
+        .diff-line.header {
+            background: rgba(99, 102, 241, 0.2);
+            color: #a5b4fc;
+            font-weight: 600;
+            margin-top: 10px;
+        }
+
+        .inline-diff {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 2px;
+        }
+
+        .char-diff-container {
+            line-height: 1.8;
+        }
+
+        .char-line-num {
+            display: inline-block;
+            min-width: 36px;
+            padding-right: 12px;
+            color: #6b7280;
+            text-align: right;
+            user-select: none;
+            font-size: 12px;
+        }
+
+        .char-added {
+            background: rgba(16, 185, 129, 0.3);
+            color: #34d399;
+            padding: 0 2px;
+            border-radius: 2px;
+        }
+
+        .char-removed {
+            background: rgba(239, 68, 68, 0.3);
+            color: #f87171;
+            padding: 0 2px;
+            border-radius: 2px;
+            text-decoration: line-through;
+        }
+
+        .char-newline {
+            font-size: 11px;
+            opacity: 0.8;
+            text-decoration: none;
+        }
+
+        .char-space, .char-tab {
+            opacity: 0.6;
+            font-size: 11px;
+        }
+
+        .mode-toggle {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .mode-btn {
+            padding: 8px 16px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            color: #9ca3af;
+            font-size: 13px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .mode-btn.active {
+            background: rgba(244, 114, 182, 0.2);
+            border-color: #f472b6;
+            color: #f472b6;
+        }
+
+        .mode-btn:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .identical-message {
+            text-align: center;
+            padding: 40px;
+            color: #10b981;
+            font-size: 18px;
+        }
+
+        @media (max-width: 768px) {
+            .input-grid {
+                grid-template-columns: 1fr;
+            }
+
+            textarea {
+                height: 150px;
+            }
+
+            h1 {
+                font-size: 1.4rem;
+            }
+
+            .card {
+                padding: 16px;
+            }
+
+            .stats {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <a href="index.html" class="back-link">← Back to Tools</a>
+        <h1>Text Diff Tool</h1>
+        <p class="subtitle">Compare two texts and highlight the differences</p>
+
+        <div class="card">
+            <div class="input-grid">
+                <div class="input-section">
+                    <label for="text1">Original Text</label>
+                    <div class="editor-container">
+                        <div class="line-numbers" id="lineNumbers1"><div>1</div></div>
+                        <textarea id="text1" placeholder="Enter original text..."></textarea>
+                    </div>
+                </div>
+                <div class="input-section">
+                    <label for="text2">Modified Text</label>
+                    <div class="editor-container">
+                        <div class="line-numbers" id="lineNumbers2"><div>1</div></div>
+                        <textarea id="text2" placeholder="Enter modified text..."></textarea>
+                    </div>
+                </div>
+            </div>
+
+            <div class="button-group">
+                <button class="btn-compare" onclick="compare()">Compare</button>
+                <button class="btn-swap" onclick="swap()">Swap</button>
+                <button class="btn-clear" onclick="clearAll()">Clear</button>
+            </div>
+        </div>
+
+        <div id="result" class="result-section">
+            <div class="card">
+                <div class="card-title">Diff Result</div>
+
+                <div class="mode-toggle">
+                    <button class="mode-btn active" onclick="setMode('line')" id="modeLineBtn">Line by Line</button>
+                    <button class="mode-btn" onclick="setMode('char')" id="modeCharBtn">Character</button>
+                </div>
+
+                <div class="stats" id="stats"></div>
+                <div class="diff-output" id="diffOutput"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const text1El = document.getElementById('text1');
+        const text2El = document.getElementById('text2');
+        const resultEl = document.getElementById('result');
+        const diffOutputEl = document.getElementById('diffOutput');
+        const statsEl = document.getElementById('stats');
+        const lineNumbers1 = document.getElementById('lineNumbers1');
+        const lineNumbers2 = document.getElementById('lineNumbers2');
+
+        let currentMode = 'line';
+
+        // Update line numbers for a textarea
+        function updateLineNumbers(textarea, lineNumbersEl) {
+            const lines = textarea.value.split('\n');
+            const count = lines.length;
+            let html = '';
+            for (let i = 1; i <= count; i++) {
+                html += `<div>${i}</div>`;
+            }
+            lineNumbersEl.innerHTML = html;
+        }
+
+        // Sync scroll between textarea and line numbers
+        function syncScroll(textarea, lineNumbersEl) {
+            lineNumbersEl.scrollTop = textarea.scrollTop;
+        }
+
+        // Initialize line numbers and event listeners
+        function initEditor(textarea, lineNumbersEl) {
+            updateLineNumbers(textarea, lineNumbersEl);
+            textarea.addEventListener('input', () => updateLineNumbers(textarea, lineNumbersEl));
+            textarea.addEventListener('scroll', () => syncScroll(textarea, lineNumbersEl));
+        }
+
+        initEditor(text1El, lineNumbers1);
+        initEditor(text2El, lineNumbers2);
+        let lastText1 = '';
+        let lastText2 = '';
+
+        function setMode(mode) {
+            currentMode = mode;
+            document.getElementById('modeLineBtn').classList.toggle('active', mode === 'line');
+            document.getElementById('modeCharBtn').classList.toggle('active', mode === 'char');
+            if (lastText1 || lastText2) {
+                displayDiff(lastText1, lastText2);
+            }
+        }
+
+        // Longest Common Subsequence for diff
+        function lcs(a, b) {
+            const m = a.length;
+            const n = b.length;
+            const dp = Array(m + 1).fill(null).map(() => Array(n + 1).fill(0));
+
+            for (let i = 1; i <= m; i++) {
+                for (let j = 1; j <= n; j++) {
+                    if (a[i - 1] === b[j - 1]) {
+                        dp[i][j] = dp[i - 1][j - 1] + 1;
+                    } else {
+                        dp[i][j] = Math.max(dp[i - 1][j], dp[i][j - 1]);
+                    }
+                }
+            }
+
+            // Backtrack to find diff
+            const diff = [];
+            let i = m, j = n;
+            while (i > 0 || j > 0) {
+                if (i > 0 && j > 0 && a[i - 1] === b[j - 1]) {
+                    diff.unshift({ type: 'unchanged', value: a[i - 1] });
+                    i--;
+                    j--;
+                } else if (j > 0 && (i === 0 || dp[i][j - 1] >= dp[i - 1][j])) {
+                    diff.unshift({ type: 'added', value: b[j - 1] });
+                    j--;
+                } else {
+                    diff.unshift({ type: 'removed', value: a[i - 1] });
+                    i--;
+                }
+            }
+
+            return diff;
+        }
+
+        function compare() {
+            const t1 = text1El.value;
+            const t2 = text2El.value;
+
+            if (!t1 && !t2) {
+                return;
+            }
+
+            lastText1 = t1;
+            lastText2 = t2;
+
+            resultEl.classList.add('show');
+            displayDiff(t1, t2);
+        }
+
+        function displayDiff(t1, t2) {
+            if (t1 === t2) {
+                statsEl.innerHTML = '';
+                diffOutputEl.innerHTML = '<div class="identical-message">Texts are identical</div>';
+                return;
+            }
+
+            if (currentMode === 'line') {
+                displayLineDiff(t1, t2);
+            } else {
+                displayCharDiff(t1, t2);
+            }
+        }
+
+        function displayLineDiff(t1, t2) {
+            // Normalize: remove trailing empty line from split result if text doesn't end with newline
+            const lines1 = t1.split('\n');
+            const lines2 = t2.split('\n');
+
+            // Track if texts end with newline
+            const t1EndsWithNewline = t1.endsWith('\n');
+            const t2EndsWithNewline = t2.endsWith('\n');
+
+            // Remove the trailing empty string that split creates for trailing newlines
+            // We'll handle newline endings separately
+            if (t1EndsWithNewline && lines1[lines1.length - 1] === '') lines1.pop();
+            if (t2EndsWithNewline && lines2[lines2.length - 1] === '') lines2.pop();
+
+            const diff = lcs(lines1, lines2);
+
+            let added = 0, removed = 0, unchanged = 0;
+            let html = '';
+            let lineNum1 = 1, lineNum2 = 1;
+
+            diff.forEach(item => {
+                const escaped = escapeHtml(item.value);
+                const displayValue = escaped === '' ? '<span style="opacity:0.5;font-style:italic">(empty line)</span>' : escaped;
+
+                if (item.type === 'added') {
+                    html += `<div class="diff-line added"><span class="line-num">+${lineNum2}</span>${displayValue}</div>`;
+                    lineNum2++;
+                    added++;
+                } else if (item.type === 'removed') {
+                    html += `<div class="diff-line removed"><span class="line-num">-${lineNum1}</span>${displayValue}</div>`;
+                    lineNum1++;
+                    removed++;
+                } else {
+                    html += `<div class="diff-line unchanged"><span class="line-num">${lineNum1}</span>${displayValue}</div>`;
+                    lineNum1++;
+                    lineNum2++;
+                    unchanged++;
+                }
+            });
+
+            // Show trailing newline difference
+            if (t1EndsWithNewline !== t2EndsWithNewline) {
+                if (t1EndsWithNewline && !t2EndsWithNewline) {
+                    html += `<div class="diff-line removed"><span class="line-num">-</span><span style="opacity:0.7;font-style:italic">⏎ (trailing newline)</span></div>`;
+                    removed++;
+                } else {
+                    html += `<div class="diff-line added"><span class="line-num">+</span><span style="opacity:0.7;font-style:italic">⏎ (trailing newline)</span></div>`;
+                    added++;
+                }
+            }
+
+            statsEl.innerHTML = `
+                <div class="stat-item added">
+                    <div>
+                        <div class="stat-value" style="color: #10b981">${added}</div>
+                        <div class="stat-label">Added</div>
+                    </div>
+                </div>
+                <div class="stat-item removed">
+                    <div>
+                        <div class="stat-value" style="color: #ef4444">${removed}</div>
+                        <div class="stat-label">Removed</div>
+                    </div>
+                </div>
+                <div class="stat-item unchanged">
+                    <div>
+                        <div class="stat-value" style="color: #9ca3af">${unchanged}</div>
+                        <div class="stat-label">Unchanged</div>
+                    </div>
+                </div>
+            `;
+
+            diffOutputEl.innerHTML = html;
+        }
+
+        function displayCharDiff(t1, t2) {
+            const chars1 = t1.split('');
+            const chars2 = t2.split('');
+            const diff = lcs(chars1, chars2);
+
+            let added = 0, removed = 0;
+            let lineNum = 1;
+            let html = '<div class="char-diff-container">';
+            html += `<span class="char-line-num">${lineNum}</span>`;
+
+            diff.forEach(item => {
+                const escaped = escapeHtml(item.value);
+
+                if (item.type === 'added') {
+                    if (item.value === '\n') {
+                        html += `<span class="char-added char-newline">↵</span><br>`;
+                        lineNum++;
+                        html += `<span class="char-line-num">${lineNum}</span>`;
+                    } else if (item.value === ' ') {
+                        html += `<span class="char-added char-space">·</span>`;
+                    } else if (item.value === '\t') {
+                        html += `<span class="char-added char-tab">→</span>`;
+                    } else {
+                        html += `<span class="char-added">${escaped}</span>`;
+                    }
+                    added++;
+                } else if (item.type === 'removed') {
+                    if (item.value === '\n') {
+                        html += `<span class="char-removed char-newline">↵</span>`;
+                    } else if (item.value === ' ') {
+                        html += `<span class="char-removed char-space">·</span>`;
+                    } else if (item.value === '\t') {
+                        html += `<span class="char-removed char-tab">→</span>`;
+                    } else {
+                        html += `<span class="char-removed">${escaped}</span>`;
+                    }
+                    removed++;
+                } else {
+                    if (item.value === '\n') {
+                        html += '<br>';
+                        lineNum++;
+                        html += `<span class="char-line-num">${lineNum}</span>`;
+                    } else {
+                        html += escaped;
+                    }
+                }
+            });
+
+            html += '</div>';
+
+            statsEl.innerHTML = `
+                <div class="stat-item added">
+                    <div>
+                        <div class="stat-value" style="color: #10b981">${added}</div>
+                        <div class="stat-label">Characters Added</div>
+                    </div>
+                </div>
+                <div class="stat-item removed">
+                    <div>
+                        <div class="stat-value" style="color: #ef4444">${removed}</div>
+                        <div class="stat-label">Characters Removed</div>
+                    </div>
+                </div>
+            `;
+
+            diffOutputEl.innerHTML = html;
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        function swap() {
+            const temp = text1El.value;
+            text1El.value = text2El.value;
+            text2El.value = temp;
+            updateLineNumbers(text1El, lineNumbers1);
+            updateLineNumbers(text2El, lineNumbers2);
+        }
+
+        function clearAll() {
+            text1El.value = '';
+            text2El.value = '';
+            resultEl.classList.remove('show');
+            lastText1 = '';
+            lastText2 = '';
+            updateLineNumbers(text1El, lineNumbers1);
+            updateLineNumbers(text2El, lineNumbers2);
+        }
+    </script>
+</body>
+</html>
