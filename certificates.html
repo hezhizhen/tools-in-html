@@ -1,0 +1,1135 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>X.509 Certificate Parser</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #0f0f23 0%, #1a1a3e 100%);
+            min-height: 100vh;
+            padding: 20px;
+            color: #fff;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 10px;
+            font-size: 1.8rem;
+            background: linear-gradient(90deg, #10b981, #3b82f6);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #6b7280;
+            margin-bottom: 30px;
+            font-size: 14px;
+        }
+
+        .card {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 16px;
+            padding: 24px;
+            margin-bottom: 20px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .card-title {
+            font-size: 1.1rem;
+            margin-bottom: 15px;
+            color: #10b981;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        textarea {
+            width: 100%;
+            height: 180px;
+            padding: 16px;
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            background: rgba(0, 0, 0, 0.4);
+            color: #10b981;
+            font-size: 12px;
+            font-family: 'Consolas', 'Monaco', monospace;
+            resize: vertical;
+            transition: border-color 0.3s;
+        }
+
+        textarea:focus {
+            outline: none;
+            border-color: #10b981;
+        }
+
+        textarea::placeholder {
+            color: #4a5568;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 12px;
+            margin: 20px 0;
+            flex-wrap: wrap;
+        }
+
+        button {
+            padding: 14px 28px;
+            border: none;
+            border-radius: 10px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-parse {
+            background: linear-gradient(135deg, #10b981, #059669);
+            color: #000;
+            flex: 1;
+            min-width: 150px;
+        }
+
+        .btn-sample {
+            background: rgba(255, 255, 255, 0.1);
+            color: #fff;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .btn-clear {
+            background: rgba(239, 68, 68, 0.2);
+            color: #f87171;
+            border: 1px solid rgba(239, 68, 68, 0.3);
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        .result-section {
+            display: none;
+        }
+
+        .result-section.show {
+            display: block;
+        }
+
+        .status-banner {
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .status-banner.valid {
+            background: rgba(16, 185, 129, 0.15);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+        }
+
+        .status-banner.expired {
+            background: rgba(239, 68, 68, 0.15);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+        }
+
+        .status-banner.warning {
+            background: rgba(245, 158, 11, 0.15);
+            border: 1px solid rgba(245, 158, 11, 0.3);
+        }
+
+        .status-icon {
+            font-size: 40px;
+        }
+
+        .status-text h3 {
+            font-size: 18px;
+            margin-bottom: 5px;
+        }
+
+        .status-text p {
+            font-size: 14px;
+            color: #9ca3af;
+        }
+
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 15px;
+        }
+
+        .info-item {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 15px;
+            border-radius: 10px;
+            border-left: 3px solid #3b82f6;
+        }
+
+        .info-item.highlight {
+            border-left-color: #10b981;
+            background: rgba(16, 185, 129, 0.1);
+        }
+
+        .info-item.warning {
+            border-left-color: #f59e0b;
+            background: rgba(245, 158, 11, 0.1);
+        }
+
+        .info-item.danger {
+            border-left-color: #ef4444;
+            background: rgba(239, 68, 68, 0.1);
+        }
+
+        .info-label {
+            font-size: 12px;
+            color: #6b7280;
+            margin-bottom: 5px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .info-value {
+            font-size: 14px;
+            font-weight: 500;
+            color: #fff;
+            word-break: break-all;
+        }
+
+        .info-value.mono {
+            font-family: 'Consolas', 'Monaco', monospace;
+            font-size: 12px;
+        }
+
+        .section {
+            margin-bottom: 20px;
+        }
+
+        .section-title {
+            font-size: 14px;
+            color: #9ca3af;
+            margin-bottom: 12px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .san-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .san-item {
+            background: rgba(59, 130, 246, 0.2);
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 13px;
+            color: #93c5fd;
+        }
+
+        .timeline {
+            position: relative;
+            height: 40px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 8px;
+            margin: 15px 0;
+            overflow: hidden;
+        }
+
+        .timeline-bar {
+            position: absolute;
+            height: 100%;
+            background: linear-gradient(90deg, #10b981, #3b82f6);
+            border-radius: 8px;
+        }
+
+        .timeline-marker {
+            position: absolute;
+            top: 0;
+            height: 100%;
+            width: 3px;
+            background: #fff;
+        }
+
+        .timeline-labels {
+            display: flex;
+            justify-content: space-between;
+            font-size: 11px;
+            color: #6b7280;
+            margin-top: 5px;
+        }
+
+        .days-remaining {
+            font-size: 24px;
+            font-weight: 700;
+            color: #10b981;
+        }
+
+        .days-remaining.warning {
+            color: #f59e0b;
+        }
+
+        .days-remaining.danger {
+            color: #ef4444;
+        }
+
+        .message {
+            padding: 12px 16px;
+            border-radius: 8px;
+            margin-top: 15px;
+            font-size: 14px;
+            display: none;
+        }
+
+        .message.error {
+            display: block;
+            background: rgba(239, 68, 68, 0.2);
+            color: #f87171;
+            border: 1px solid rgba(239, 68, 68, 0.3);
+        }
+
+        .collapsible {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 10px;
+            margin-bottom: 10px;
+            overflow: hidden;
+        }
+
+        .collapsible-header {
+            padding: 12px 16px;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: background 0.3s;
+        }
+
+        .collapsible-header:hover {
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .collapsible-body {
+            padding: 0 16px 16px;
+            display: none;
+        }
+
+        .collapsible.open .collapsible-body {
+            display: block;
+        }
+
+        .collapsible.open .toggle-icon {
+            transform: rotate(180deg);
+        }
+
+        .toggle-icon {
+            transition: transform 0.3s;
+            color: #6b7280;
+        }
+
+        .extension-item {
+            padding: 10px;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 6px;
+            margin-bottom: 8px;
+        }
+
+        .extension-name {
+            font-weight: 600;
+            color: #10b981;
+            font-size: 13px;
+        }
+
+        .extension-value {
+            font-size: 12px;
+            color: #9ca3af;
+            margin-top: 5px;
+            font-family: 'Consolas', 'Monaco', monospace;
+        }
+
+        @media (max-width: 480px) {
+            h1 {
+                font-size: 1.4rem;
+            }
+
+            .card {
+                padding: 16px;
+            }
+
+            textarea {
+                height: 120px;
+                font-size: 10px;
+            }
+
+            button {
+                padding: 12px 16px;
+                font-size: 14px;
+            }
+
+            .info-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .status-banner {
+                flex-direction: column;
+                text-align: center;
+            }
+        }
+
+        .back-link {
+            display: inline-block;
+            margin-bottom: 20px;
+            color: #a0aec0;
+            text-decoration: none;
+            font-size: 14px;
+            transition: color 0.2s;
+        }
+
+        .back-link:hover {
+            color: #10b981;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <a href="index.html" class="back-link">← Back to Tools</a>
+        <h1>X.509 Certificate Parser</h1>
+        <p class="subtitle">Parse PEM format certificates, view validity, issuer, subject info</p>
+
+        <div class="card">
+            <div class="card-title">Input Certificate (PEM format)</div>
+            <textarea id="input" placeholder="-----BEGIN CERTIFICATE-----
+MIIDXTCCAkWgAwIBAgIJAJC1HiIAZAiU...
+-----END CERTIFICATE-----"></textarea>
+
+            <div class="button-group">
+                <button class="btn-parse" onclick="parseCert()">Parse Certificate</button>
+                <button class="btn-sample" onclick="loadSample()">Load Sample</button>
+                <button class="btn-clear" onclick="clearAll()">Clear</button>
+            </div>
+            <div id="message" class="message"></div>
+        </div>
+
+        <div id="result" class="result-section">
+            <!-- Status Banner -->
+            <div id="statusBanner" class="status-banner valid">
+                <div class="status-icon">✅</div>
+                <div class="status-text">
+                    <h3 id="statusTitle">Certificate Valid</h3>
+                    <p id="statusDesc">Certificate is within validity period</p>
+                </div>
+            </div>
+
+            <!-- Validity Card -->
+            <div class="card">
+                <div class="card-title">Validity Information</div>
+                <div class="info-grid">
+                    <div class="info-item highlight">
+                        <div class="info-label">Not Before</div>
+                        <div class="info-value" id="notBefore">-</div>
+                    </div>
+                    <div class="info-item" id="notAfterItem">
+                        <div class="info-label">Not After</div>
+                        <div class="info-value" id="notAfter">-</div>
+                    </div>
+                    <div class="info-item" id="daysItem">
+                        <div class="info-label">Days Remaining</div>
+                        <div class="info-value">
+                            <span class="days-remaining" id="daysRemaining">-</span>
+                            <span id="daysText"> days</span>
+                        </div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label">Total Validity</div>
+                        <div class="info-value" id="totalDays">-</div>
+                    </div>
+                </div>
+                <div class="timeline" id="timeline">
+                    <div class="timeline-bar" id="timelineBar"></div>
+                    <div class="timeline-marker" id="timelineMarker"></div>
+                </div>
+                <div class="timeline-labels">
+                    <span id="timelineStart">-</span>
+                    <span>Now</span>
+                    <span id="timelineEnd">-</span>
+                </div>
+            </div>
+
+            <!-- Subject Card -->
+            <div class="card">
+                <div class="card-title">Subject</div>
+                <div class="info-grid" id="subjectGrid"></div>
+            </div>
+
+            <!-- Issuer Card -->
+            <div class="card">
+                <div class="card-title">Issuer</div>
+                <div class="info-grid" id="issuerGrid"></div>
+                <div style="margin-top: 15px;">
+                    <div class="info-item" id="selfSignedItem">
+                        <div class="info-label">Self-Signed</div>
+                        <div class="info-value" id="selfSigned">-</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Technical Details -->
+            <div class="card">
+                <div class="card-title">Technical Details</div>
+                <div class="info-grid">
+                    <div class="info-item">
+                        <div class="info-label">Version</div>
+                        <div class="info-value" id="version">-</div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label">Serial Number</div>
+                        <div class="info-value mono" id="serialNumber">-</div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label">Signature Algorithm</div>
+                        <div class="info-value" id="signatureAlgorithm">-</div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label">Public Key Algorithm</div>
+                        <div class="info-value" id="publicKeyAlgorithm">-</div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label">Public Key Size</div>
+                        <div class="info-value" id="publicKeySize">-</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SAN -->
+            <div class="card" id="sanCard" style="display: none;">
+                <div class="card-title">Subject Alternative Names (SAN)</div>
+                <div class="san-list" id="sanList"></div>
+            </div>
+
+            <!-- Extensions -->
+            <div class="card">
+                <div class="card-title">Extensions</div>
+                <div class="collapsible" id="extensionsCollapsible">
+                    <div class="collapsible-header" onclick="this.parentElement.classList.toggle('open')">
+                        <span>Click to expand/collapse extension details</span>
+                        <span class="toggle-icon">▼</span>
+                    </div>
+                    <div class="collapsible-body" id="extensionsList"></div>
+                </div>
+            </div>
+
+            <!-- Fingerprints -->
+            <div class="card">
+                <div class="card-title">Certificate Fingerprints</div>
+                <div class="info-grid">
+                    <div class="info-item">
+                        <div class="info-label">SHA-256</div>
+                        <div class="info-value mono" id="sha256Fingerprint">-</div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label">SHA-1</div>
+                        <div class="info-value mono" id="sha1Fingerprint">-</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const inputEl = document.getElementById('input');
+        const messageEl = document.getElementById('message');
+        const resultEl = document.getElementById('result');
+
+        function showMessage(text) {
+            messageEl.textContent = text;
+            messageEl.className = 'message error';
+            setTimeout(() => { messageEl.className = 'message'; }, 5000);
+        }
+
+        // Base64 decode
+        function base64Decode(str) {
+            const binary = atob(str);
+            const bytes = new Uint8Array(binary.length);
+            for (let i = 0; i < binary.length; i++) {
+                bytes[i] = binary.charCodeAt(i);
+            }
+            return bytes;
+        }
+
+        // ASN.1 OID mapping
+        const OID_MAP = {
+            '2.5.4.3': 'CN',
+            '2.5.4.6': 'C',
+            '2.5.4.7': 'L',
+            '2.5.4.8': 'ST',
+            '2.5.4.10': 'O',
+            '2.5.4.11': 'OU',
+            '1.2.840.113549.1.1.1': 'RSA',
+            '1.2.840.113549.1.1.5': 'SHA-1 with RSA',
+            '1.2.840.113549.1.1.11': 'SHA-256 with RSA',
+            '1.2.840.113549.1.1.12': 'SHA-384 with RSA',
+            '1.2.840.113549.1.1.13': 'SHA-512 with RSA',
+            '1.2.840.10045.2.1': 'EC',
+            '1.2.840.10045.4.3.2': 'ECDSA with SHA-256',
+            '1.2.840.10045.4.3.3': 'ECDSA with SHA-384',
+            '2.5.29.14': 'Subject Key Identifier',
+            '2.5.29.15': 'Key Usage',
+            '2.5.29.17': 'Subject Alternative Name',
+            '2.5.29.19': 'Basic Constraints',
+            '2.5.29.35': 'Authority Key Identifier',
+            '2.5.29.37': 'Extended Key Usage',
+            '1.3.6.1.5.5.7.1.1': 'Authority Info Access',
+            '2.5.29.31': 'CRL Distribution Points',
+            '2.5.29.32': 'Certificate Policies'
+        };
+
+        const OID_NAMES = {
+            'CN': 'Common Name',
+            'C': 'Country',
+            'L': 'Locality',
+            'ST': 'State/Province',
+            'O': 'Organization',
+            'OU': 'Organizational Unit'
+        };
+
+        // ASN.1 Parser
+        class ASN1 {
+            constructor(data, offset = 0) {
+                this.data = data;
+                this.pos = offset;
+            }
+
+            peek() {
+                return this.data[this.pos];
+            }
+
+            readByte() {
+                return this.data[this.pos++];
+            }
+
+            readLength() {
+                let len = this.readByte();
+                if (len & 0x80) {
+                    const numBytes = len & 0x7f;
+                    len = 0;
+                    for (let i = 0; i < numBytes; i++) {
+                        len = (len << 8) | this.readByte();
+                    }
+                }
+                return len;
+            }
+
+            readTag() {
+                return this.readByte();
+            }
+
+            readTLV() {
+                const tag = this.readTag();
+                const length = this.readLength();
+                const value = this.data.slice(this.pos, this.pos + length);
+                this.pos += length;
+                return { tag, length, value };
+            }
+
+            readSequence() {
+                const tag = this.readTag();
+                if (tag !== 0x30) throw new Error('Expected SEQUENCE');
+                return this.readLength();
+            }
+
+            readOID() {
+                const { tag, value } = this.readTLV();
+                if (tag !== 0x06) throw new Error('Expected OID');
+
+                let oid = Math.floor(value[0] / 40) + '.' + (value[0] % 40);
+                let val = 0;
+                for (let i = 1; i < value.length; i++) {
+                    val = (val << 7) | (value[i] & 0x7f);
+                    if (!(value[i] & 0x80)) {
+                        oid += '.' + val;
+                        val = 0;
+                    }
+                }
+                return oid;
+            }
+
+            readInteger() {
+                const { tag, value } = this.readTLV();
+                if (tag !== 0x02) throw new Error('Expected INTEGER');
+                return value;
+            }
+
+            readBitString() {
+                const { tag, value } = this.readTLV();
+                if (tag !== 0x03) throw new Error('Expected BIT STRING');
+                return value.slice(1); // Skip unused bits byte
+            }
+
+            readUTCTime() {
+                const { tag, value } = this.readTLV();
+                const str = String.fromCharCode(...value);
+                let year = parseInt(str.substr(0, 2));
+                year += year < 50 ? 2000 : 1900;
+                const month = parseInt(str.substr(2, 2)) - 1;
+                const day = parseInt(str.substr(4, 2));
+                const hour = parseInt(str.substr(6, 2));
+                const min = parseInt(str.substr(8, 2));
+                const sec = parseInt(str.substr(10, 2));
+                return new Date(Date.UTC(year, month, day, hour, min, sec));
+            }
+
+            readGeneralizedTime() {
+                const { tag, value } = this.readTLV();
+                const str = String.fromCharCode(...value);
+                const year = parseInt(str.substr(0, 4));
+                const month = parseInt(str.substr(4, 2)) - 1;
+                const day = parseInt(str.substr(6, 2));
+                const hour = parseInt(str.substr(8, 2));
+                const min = parseInt(str.substr(10, 2));
+                const sec = parseInt(str.substr(12, 2));
+                return new Date(Date.UTC(year, month, day, hour, min, sec));
+            }
+
+            readTime() {
+                const tag = this.peek();
+                if (tag === 0x17) return this.readUTCTime();
+                if (tag === 0x18) return this.readGeneralizedTime();
+                throw new Error('Expected Time');
+            }
+
+            readString() {
+                const { tag, value } = this.readTLV();
+                return new TextDecoder().decode(value);
+            }
+
+            skip(length) {
+                this.pos += length;
+            }
+        }
+
+        // Parse X.509 certificate
+        function parseCertificate(pem) {
+            const base64 = pem
+                .replace(/-----BEGIN CERTIFICATE-----/, '')
+                .replace(/-----END CERTIFICATE-----/, '')
+                .replace(/\s/g, '');
+
+            const der = base64Decode(base64);
+            const cert = {};
+
+            const asn = new ASN1(der);
+
+            // Certificate SEQUENCE
+            asn.readSequence();
+
+            // TBSCertificate SEQUENCE
+            const tbsStart = asn.pos;
+            const tbsLen = asn.readSequence();
+
+            // Version (optional, context tag [0])
+            if (asn.peek() === 0xa0) {
+                asn.readByte(); // tag
+                asn.readLength();
+                const versionBytes = asn.readInteger();
+                cert.version = versionBytes[0] + 1;
+            } else {
+                cert.version = 1;
+            }
+
+            // Serial Number
+            const serialBytes = asn.readInteger();
+            cert.serialNumber = Array.from(serialBytes).map(b => b.toString(16).padStart(2, '0')).join(':');
+
+            // Signature Algorithm
+            asn.readSequence();
+            cert.signatureAlgorithm = OID_MAP[asn.readOID()] || 'Unknown';
+            // Skip to end of algorithm sequence
+            while (asn.peek() === 0x05 || asn.peek() === 0x06) {
+                asn.readTLV();
+            }
+
+            // Issuer
+            cert.issuer = parseDistinguishedName(asn);
+
+            // Validity
+            asn.readSequence();
+            cert.notBefore = asn.readTime();
+            cert.notAfter = asn.readTime();
+
+            // Subject
+            cert.subject = parseDistinguishedName(asn);
+
+            // Subject Public Key Info
+            const spkiStart = asn.pos;
+            asn.readSequence();
+            asn.readSequence();
+            cert.publicKeyAlgorithm = OID_MAP[asn.readOID()] || 'Unknown';
+
+            // Skip remaining algorithm params
+            while (asn.peek() !== 0x03) {
+                asn.readTLV();
+            }
+
+            const pubKeyBits = asn.readBitString();
+
+            // Estimate key size
+            if (cert.publicKeyAlgorithm === 'RSA') {
+                const keyAsn = new ASN1(pubKeyBits);
+                keyAsn.readSequence();
+                const modulus = keyAsn.readInteger();
+                let bitLen = 0;
+                for (let i = 0; i < modulus.length; i++) {
+                    if (modulus[i] !== 0) {
+                        bitLen = (modulus.length - i) * 8;
+                        break;
+                    }
+                }
+                cert.publicKeySize = bitLen + ' bits';
+            } else if (cert.publicKeyAlgorithm === 'EC') {
+                cert.publicKeySize = (pubKeyBits.length * 8 / 2) + ' bits (estimated)';
+            } else {
+                cert.publicKeySize = 'Unknown';
+            }
+
+            // Extensions (optional, context tag [3])
+            cert.extensions = [];
+            cert.san = [];
+
+            while (asn.pos < der.length - 100) {
+                if (asn.peek() === 0xa3) {
+                    asn.readByte();
+                    const extLen = asn.readLength();
+                    asn.readSequence();
+
+                    const extEndPos = asn.pos + extLen - 2;
+
+                    while (asn.pos < extEndPos && asn.peek() === 0x30) {
+                        try {
+                            asn.readSequence();
+                            const oid = asn.readOID();
+                            const extName = OID_MAP[oid] || oid;
+
+                            let critical = false;
+                            if (asn.peek() === 0x01) {
+                                const { value } = asn.readTLV();
+                                critical = value[0] !== 0;
+                            }
+
+                            const { value: extValue } = asn.readTLV();
+
+                            if (oid === '2.5.29.17') { // SAN
+                                parseSAN(extValue, cert.san);
+                            }
+
+                            cert.extensions.push({
+                                oid,
+                                name: extName,
+                                critical,
+                                value: Array.from(extValue).map(b => b.toString(16).padStart(2, '0')).join('')
+                            });
+                        } catch (e) {
+                            break;
+                        }
+                    }
+                    break;
+                } else {
+                    try {
+                        asn.readTLV();
+                    } catch (e) {
+                        break;
+                    }
+                }
+            }
+
+            // Check self-signed
+            cert.selfSigned = JSON.stringify(cert.subject) === JSON.stringify(cert.issuer);
+
+            // Calculate fingerprints
+            cert.derData = der;
+
+            return cert;
+        }
+
+        function parseDistinguishedName(asn) {
+            const dn = {};
+            asn.readSequence();
+
+            while (asn.peek() === 0x31) {
+                asn.readByte();
+                asn.readLength();
+                asn.readSequence();
+                const oid = asn.readOID();
+                const value = asn.readString();
+                const key = OID_MAP[oid] || oid;
+                dn[key] = value;
+            }
+
+            return dn;
+        }
+
+        function parseSAN(data, sanList) {
+            try {
+                const asn = new ASN1(data);
+                asn.readSequence();
+
+                while (asn.pos < data.length) {
+                    const tag = asn.readByte();
+                    const len = asn.readLength();
+                    const value = asn.data.slice(asn.pos, asn.pos + len);
+                    asn.pos += len;
+
+                    const type = tag & 0x0f;
+                    const str = new TextDecoder().decode(value);
+
+                    if (type === 2) sanList.push({ type: 'DNS', value: str });
+                    else if (type === 1) sanList.push({ type: 'Email', value: str });
+                    else if (type === 6) sanList.push({ type: 'URI', value: str });
+                    else if (type === 7) {
+                        if (value.length === 4) {
+                            sanList.push({ type: 'IP', value: value.join('.') });
+                        } else if (value.length === 16) {
+                            const ipv6 = [];
+                            for (let i = 0; i < 16; i += 2) {
+                                ipv6.push(((value[i] << 8) | value[i + 1]).toString(16));
+                            }
+                            sanList.push({ type: 'IP', value: ipv6.join(':') });
+                        }
+                    }
+                }
+            } catch (e) { }
+        }
+
+        async function calculateFingerprints(der) {
+            const sha256 = await crypto.subtle.digest('SHA-256', der);
+            const sha1 = await crypto.subtle.digest('SHA-1', der);
+
+            const toHex = (buffer) => Array.from(new Uint8Array(buffer))
+                .map(b => b.toString(16).padStart(2, '0').toUpperCase())
+                .join(':');
+
+            return {
+                sha256: toHex(sha256),
+                sha1: toHex(sha1)
+            };
+        }
+
+        async function parseCert() {
+            const pem = inputEl.value.trim();
+            if (!pem) {
+                showMessage('Please enter a certificate');
+                return;
+            }
+
+            if (!pem.includes('-----BEGIN CERTIFICATE-----')) {
+                showMessage('Please enter a valid PEM format certificate');
+                return;
+            }
+
+            try {
+                const cert = parseCertificate(pem);
+                const fingerprints = await calculateFingerprints(cert.derData);
+                displayCert(cert, fingerprints);
+            } catch (e) {
+                console.error(e);
+                showMessage('Parse failed: ' + e.message);
+            }
+        }
+
+        function formatDate(date) {
+            return date.toLocaleString('en-US', {
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit',
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit',
+                timeZoneName: 'short'
+            });
+        }
+
+        function displayCert(cert, fingerprints) {
+            resultEl.classList.add('show');
+
+            const now = new Date();
+            const notBefore = cert.notBefore;
+            const notAfter = cert.notAfter;
+
+            const daysRemaining = Math.ceil((notAfter - now) / (1000 * 60 * 60 * 24));
+            const totalDays = Math.ceil((notAfter - notBefore) / (1000 * 60 * 60 * 24));
+            const elapsed = Math.ceil((now - notBefore) / (1000 * 60 * 60 * 24));
+
+            // Status
+            const banner = document.getElementById('statusBanner');
+            const statusTitle = document.getElementById('statusTitle');
+            const statusDesc = document.getElementById('statusDesc');
+
+            if (now < notBefore) {
+                banner.className = 'status-banner warning';
+                banner.querySelector('.status-icon').textContent = '⏳';
+                statusTitle.textContent = 'Certificate Not Yet Valid';
+                statusDesc.textContent = `Will become valid on ${formatDate(notBefore)}`;
+            } else if (now > notAfter) {
+                banner.className = 'status-banner expired';
+                banner.querySelector('.status-icon').textContent = '❌';
+                statusTitle.textContent = 'Certificate Expired';
+                statusDesc.textContent = `Expired on ${formatDate(notAfter)}`;
+            } else if (daysRemaining <= 30) {
+                banner.className = 'status-banner warning';
+                banner.querySelector('.status-icon').textContent = '⚠️';
+                statusTitle.textContent = 'Certificate Expiring Soon';
+                statusDesc.textContent = `${daysRemaining} days until expiration, please renew soon`;
+            } else {
+                banner.className = 'status-banner valid';
+                banner.querySelector('.status-icon').textContent = '✅';
+                statusTitle.textContent = 'Certificate Valid';
+                statusDesc.textContent = 'Certificate is within validity period';
+            }
+
+            // Validity
+            document.getElementById('notBefore').textContent = formatDate(notBefore);
+            document.getElementById('notAfter').textContent = formatDate(notAfter);
+            document.getElementById('totalDays').textContent = totalDays + ' days';
+
+            const daysEl = document.getElementById('daysRemaining');
+            daysEl.textContent = daysRemaining;
+            daysEl.className = 'days-remaining' + (daysRemaining <= 30 ? (daysRemaining <= 7 ? ' danger' : ' warning') : '');
+
+            if (daysRemaining < 0) {
+                document.getElementById('daysText').textContent = ' days ago (expired)';
+                daysEl.textContent = Math.abs(daysRemaining);
+            }
+
+            // Update item styles
+            const notAfterItem = document.getElementById('notAfterItem');
+            const daysItem = document.getElementById('daysItem');
+            notAfterItem.className = 'info-item' + (daysRemaining <= 30 ? (daysRemaining <= 7 ? ' danger' : ' warning') : '');
+            daysItem.className = 'info-item' + (daysRemaining <= 30 ? (daysRemaining <= 7 ? ' danger' : ' warning') : '');
+
+            // Timeline
+            const progress = Math.max(0, Math.min(100, (elapsed / totalDays) * 100));
+            document.getElementById('timelineBar').style.width = progress + '%';
+            document.getElementById('timelineMarker').style.left = progress + '%';
+            document.getElementById('timelineStart').textContent = notBefore.toLocaleDateString();
+            document.getElementById('timelineEnd').textContent = notAfter.toLocaleDateString();
+
+            // Subject
+            const subjectGrid = document.getElementById('subjectGrid');
+            subjectGrid.innerHTML = '';
+            for (const [key, value] of Object.entries(cert.subject)) {
+                const label = OID_NAMES[key] || key;
+                subjectGrid.innerHTML += `
+                    <div class="info-item">
+                        <div class="info-label">${label}</div>
+                        <div class="info-value">${value}</div>
+                    </div>
+                `;
+            }
+
+            // Issuer
+            const issuerGrid = document.getElementById('issuerGrid');
+            issuerGrid.innerHTML = '';
+            for (const [key, value] of Object.entries(cert.issuer)) {
+                const label = OID_NAMES[key] || key;
+                issuerGrid.innerHTML += `
+                    <div class="info-item">
+                        <div class="info-label">${label}</div>
+                        <div class="info-value">${value}</div>
+                    </div>
+                `;
+            }
+
+            document.getElementById('selfSigned').textContent = cert.selfSigned ? 'Yes (Self-Signed Certificate)' : 'No';
+            document.getElementById('selfSignedItem').className = 'info-item' + (cert.selfSigned ? ' warning' : '');
+
+            // Technical info
+            document.getElementById('version').textContent = 'V' + cert.version;
+            document.getElementById('serialNumber').textContent = cert.serialNumber;
+            document.getElementById('signatureAlgorithm').textContent = cert.signatureAlgorithm;
+            document.getElementById('publicKeyAlgorithm').textContent = cert.publicKeyAlgorithm;
+            document.getElementById('publicKeySize').textContent = cert.publicKeySize;
+
+            // SAN
+            const sanCard = document.getElementById('sanCard');
+            const sanList = document.getElementById('sanList');
+            if (cert.san.length > 0) {
+                sanCard.style.display = 'block';
+                sanList.innerHTML = cert.san.map(s => `<span class="san-item">${s.type}: ${s.value}</span>`).join('');
+            } else {
+                sanCard.style.display = 'none';
+            }
+
+            // Extensions
+            const extList = document.getElementById('extensionsList');
+            extList.innerHTML = cert.extensions.map(ext => `
+                <div class="extension-item">
+                    <div class="extension-name">${ext.name} ${ext.critical ? '(Critical)' : ''}</div>
+                    <div class="extension-value">${ext.value.substring(0, 100)}${ext.value.length > 100 ? '...' : ''}</div>
+                </div>
+            `).join('');
+
+            // Fingerprints
+            document.getElementById('sha256Fingerprint').textContent = fingerprints.sha256;
+            document.getElementById('sha1Fingerprint').textContent = fingerprints.sha1;
+        }
+
+        function loadSample() {
+            // Sample certificate for testing
+            inputEl.value = `-----BEGIN CERTIFICATE-----
+MIIFazCCA1OgAwIBAgIRAIIQz7DSQONZRGPgu2OCiwAwDQYJKoZIhvcNAQELBQAw
+TzELMAkGA1UEBhMCVVMxKTAnBgNVBAoTIEludGVybmV0IFNlY3VyaXR5IFJlc2Vh
+cmNoIEdyb3VwMRUwEwYDVQQDEwxJU1JHIFJvb3QgWDEwHhcNMTUwNjA0MTEwNDM4
+WhcNMzUwNjA0MTEwNDM4WjBPMQswCQYDVQQGEwJVUzEpMCcGA1UEChMgSW50ZXJu
+ZXQgU2VjdXJpdHkgUmVzZWFyY2ggR3JvdXAxFTATBgNVBAMTDElTUkcgUm9vdCBY
+MTCCAiIwDQYJKoZIhvcNAQEBBQADggIPADCCAgoCggIBAK3oJHP0FDfzm54rVygc
+h77ct984kIxuPOZXoHj3dcKi/vVqbvYATyjb3miGbESTtrFj/RQSa78f0uoxmyF+
+0TM8ukj13Xnfs7j/EvEhmkvBioZxaUpmZmyPfjxwv60pIgbz5MDmgK7iS4+3mX6U
+A5/TR5d8mUgjU+g4rk8Kb4Mu0UlXjIB0ttov0DiNewNwIRt18jA8+o+u3dpjq+sW
+T8KOEUt+zwvo/7V3LvSye0rgTBIlDHCNAymg4VMk7BPZ7hm/ELNKjD+Jo2FR3qyH
+B5T0Y3HsLuJvW5iB4YlcNHlsdu87kGJ55tukmi8mxdAQ4Q7e2RCOFvu396j3x+UC
+B5iPNgiV5+I3lg02dZ77DnKxHZu8A/lJBdiB3QW0KtZB6awBdpUKD9jf1b0SHzUv
+KBds0pjBqAlkd25HN7rOrFleaJ1/ctaJxQZBKT5ZPt0m9STJEadao0xAH0ahmbWn
+OlFuhjuefXKnEgV4We0+UXgVCwOPjdAvBbI+e0ocS3MFEvzG6uBQE3xDk3SzynTn
+jh8BCNAw1FtxNrQHusEwMFxIt4I7mKZ9YIqioymCzLq9gwQbooMDQaHWBfEbwrbw
+qHyGO0aoSCqI3Haadr8faqU9GY/rOPNk3sgrDQoo//fb4hVC1CLQJ13hef4Y53CI
+rU7m2Ys6xt0nUW7/vGT1M0NPAgMBAAGjQjBAMA4GA1UdDwEB/wQEAwIBBjAPBgNV
+HRMBAf8EBTADAQH/MB0GA1UdDgQWBBR5tFnme7bl5AFzgAiIyBpY9umbbjANBgkq
+hkiG9w0BAQsFAAOCAgEAVR9YqbyyqFDQDLHYGmkgJykIrGF1XIpu+ILlaS/V9lZL
+ubhzEFnTIZd+50xx+7LSYK05qAvqFyFWhfFQDlnrzuBZ6brJFe+GnY+EgPbk6ZGQ
+3BebYhtF8GaV0nxvwuo77x/Py9auJ/GpsMiu/X1+mvoiBOv/2X/qkSsisRcOj/KK
+NFtY2PwByVS5uCbMiogziUwthDyC3+6WVwW6LLv3xLfHTjuCvjHIInNzktHCgKQ5
+ORAzI4JMPJ+GslWYHb4phowim57iaztXOoJwTdwJx4nLCgdNbOhdjsnvzqvHu7Ur
+TkXWStAmzOVyyghqpZXjFaH3pO3JLF+l+/+sKAIuvtd7u+Nxe5AW0wdeRlN8NwdC
+jNPElpzVmbUq4JUagEiuTDkHzsxHpFKVK7q4+63SM1N95R1NbdWhscdCb+ZAJzVc
+oyi3B43njTOQ5yOf+1CceWxG1bQVs5ZufpsMljq4Ui0/1lvh+wjChP4kqKOJ2qxq
+4RgqsahDYVvTH9w7jXbyLeiNdd8XM2w9U/t7y0Ff/9yi0GE44Za4rF2LN9d11TPA
+mRGunUHBcnWEvgJBQl9nJEiU0Zsnvgc/ubhPgXRR4Xq37Z0j4r7g1SgEEzwxA57d
+emyPxgcYxn/eR44/KJ4EBs+lVDR3veyJm+kXQ99b21/+jh5Xos1AnX5iItreGCc=
+-----END CERTIFICATE-----`;
+        }
+
+        function clearAll() {
+            inputEl.value = '';
+            resultEl.classList.remove('show');
+        }
+    </script>
+</body>
+
+</html>
