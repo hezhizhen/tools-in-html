@@ -330,7 +330,25 @@
             border: 1px solid rgba(239, 68, 68, 0.3);
         }
 
-        button:hover {
+        .btn-share {
+            background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+            color: #fff;
+        }
+
+        .btn-share:disabled {
+            background: rgba(255, 255, 255, 0.05);
+            color: #6b7280;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-share:disabled:hover {
+            transform: none;
+            box-shadow: none;
+        }
+
+        button:hover:not(:disabled) {
             transform: translateY(-2px);
             box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
         }
@@ -360,11 +378,26 @@
         }
 
         .message {
+            position: fixed;
+            top: 20px;
+            right: 20px;
             padding: 12px 16px;
             border-radius: 8px;
-            margin-top: 15px;
             font-size: 14px;
             display: none;
+            z-index: 1000;
+            animation: slideIn 0.3s ease;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
         }
 
         .message.error {
@@ -372,6 +405,13 @@
             background: rgba(239, 68, 68, 0.2);
             color: #f87171;
             border: 1px solid rgba(239, 68, 68, 0.3);
+        }
+
+        .message.success {
+            display: block;
+            background: rgba(16, 185, 129, 0.2);
+            color: #34d399;
+            border: 1px solid rgba(16, 185, 129, 0.3);
         }
 
         .live-badge {
@@ -446,6 +486,7 @@
 
         <div class="button-group">
             <button class="btn-calculate" onclick="calculate()">Calculate</button>
+            <button class="btn-share" id="shareBtn" onclick="shareUrl()" disabled>Share</button>
             <button class="btn-clear" onclick="clearAll()">Clear</button>
         </div>
 
@@ -544,6 +585,7 @@
                 endEl.style.opacity = '1';
             }
             updateNowIndicator();
+            updateShareButton();
 
             if (this.checked) {
                 if (intervalId) clearInterval(intervalId);
@@ -560,6 +602,10 @@
                 }
             }
         });
+
+        // Listen for Flatpickr changes to update share button
+        startEl.addEventListener('change', updateShareButton);
+        endEl.addEventListener('change', updateShareButton);
 
         function calculate() {
             const startDate = startPicker.selectedDates[0];
@@ -634,7 +680,156 @@
                 clearInterval(intervalId);
                 intervalId = null;
             }
+
+            updateShareButton();
         }
+
+        // Base62 charset
+        const BASE62 = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
+
+        // Encode number to Base62
+        function encodeBase62(num) {
+            if (num === 0n) return '0';
+            let arr = [];
+            while (num > 0n) {
+                arr.push(BASE62[Number(num % 62n)]);
+                num = num / 62n;
+            }
+            return arr.reverse().join('');
+        }
+
+        // Decode Base62 to number
+        function decodeBase62(str) {
+            let num = 0n;
+            for (let i = 0; i < str.length; i++) {
+                const idx = BASE62.indexOf(str[i]);
+                if (idx === -1) throw new Error('Invalid character');
+                num = num * 62n + BigInt(idx);
+            }
+            return num;
+        }
+
+        // NOW marker (max 32-bit value: 4294967295)
+        const NOW_MARKER = 0xFFFFFFFF;
+
+        // Encode share data to Base62
+        function encodeShareData(startTs, endTs, isNow) {
+            // If NOW mode, use marker for endTs
+            const endValue = isNow ? NOW_MARKER : endTs;
+            // Pack two 32-bit timestamps into a single number
+            // startTs in high 32 bits, endTs in low 32 bits
+            const packed = (BigInt(startTs) << 32n) | BigInt(endValue);
+            return encodeBase62(packed);
+        }
+
+        // Decode share data from Base62
+        function decodeShareData(base62) {
+            try {
+                const packed = decodeBase62(base62);
+                const startTs = Number(packed >> 32n);
+                const endTs = Number(packed & 0xFFFFFFFFn);
+                const isNow = endTs === NOW_MARKER;
+                return { s: startTs, e: endTs, isNow };
+            } catch (e) {
+                // Invalid hash, ignore
+            }
+            return null;
+        }
+
+        // Share URL function
+        function shareUrl() {
+            const startDate = startPicker.selectedDates[0];
+
+            if (!startDate) {
+                showMessage('Please set start time', 'error');
+                return;
+            }
+
+            const startTs = Math.floor(startDate.getTime() / 1000);
+            const isNow = useNowEl.checked;
+            let endTs = 0;
+
+            if (!isNow) {
+                const endDate = endPicker.selectedDates[0];
+                if (!endDate) {
+                    showMessage('Please set end time or use NOW', 'error');
+                    return;
+                }
+                endTs = Math.floor(endDate.getTime() / 1000);
+            }
+
+            const hash = encodeShareData(startTs, endTs, isNow);
+
+            const url = window.location.origin + window.location.pathname + '#s=' + hash;
+
+            // Update current URL
+            history.pushState(null, null, '#s=' + hash);
+
+            navigator.clipboard.writeText(url).then(() => {
+                showMessage('Share link copied to clipboard!', 'success');
+            }).catch(() => {
+                showMessage('Failed to copy link', 'error');
+            });
+        }
+
+        // Update share button state
+        function updateShareButton() {
+            const shareBtn = document.getElementById('shareBtn');
+            const hasStart = startPicker.selectedDates.length > 0;
+            const hasEnd = endPicker.selectedDates.length > 0;
+            const isNowMode = useNowEl.checked;
+
+            // Enable if start time is set, and either end time is set or NOW is checked
+            shareBtn.disabled = !hasStart || (!hasEnd && !isNowMode);
+        }
+
+        // Parse hash on page load
+        function parseHash() {
+            const hash = window.location.hash;
+            if (hash && hash.startsWith('#s=')) {
+                const base62 = hash.substring(3);
+                const data = decodeShareData(base62);
+
+                if (data) {
+                    const startDate = new Date(data.s * 1000);
+                    startPicker.setDate(startDate);
+
+                    if (data.isNow) {
+                        // NOW mode
+                        useNowEl.checked = true;
+                        endEl.disabled = true;
+                        endEl.style.opacity = '0.5';
+                        updateNowIndicator();
+                        // Start live update timer
+                        if (intervalId) clearInterval(intervalId);
+                        intervalId = setInterval(() => {
+                            updateNowIndicator();
+                            if (resultCardEl.style.display !== 'none') {
+                                calculate();
+                            }
+                        }, 1000);
+                    } else {
+                        // Fixed end time
+                        const endDate = new Date(data.e * 1000);
+                        endPicker.setDate(endDate);
+                        useNowEl.checked = false;
+                        endEl.disabled = false;
+                        endEl.style.opacity = '1';
+                    }
+
+                    // Clear hash from URL
+                    history.replaceState(null, null, window.location.pathname);
+
+                    calculate();
+                }
+            }
+        }
+
+        // Parse hash on load
+        parseHash();
+
+        // Update share button state on init
+        updateShareButton();
     </script>
 </body>
 </html>
