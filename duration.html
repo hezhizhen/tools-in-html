@@ -6,6 +6,7 @@
     <title>Duration Calculator</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/themes/dark.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/plugins/confirmDate/confirmDate.css">
     <style>
         * {
             margin: 0;
@@ -207,11 +208,35 @@
             border-top-color: #fff;
         }
 
+        .flatpickr-confirm {
+            background: linear-gradient(135deg, #10b981, #059669);
+            color: #fff;
+            border: none;
+            font-weight: 600;
+            padding: 10px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .flatpickr-confirm:hover {
+            background: linear-gradient(135deg, #059669, #047857);
+        }
+
+        .end-time-row {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .end-time-row input[type="text"] {
+            flex: 1;
+        }
+
         .checkbox-wrapper {
             display: flex;
             align-items: center;
-            gap: 10px;
-            margin-top: 12px;
+            gap: 8px;
+            white-space: nowrap;
         }
 
         input[type="checkbox"] {
@@ -225,22 +250,6 @@
             margin: 0;
             cursor: pointer;
             color: #fff;
-        }
-
-        .now-indicator {
-            display: none;
-            margin-top: 12px;
-            padding: 12px 16px;
-            background: rgba(16, 185, 129, 0.2);
-            border: 1px solid rgba(16, 185, 129, 0.3);
-            border-radius: 8px;
-            color: #34d399;
-            font-family: 'Consolas', 'Monaco', monospace;
-            font-size: 14px;
-        }
-
-        .now-indicator.active {
-            display: block;
         }
 
         .result-card {
@@ -306,6 +315,7 @@
             display: flex;
             gap: 12px;
             margin-top: 20px;
+            margin-bottom: 20px;
         }
 
         button {
@@ -476,12 +486,13 @@
 
         <div class="card">
             <label for="end">End Time</label>
-            <input type="text" id="end" placeholder="Select end time">
-            <div class="checkbox-wrapper">
-                <input type="checkbox" id="useNow">
-                <label for="useNow">Use current time (NOW)</label>
+            <div class="end-time-row">
+                <input type="text" id="end" placeholder="Select end time">
+                <div class="checkbox-wrapper">
+                    <input type="checkbox" id="useNow">
+                    <label for="useNow">NOW</label>
+                </div>
             </div>
-            <div id="nowIndicator" class="now-indicator"></div>
         </div>
 
         <div class="button-group">
@@ -520,11 +531,11 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/plugins/confirmDate/confirmDate.js"></script>
     <script>
         const startEl = document.getElementById('start');
         const endEl = document.getElementById('end');
         const useNowEl = document.getElementById('useNow');
-        const nowIndicatorEl = document.getElementById('nowIndicator');
         const resultCardEl = document.getElementById('resultCard');
         const resultTitleEl = document.getElementById('resultTitle');
         const resultValueEl = document.getElementById('resultValue');
@@ -538,7 +549,9 @@
             enableTime: true,
             dateFormat: "Y-m-d H:i",
             time_24hr: true,
-            allowInput: true
+            allowInput: true,
+            disableMobile: true,
+            plugins: [new confirmDatePlugin({})]
         };
 
         const twoDaysAgo = new Date();
@@ -568,39 +581,32 @@
             return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
         }
 
-        function updateNowIndicator() {
+        function updateNowDisplay() {
             if (useNowEl.checked) {
-                nowIndicatorEl.textContent = 'NOW: ' + formatDateTime(new Date());
-                nowIndicatorEl.classList.add('active');
-            } else {
-                nowIndicatorEl.classList.remove('active');
+                endEl.value = formatDateTime(new Date());
             }
         }
 
         useNowEl.addEventListener('change', function() {
-            endEl.disabled = this.checked;
             if (this.checked) {
-                endEl.style.opacity = '0.5';
-            } else {
-                endEl.style.opacity = '1';
-            }
-            updateNowIndicator();
-            updateShareButton();
-
-            if (this.checked) {
+                endPicker.clear();
+                updateNowDisplay();
                 if (intervalId) clearInterval(intervalId);
                 intervalId = setInterval(() => {
-                    updateNowIndicator();
+                    updateNowDisplay();
                     if (resultCardEl.style.display !== 'none') {
                         calculate();
                     }
                 }, 1000);
             } else {
+                // Set end time to current time (without seconds)
+                endPicker.setDate(new Date());
                 if (intervalId) {
                     clearInterval(intervalId);
                     intervalId = null;
                 }
             }
+            updateShareButton();
         });
 
         // Listen for Flatpickr changes to update share button
@@ -669,10 +675,8 @@
         function clearAll() {
             startPicker.clear();
             endPicker.clear();
-            endEl.disabled = false;
-            endEl.style.opacity = '1';
+            endEl.value = '';
             useNowEl.checked = false;
-            nowIndicatorEl.classList.remove('active');
             resultCardEl.style.display = 'none';
             messageEl.className = 'message';
 
@@ -797,13 +801,11 @@
                     if (data.isNow) {
                         // NOW mode
                         useNowEl.checked = true;
-                        endEl.disabled = true;
-                        endEl.style.opacity = '0.5';
-                        updateNowIndicator();
+                        updateNowDisplay();
                         // Start live update timer
                         if (intervalId) clearInterval(intervalId);
                         intervalId = setInterval(() => {
-                            updateNowIndicator();
+                            updateNowDisplay();
                             if (resultCardEl.style.display !== 'none') {
                                 calculate();
                             }
@@ -813,8 +815,6 @@
                         const endDate = new Date(data.e * 1000);
                         endPicker.setDate(endDate);
                         useNowEl.checked = false;
-                        endEl.disabled = false;
-                        endEl.style.opacity = '1';
                     }
 
                     // Clear hash from URL
