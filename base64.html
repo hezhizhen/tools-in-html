@@ -140,11 +140,14 @@
         }
 
         .message {
+            position: fixed;
+            top: 20px;
+            right: 20px;
             padding: 12px 16px;
             border-radius: 8px;
-            margin-top: 15px;
             font-size: 14px;
             display: none;
+            z-index: 1000;
         }
 
         .message.success {
@@ -228,9 +231,9 @@
                 <button class="btn-copy" onclick="copyResult()">Copy</button>
                 <button class="btn-clear" onclick="clearAll()">Clear</button>
             </div>
-            <div id="message" class="message"></div>
         </div>
     </div>
+    <div id="message" class="message"></div>
 
     <script>
         const inputEl = document.getElementById('input');
