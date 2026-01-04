@@ -292,11 +292,14 @@
         }
 
         .message {
+            position: fixed;
+            top: 20px;
+            right: 20px;
             padding: 12px 16px;
             border-radius: 8px;
-            margin-top: 15px;
             font-size: 14px;
             display: none;
+            z-index: 1000;
         }
 
         .message.error {
@@ -425,8 +428,8 @@ MIIDXTCCAkWgAwIBAgIJAJC1HiIAZAiU...
                 <button class="btn-sample" onclick="loadSample()">Load Sample</button>
                 <button class="btn-clear" onclick="clearAll()">Clear</button>
             </div>
-            <div id="message" class="message"></div>
         </div>
+    <div id="message" class="message"></div>
 
         <div id="result" class="result-section">
             <!-- Status Banner -->
