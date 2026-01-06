@@ -587,7 +587,15 @@
             }
         }
 
+        // Clear hash when user modifies time
+        function clearHash() {
+            if (window.location.hash) {
+                history.replaceState(null, null, window.location.pathname);
+            }
+        }
+
         useNowEl.addEventListener('change', function() {
+            clearHash();
             if (this.checked) {
                 endPicker.clear();
                 updateNowDisplay();
@@ -609,9 +617,9 @@
             updateShareButton();
         });
 
-        // Listen for Flatpickr changes to update share button
-        startEl.addEventListener('change', updateShareButton);
-        endEl.addEventListener('change', updateShareButton);
+        // Listen for Flatpickr changes to update share button and clear hash
+        startEl.addEventListener('change', () => { updateShareButton(); clearHash(); });
+        endEl.addEventListener('change', () => { updateShareButton(); clearHash(); });
 
         function calculate() {
             const startDate = startPicker.selectedDates[0];
@@ -816,9 +824,6 @@
                         endPicker.setDate(endDate);
                         useNowEl.checked = false;
                     }
-
-                    // Clear hash from URL
-                    history.replaceState(null, null, window.location.pathname);
 
                     calculate();
                 }
