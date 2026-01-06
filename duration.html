@@ -562,9 +562,15 @@
 
         const twoDaysAgo = new Date();
         twoDaysAgo.setDate(twoDaysAgo.getDate() - 2);
+        twoDaysAgo.setSeconds(0, 0);
         startPicker = flatpickr(startEl, {
             ...flatpickrConfig,
-            defaultDate: twoDaysAgo
+            defaultDate: twoDaysAgo,
+            onChange: (selectedDates) => {
+                if (selectedDates.length > 0) {
+                    selectedDates[0].setSeconds(0, 0);
+                }
+            }
         });
 
         endPicker = flatpickr(endEl, flatpickrConfig);
@@ -861,6 +867,7 @@
 
                 if (data) {
                     const startDate = new Date(data.s * 1000);
+                    startDate.setSeconds(0, 0);
                     startPicker.setDate(startDate);
 
                     if (data.isNow) {
