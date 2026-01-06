@@ -573,7 +573,14 @@
             }
         });
 
-        endPicker = flatpickr(endEl, flatpickrConfig);
+        endPicker = flatpickr(endEl, {
+            ...flatpickrConfig,
+            onChange: (selectedDates) => {
+                if (!useNowEl.checked && selectedDates.length > 0) {
+                    selectedDates[0].setSeconds(0, 0);
+                }
+            }
+        });
 
         function showMessage(text, type) {
             messageEl.textContent = text;
@@ -620,7 +627,9 @@
                 }, 1000);
             } else {
                 // Set end time to current time (without seconds)
-                endPicker.setDate(new Date());
+                const now = new Date();
+                now.setSeconds(0, 0);
+                endPicker.setDate(now);
                 if (intervalId) {
                     clearInterval(intervalId);
                     intervalId = null;
@@ -885,6 +894,7 @@
                     } else {
                         // Fixed end time
                         const endDate = new Date(data.e * 1000);
+                        endDate.setSeconds(0, 0);
                         endPicker.setDate(endDate);
                         useNowEl.checked = false;
                     }
