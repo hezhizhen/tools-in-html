@@ -495,6 +495,11 @@
             </div>
         </div>
 
+        <div class="card name-card">
+            <label for="name">Name (optional)</label>
+            <input type="text" id="name" placeholder="e.g. Project started, Vacation days...">
+        </div>
+
         <div class="button-group">
             <button class="btn-calculate" onclick="calculate()">Calculate</button>
             <button class="btn-share" id="shareBtn" onclick="shareUrl()" disabled>Share</button>
@@ -536,6 +541,7 @@
         const startEl = document.getElementById('start');
         const endEl = document.getElementById('end');
         const useNowEl = document.getElementById('useNow');
+        const nameEl = document.getElementById('name');
         const resultCardEl = document.getElementById('resultCard');
         const resultTitleEl = document.getElementById('resultTitle');
         const resultValueEl = document.getElementById('resultValue');
@@ -672,11 +678,17 @@
             document.getElementById('totalSeconds').textContent =
                 `Total: ${totalSeconds.toLocaleString()} seconds`;
 
-            // Update title
+            // Update title (use name if provided, otherwise "Duration")
+            const name = nameEl.value.trim();
+            let titleText = name || 'Duration';
+            if (isNegative && !name) {
+                titleText = 'Duration (negative)';
+            }
+
             if (useNowEl.checked) {
-                resultTitleEl.innerHTML = 'Duration <span class="live-badge">LIVE</span>';
+                resultTitleEl.innerHTML = titleText + ' <span class="live-badge">LIVE</span>';
             } else {
-                resultTitleEl.textContent = isNegative ? 'Duration (negative)' : 'Duration';
+                resultTitleEl.textContent = titleText;
             }
         }
 
@@ -684,6 +696,7 @@
             startPicker.clear();
             endPicker.clear();
             endEl.value = '';
+            nameEl.value = '';
             useNowEl.checked = false;
             resultCardEl.style.display = 'none';
             messageEl.className = 'message';
@@ -693,6 +706,7 @@
                 intervalId = null;
             }
 
+            clearHash();
             updateShareButton();
         }
 
@@ -723,6 +737,26 @@
 
         // NOW marker (max 32-bit value: 4294967295)
         const NOW_MARKER = 0xFFFFFFFF;
+
+        // Base64URL encode (URL-safe, no padding)
+        function encodeBase64URL(str) {
+            const bytes = new TextEncoder().encode(str);
+            let binary = '';
+            bytes.forEach(b => binary += String.fromCharCode(b));
+            return btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+        }
+
+        // Base64URL decode
+        function decodeBase64URL(str) {
+            str = str.replace(/-/g, '+').replace(/_/g, '/');
+            while (str.length % 4) str += '=';
+            const binary = atob(str);
+            const bytes = new Uint8Array(binary.length);
+            for (let i = 0; i < binary.length; i++) {
+                bytes[i] = binary.charCodeAt(i);
+            }
+            return new TextDecoder().decode(bytes);
+        }
 
         // Encode share data to Base62
         function encodeShareData(startTs, endTs, isNow) {
@@ -770,7 +804,14 @@
                 endTs = Math.floor(endDate.getTime() / 1000);
             }
 
-            const hash = encodeShareData(startTs, endTs, isNow);
+            const timeHash = encodeShareData(startTs, endTs, isNow);
+            const name = nameEl.value.trim();
+
+            // Format: #s={base62} or #s={base62}.{base64url_name}
+            let hash = timeHash;
+            if (name) {
+                hash += '.' + encodeBase64URL(name);
+            }
 
             const url = window.location.origin + window.location.pathname + '#s=' + hash;
 
@@ -799,8 +840,24 @@
         function parseHash() {
             const hash = window.location.hash;
             if (hash && hash.startsWith('#s=')) {
-                const base62 = hash.substring(3);
-                const data = decodeShareData(base62);
+                const hashContent = hash.substring(3);
+
+                // Check if there's a name: format is {base62}.{base64url_name}
+                const dotIndex = hashContent.indexOf('.');
+                let timeHash, name = '';
+
+                if (dotIndex !== -1) {
+                    timeHash = hashContent.substring(0, dotIndex);
+                    try {
+                        name = decodeBase64URL(hashContent.substring(dotIndex + 1));
+                    } catch (e) {
+                        // Invalid name encoding, ignore
+                    }
+                } else {
+                    timeHash = hashContent;
+                }
+
+                const data = decodeShareData(timeHash);
 
                 if (data) {
                     const startDate = new Date(data.s * 1000);
@@ -823,6 +880,11 @@
                         const endDate = new Date(data.e * 1000);
                         endPicker.setDate(endDate);
                         useNowEl.checked = false;
+                    }
+
+                    // Set name if present
+                    if (name) {
+                        nameEl.value = name;
                     }
 
                     calculate();
