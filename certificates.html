@@ -62,7 +62,7 @@
 
         textarea {
             width: 100%;
-            height: 180px;
+            min-height: 60px;
             padding: 16px;
             border: 2px solid rgba(255, 255, 255, 0.1);
             border-radius: 12px;
@@ -70,7 +70,8 @@
             color: #10b981;
             font-size: 12px;
             font-family: 'Consolas', 'Monaco', monospace;
-            resize: vertical;
+            resize: none;
+            overflow: hidden;
             transition: border-color 0.3s;
         }
 
@@ -377,7 +378,6 @@
             }
 
             textarea {
-                height: 120px;
                 font-size: 10px;
             }
 
@@ -560,6 +560,17 @@ MIIDXTCCAkWgAwIBAgIJAJC1HiIAZAiU...
         const inputEl = document.getElementById('input');
         const messageEl = document.getElementById('message');
         const resultEl = document.getElementById('result');
+
+        // Auto-resize textarea
+        function autoResize() {
+            inputEl.style.height = 'auto';
+            inputEl.style.height = inputEl.scrollHeight + 'px';
+        }
+
+        inputEl.addEventListener('input', autoResize);
+
+        // Initial resize
+        autoResize();
 
         function showMessage(text) {
             messageEl.textContent = text;
@@ -1142,11 +1153,13 @@ oyi3B43njTOQ5yOf+1CceWxG1bQVs5ZufpsMljq4Ui0/1lvh+wjChP4kqKOJ2qxq
 mRGunUHBcnWEvgJBQl9nJEiU0Zsnvgc/ubhPgXRR4Xq37Z0j4r7g1SgEEzwxA57d
 emyPxgcYxn/eR44/KJ4EBs+lVDR3veyJm+kXQ99b21/+jh5Xos1AnX5iItreGCc=
 -----END CERTIFICATE-----`;
+            autoResize();
         }
 
         function clearAll() {
             inputEl.value = '';
             resultEl.classList.remove('show');
+            autoResize();
         }
     </script>
 </body>
