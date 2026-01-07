@@ -533,6 +533,7 @@
         targetPicker = flatpickr(targetEl, {
             ...flatpickrConfig,
             defaultDate: tomorrow,
+            minDate: new Date(),
             onChange: (selectedDates) => {
                 if (selectedDates.length > 0) {
                     selectedDates[0].setSeconds(0, 0);
