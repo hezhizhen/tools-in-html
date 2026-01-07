@@ -524,6 +524,7 @@ brew "node"' oninput="autoResize()"></textarea>
         const fileInput = document.getElementById('fileInput');
 
         let allFormulas = [];
+        let failedFormulas = [];
 
         // File upload handling
         dropZone.addEventListener('click', () => fileInput.click());
@@ -555,12 +556,19 @@ brew "node"' oninput="autoResize()"></textarea>
         function handleFile(file) {
             const reader = new FileReader();
             reader.onload = (e) => {
-                inputEl.value = e.target.result;
+                const content = e.target.result;
+                // Filter to only show lines that will be analyzed (brew "formula" format)
+                const filteredLines = content.split('\n')
+                    .filter(line => /^\s*brew\s+["']([^"']+)["']/.test(line))
+                    .join('\n');
+                inputEl.value = filteredLines;
                 updateLineNumbers();
                 autoResize();
                 dropZone.classList.add('has-file');
                 dropZone.querySelector('.drop-zone-text p').textContent = file.name;
-                showMessage(`Loaded ${file.name}`, 'success');
+                const totalLines = content.split('\n').length;
+                const keptLines = filteredLines ? filteredLines.split('\n').length : 0;
+                showMessage(`Loaded ${file.name}: ${keptLines}/${totalLines} lines`, 'success');
             };
             reader.onerror = () => {
                 showMessage('Error reading file', 'error');
@@ -609,6 +617,18 @@ brew "node"' oninput="autoResize()"></textarea>
             }, 3000);
         }
 
+        function escapeHtml(str) {
+            if (str === null || str === undefined) return '';
+            const s = String(str);
+            return s.replace(/[&<>"']/g, c => ({
+                '&': '&amp;',
+                '<': '&lt;',
+                '>': '&gt;',
+                '"': '&quot;',
+                "'": '&#39;'
+            }[c]));
+        }
+
         function parseBrewfile(content) {
             const formulas = [];
             const lines = content.split('\n');
@@ -625,10 +645,12 @@ brew "node"' oninput="autoResize()"></textarea>
         async function fetchFormulaInfo(name) {
             try {
                 const res = await fetch(`https://formulae.brew.sh/api/formula/${name}.json`);
-                if (!res.ok) return null;
+                if (!res.ok) {
+                    return { error: true, name, reason: `HTTP ${res.status}` };
+                }
                 return await res.json();
             } catch (e) {
-                return null;
+                return { error: true, name, reason: e.message || 'Network error' };
             }
         }
 
@@ -667,9 +689,14 @@ brew "node"' oninput="autoResize()"></textarea>
             resultEl.classList.remove('show');
 
             try {
-                brewfileFormulas = await fetchAllWithProgress(formulas, (msg) => {
+                failedFormulas = [];
+                const brewfileResults = await fetchAllWithProgress(formulas, (msg) => {
                     loadingTextEl.textContent = msg;
                 });
+
+                // Separate successful and failed results
+                brewfileFormulas = brewfileResults.filter(r => !r.error);
+                failedFormulas = brewfileResults.filter(r => r.error);
 
                 if (brewfileFormulas.length === 0) {
                     showMessage('No valid formulas found', 'error');
@@ -695,9 +722,13 @@ brew "node"' oninput="autoResize()"></textarea>
                 }
 
                 loadingTextEl.textContent = `Fetching ${toFetch.length} dependencies...`;
-                const depFormulas = await fetchAllWithProgress(toFetch, (msg) => {
+                const depResults = await fetchAllWithProgress(toFetch, (msg) => {
                     loadingTextEl.textContent = msg;
                 });
+
+                // Separate successful and failed dependency results
+                const depFormulas = depResults.filter(r => !r.error);
+                failedFormulas = [...failedFormulas, ...depResults.filter(r => r.error)];
 
                 allFormulas = [...brewfileFormulas, ...depFormulas];
 
@@ -719,6 +750,17 @@ brew "node"' oninput="autoResize()"></textarea>
             const brewfileSet = new Set(brewfileFormulas.map(f => f.name));
             const depCount = allFormulas.filter(f => !brewfileSet.has(f.name)).length;
 
+            let failedHtml = '';
+            if (failedFormulas.length > 0) {
+                failedHtml = `
+                <div class="stat-item" style="flex-basis:100%;background:rgba(239,68,68,0.1);">
+                    <div class="stat-value" style="color:#f87171;">${failedFormulas.length} Failed</div>
+                    <div class="stat-label" style="color:#f87171;">
+                        ${failedFormulas.map(f => `<span class="dep-tag" style="background:rgba(239,68,68,0.2);color:#f87171;margin:2px;" title="${escapeHtml(f.reason)}">${escapeHtml(f.name)}</span>`).join('')}
+                    </div>
+                </div>`;
+            }
+
             statsEl.innerHTML = `
                 <div class="stat-item">
                     <div class="stat-value">${allFormulas.length}</div>
@@ -732,6 +774,7 @@ brew "node"' oninput="autoResize()"></textarea>
                     <div class="stat-value">${depCount}</div>
                     <div class="stat-label">Dependencies</div>
                 </div>
+                ${failedHtml}
             `;
         }
 
@@ -753,7 +796,7 @@ brew "node"' oninput="autoResize()"></textarea>
                         color: '#fff',
                         size: isFromBrewfile ? 16 : 12
                     },
-                    title: `${formula.name} ${formula.versions?.stable || ''}\n${formula.desc || ''}`
+                    title: `${escapeHtml(formula.name)} ${escapeHtml(formula.versions?.stable || '')}\n${escapeHtml(formula.desc || '')}`
                 });
 
                 const deps = [
@@ -825,16 +868,16 @@ brew "node"' oninput="autoResize()"></textarea>
                 html += `
                     <tr>
                         <td>
-                            <span class="formula-name ${isFromBrewfile ? '' : 'is-dependency'}">${formula.name}</span>
+                            <span class="formula-name ${isFromBrewfile ? '' : 'is-dependency'}">${escapeHtml(formula.name)}</span>
                             ${!isFromBrewfile ? '<span style="color:#6b7280;font-size:11px;margin-left:4px;">(dep)</span>' : ''}
                         </td>
-                        <td><span class="version-tag">${formula.versions?.stable || 'N/A'}</span></td>
-                        <td style="color:#9ca3af;max-width:300px;">${formula.desc || ''}</td>
-                        <td><span class="license-tag">${formula.license || 'unknown'}</span></td>
-                        <td>${formula.homepage ? `<a href="${formula.homepage}" target="_blank" class="homepage-link">${formula.homepage}</a>` : ''}</td>
+                        <td><span class="version-tag">${escapeHtml(formula.versions?.stable || 'N/A')}</span></td>
+                        <td style="color:#9ca3af;max-width:300px;">${escapeHtml(formula.desc || '')}</td>
+                        <td><span class="license-tag">${escapeHtml(Array.isArray(formula.license) ? formula.license.join(', ') : (formula.license || 'unknown'))}</span></td>
+                        <td>${formula.homepage && /^https?:\/\//i.test(formula.homepage) ? `<a href="${escapeHtml(formula.homepage)}" target="_blank" rel="noopener noreferrer" class="homepage-link">${escapeHtml(formula.homepage)}</a>` : escapeHtml(formula.homepage || '')}</td>
                         <td>
                             <div class="deps-list">
-                                ${deps.map(d => `<span class="dep-tag">${d}</span>`).join('')}
+                                ${deps.map(d => `<span class="dep-tag">${escapeHtml(d)}</span>`).join('')}
                             </div>
                         </td>
                     </tr>
@@ -859,6 +902,7 @@ brew "node"' oninput="autoResize()"></textarea>
             resultEl.classList.remove('show');
             allFormulas = [];
             brewfileFormulas = [];
+            failedFormulas = [];
             dropZone.classList.remove('has-file');
             dropZone.querySelector('.drop-zone-text p').textContent = 'Drop Brewfile here or click to upload';
             fileInput.value = '';
