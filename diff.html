@@ -114,7 +114,7 @@
 
         textarea {
             flex: 1;
-            height: 250px;
+            min-height: 60px;
             padding: 16px;
             border: none;
             background: transparent;
@@ -122,6 +122,7 @@
             font-size: 13px;
             font-family: 'Consolas', 'Monaco', monospace;
             resize: none;
+            overflow: hidden;
             line-height: 1.5;
         }
 
@@ -355,10 +356,6 @@
                 grid-template-columns: 1fr;
             }
 
-            textarea {
-                height: 150px;
-            }
-
             h1 {
                 font-size: 1.4rem;
             }
@@ -449,8 +446,19 @@
         // Initialize line numbers and event listeners
         function initEditor(textarea, lineNumbersEl) {
             updateLineNumbers(textarea, lineNumbersEl);
-            textarea.addEventListener('input', () => updateLineNumbers(textarea, lineNumbersEl));
+            textarea.addEventListener('input', () => {
+                autoResize(textarea);
+                updateLineNumbers(textarea, lineNumbersEl);
+            });
             textarea.addEventListener('scroll', () => syncScroll(textarea, lineNumbersEl));
+            // Initial resize
+            autoResize(textarea);
+        }
+
+        // Auto-resize textarea
+        function autoResize(textarea) {
+            textarea.style.height = 'auto';
+            textarea.style.height = textarea.scrollHeight + 'px';
         }
 
         initEditor(text1El, lineNumbers1);
@@ -701,6 +709,8 @@
             text2El.value = temp;
             updateLineNumbers(text1El, lineNumbers1);
             updateLineNumbers(text2El, lineNumbers2);
+            autoResize(text1El);
+            autoResize(text2El);
         }
 
         function clearAll() {
@@ -711,6 +721,8 @@
             lastText2 = '';
             updateLineNumbers(text1El, lineNumbers1);
             updateLineNumbers(text2El, lineNumbers2);
+            autoResize(text1El);
+            autoResize(text2El);
         }
     </script>
 </body>
