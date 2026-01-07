@@ -68,7 +68,7 @@
 
         textarea {
             width: 100%;
-            height: 200px;
+            min-height: 60px;
             padding: 16px;
             border: 2px solid rgba(255, 255, 255, 0.1);
             border-radius: 12px;
@@ -76,7 +76,8 @@
             color: #10b981;
             font-size: 13px;
             font-family: 'Consolas', 'Monaco', monospace;
-            resize: vertical;
+            resize: none;
+            overflow: hidden;
             transition: border-color 0.3s;
         }
 
@@ -300,7 +301,6 @@
             }
 
             textarea {
-                height: 150px;
                 font-size: 11px;
             }
 
@@ -380,6 +380,17 @@ MIIEvgIBADANBgkqhkiG9w0BAQEFAASC...
         const inputEl = document.getElementById('input');
         const messageEl = document.getElementById('message');
         const resultEl = document.getElementById('result');
+
+        // Auto-resize textarea
+        function autoResize() {
+            inputEl.style.height = 'auto';
+            inputEl.style.height = inputEl.scrollHeight + 'px';
+        }
+
+        inputEl.addEventListener('input', autoResize);
+
+        // Initial resize
+        autoResize();
 
         function showMessage(text, type) {
             messageEl.textContent = text;
@@ -654,11 +665,13 @@ J+N8bsJO8sLO0NoNKCxmDAzqEyKzVfUCIFCL2rRcLXEcs+x2RjBM/n+FkkDlpPDz
 Iw5/eVaXnN4JAiEAh4BrYmXbxJVfMdWPaYPr6PL3evPRDNDF5RkOYptBeS0CIBC4
 J/5J64TQnykq8E5kZGk5SrVtQqm0BfR7L10Gh4EK
 -----END RSA PRIVATE KEY-----`;
+            autoResize();
         }
 
         function clearAll() {
             inputEl.value = '';
             resultEl.classList.remove('show');
+            autoResize();
             showMessage('Cleared', 'success');
         }
     </script>
