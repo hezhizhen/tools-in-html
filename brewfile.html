@@ -845,11 +845,13 @@ brew "node"'></textarea>
             const brewfileSet = new Set(formulas);
             const fetched = new Map(); // name -> formula info (cache)
             const queue = [...formulas]; // formulas to fetch
+            const queued = new Set(formulas); // track queued to avoid duplicates
             let fetchCount = 0;
 
             // Recursively fetch all dependencies
             while (queue.length > 0) {
                 const name = queue.shift();
+                queued.delete(name);
 
                 // Skip if already fetched
                 if (fetched.has(name)) continue;
@@ -867,8 +869,9 @@ brew "node"'></textarea>
                         ...(info.build_dependencies || [])
                     ];
                     for (const dep of deps) {
-                        if (!fetched.has(dep) && !queue.includes(dep)) {
+                        if (!fetched.has(dep) && !queued.has(dep)) {
                             queue.push(dep);
+                            queued.add(dep);
                         }
                     }
                 }
@@ -1184,12 +1187,12 @@ brew "node"'></textarea>
                 for (const dep of buildDeps) {
                     if (!deps.includes(dep)) {
                         const f2 = formulaMap.get(dep);
-                        if (visited.has(dep)) {
+                        const innerVisited = new Set(visited);
+                        if (innerVisited.has(dep)) {
                             html += `<li><span class="node-name node-build">${escapeHtml(dep)}</span> <span style="color:#6b7280;font-size:11px;">(build, circular)</span></li>`;
                         } else if (!f2) {
                             html += `<li><span class="node-name node-build">${escapeHtml(dep)}</span> <span style="color:#6b7280;font-size:11px;">(build, not found)</span></li>`;
                         } else {
-                            const innerVisited = new Set(visited);
                             innerVisited.add(dep);
                             const innerDeps = [...(f2.dependencies || []), ...(f2.build_dependencies || [])];
                             if (innerDeps.length > 0) {
