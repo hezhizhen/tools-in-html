@@ -1078,8 +1078,13 @@ brew "node"'></textarea>
 
         // Fit graph to container after layout completes
         cy.on('layoutstop', () => {
-            cy.fit(undefined, 30);
+            cy.fit(undefined, 50);
         });
+        
+        // Ensure fit is called even if layout completes before listener attached
+        setTimeout(() => {
+            cy.fit(undefined, 50);
+        }, 500);
     }
 
     function renderTable() {
