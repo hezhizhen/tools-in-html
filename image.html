@@ -1,0 +1,1174 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Container Image Analyzer</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #0f0f23 0%, #1a1a3e 100%);
+            min-height: 100vh;
+            padding: 20px;
+            color: #fff;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 10px;
+            font-size: 1.8rem;
+            background: linear-gradient(90deg, #3b82f6, #06b6d4);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #6b7280;
+            margin-bottom: 30px;
+            font-size: 14px;
+        }
+
+        .card {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 16px;
+            padding: 24px;
+            margin-bottom: 20px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .card-title {
+            font-size: 1.1rem;
+            margin-bottom: 15px;
+            color: #3b82f6;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .step-number {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 28px;
+            height: 28px;
+            background: linear-gradient(135deg, #3b82f6, #06b6d4);
+            border-radius: 50%;
+            font-size: 14px;
+            font-weight: 700;
+            color: #000;
+        }
+
+        input[type="text"] {
+            width: 100%;
+            padding: 14px 16px;
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            background: rgba(0, 0, 0, 0.4);
+            color: #06b6d4;
+            font-size: 14px;
+            font-family: 'Consolas', 'Monaco', monospace;
+            transition: border-color 0.3s;
+        }
+
+        input[type="text"]:focus {
+            outline: none;
+            border-color: #3b82f6;
+        }
+
+        input[type="text"]::placeholder {
+            color: #4a5568;
+        }
+
+        textarea {
+            width: 100%;
+            min-height: 120px;
+            padding: 16px;
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            background: rgba(0, 0, 0, 0.4);
+            color: #06b6d4;
+            font-size: 12px;
+            font-family: 'Consolas', 'Monaco', monospace;
+            resize: vertical;
+            transition: border-color 0.3s;
+        }
+
+        textarea:focus {
+            outline: none;
+            border-color: #3b82f6;
+        }
+
+        textarea::placeholder {
+            color: #4a5568;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 12px;
+            margin-top: 15px;
+            flex-wrap: wrap;
+        }
+
+        button {
+            padding: 14px 28px;
+            border: none;
+            border-radius: 10px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #3b82f6, #06b6d4);
+            color: #000;
+            flex: 1;
+            min-width: 150px;
+        }
+
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.1);
+            color: #fff;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .btn-clear {
+            background: rgba(239, 68, 68, 0.2);
+            color: #f87171;
+            border: 1px solid rgba(239, 68, 68, 0.3);
+        }
+
+        .btn-copy {
+            background: rgba(16, 185, 129, 0.2);
+            color: #34d399;
+            border: 1px solid rgba(16, 185, 129, 0.3);
+            padding: 10px 20px;
+            font-size: 14px;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        .command-section {
+            display: none;
+            margin-top: 20px;
+        }
+
+        .command-section.show {
+            display: block;
+        }
+
+        .command-box {
+            background: rgba(0, 0, 0, 0.4);
+            border-radius: 8px;
+            padding: 14px;
+            font-family: 'Consolas', 'Monaco', monospace;
+            font-size: 13px;
+            color: #34d399;
+            word-break: break-all;
+            margin-bottom: 12px;
+            border: 1px solid rgba(16, 185, 129, 0.2);
+        }
+
+        .result-section {
+            display: none;
+        }
+
+        .result-section.show {
+            display: block;
+        }
+
+        .status-banner {
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .status-banner.success {
+            background: rgba(16, 185, 129, 0.15);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+        }
+
+        .status-banner.info {
+            background: rgba(59, 130, 246, 0.15);
+            border: 1px solid rgba(59, 130, 246, 0.3);
+        }
+
+        .status-icon {
+            font-size: 40px;
+        }
+
+        .status-text h3 {
+            font-size: 18px;
+            margin-bottom: 5px;
+        }
+
+        .status-text p {
+            font-size: 14px;
+            color: #9ca3af;
+        }
+
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 15px;
+        }
+
+        .info-item {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 15px;
+            border-radius: 10px;
+            border-left: 3px solid #3b82f6;
+        }
+
+        .info-item.highlight {
+            border-left-color: #10b981;
+            background: rgba(16, 185, 129, 0.1);
+        }
+
+        .info-label {
+            font-size: 12px;
+            color: #6b7280;
+            margin-bottom: 5px;
+        }
+
+        .info-value {
+            font-size: 14px;
+            font-weight: 500;
+            color: #fff;
+            word-break: break-all;
+        }
+
+        .info-value.mono {
+            font-family: 'Consolas', 'Monaco', monospace;
+            font-size: 11px;
+        }
+
+        .arch-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .arch-item {
+            background: rgba(59, 130, 246, 0.2);
+            padding: 10px 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+            border: 1px solid rgba(59, 130, 246, 0.3);
+        }
+
+        .arch-item:hover {
+            background: rgba(59, 130, 246, 0.3);
+        }
+
+        .arch-item.active {
+            background: rgba(59, 130, 246, 0.4);
+            border-color: #3b82f6;
+        }
+
+        .arch-name {
+            font-size: 14px;
+            font-weight: 600;
+            color: #93c5fd;
+        }
+
+        .arch-digest {
+            font-size: 10px;
+            color: #6b7280;
+            font-family: 'Consolas', 'Monaco', monospace;
+            margin-top: 4px;
+        }
+
+        .arch-hint {
+            font-size: 12px;
+            color: #6b7280;
+            margin-top: 10px;
+        }
+
+        .layers-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+
+        .layers-table th,
+        .layers-table td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .layers-table th {
+            font-size: 12px;
+            color: #6b7280;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .layers-table td {
+            font-size: 13px;
+        }
+
+        .layers-table .digest {
+            font-family: 'Consolas', 'Monaco', monospace;
+            font-size: 11px;
+            color: #06b6d4;
+        }
+
+        .layers-table .size {
+            color: #10b981;
+            font-weight: 500;
+        }
+
+        .compression-badge {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 10px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .compression-badge.gzip {
+            background: rgba(168, 85, 247, 0.2);
+            color: #c084fc;
+        }
+
+        .compression-badge.zstd {
+            background: rgba(16, 185, 129, 0.2);
+            color: #34d399;
+        }
+
+        .compression-badge.none {
+            background: rgba(107, 114, 128, 0.2);
+            color: #9ca3af;
+        }
+
+        .media-type-hint {
+            font-size: 10px;
+            color: #6b7280;
+            margin-top: 2px;
+        }
+
+        .format-badges {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 16px;
+            flex-wrap: wrap;
+        }
+
+        .format-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 16px;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .format-badge.oci {
+            background: rgba(16, 185, 129, 0.2);
+            color: #34d399;
+            border: 1px solid rgba(16, 185, 129, 0.3);
+        }
+
+        .format-badge.docker {
+            background: rgba(59, 130, 246, 0.2);
+            color: #93c5fd;
+            border: 1px solid rgba(59, 130, 246, 0.3);
+        }
+
+        .format-badge .count {
+            background: rgba(255, 255, 255, 0.2);
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+        }
+
+        .media-type-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .media-type-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 14px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 8px;
+            font-family: 'Consolas', 'Monaco', monospace;
+            font-size: 12px;
+        }
+
+        .media-type-item .type-name {
+            color: #e5e7eb;
+            word-break: break-all;
+        }
+
+        .media-type-item .type-count {
+            flex-shrink: 0;
+            margin-left: 12px;
+            padding: 2px 10px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+
+        .media-type-item.oci .type-count {
+            background: rgba(16, 185, 129, 0.2);
+            color: #34d399;
+        }
+
+        .media-type-item.docker .type-count {
+            background: rgba(59, 130, 246, 0.2);
+            color: #93c5fd;
+        }
+
+        .media-type-item.other .type-count {
+            background: rgba(107, 114, 128, 0.2);
+            color: #9ca3af;
+        }
+
+        .total-size {
+            margin-top: 15px;
+            padding: 12px;
+            background: rgba(16, 185, 129, 0.1);
+            border-radius: 8px;
+            text-align: right;
+        }
+
+        .total-size-label {
+            font-size: 12px;
+            color: #6b7280;
+        }
+
+        .total-size-value {
+            font-size: 18px;
+            font-weight: 700;
+            color: #10b981;
+        }
+
+        .message {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 12px 16px;
+            border-radius: 8px;
+            font-size: 14px;
+            display: none;
+            z-index: 1000;
+        }
+
+        .message.success {
+            display: block;
+            background: rgba(16, 185, 129, 0.2);
+            color: #34d399;
+            border: 1px solid rgba(16, 185, 129, 0.3);
+        }
+
+        .message.error {
+            display: block;
+            background: rgba(239, 68, 68, 0.2);
+            color: #f87171;
+            border: 1px solid rgba(239, 68, 68, 0.3);
+        }
+
+        .back-link {
+            display: inline-block;
+            margin-bottom: 20px;
+            color: #a0aec0;
+            text-decoration: none;
+            font-size: 14px;
+            transition: color 0.2s;
+        }
+
+        .back-link:hover {
+            color: #3b82f6;
+        }
+
+        @media (max-width: 480px) {
+            h1 {
+                font-size: 1.4rem;
+            }
+
+            .card {
+                padding: 16px;
+            }
+
+            input[type="text"],
+            textarea {
+                font-size: 12px;
+            }
+
+            button {
+                padding: 12px 16px;
+                font-size: 14px;
+            }
+
+            .info-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .layers-table th,
+            .layers-table td {
+                padding: 8px;
+                font-size: 11px;
+            }
+
+            .status-banner {
+                flex-direction: column;
+                text-align: center;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <a href="index.html" class="back-link">← Back to Tools</a>
+        <h1>Container Image Analyzer</h1>
+        <p class="subtitle">Analyze container image architecture, layers, and media types</p>
+
+        <!-- Step 1: Input image reference -->
+        <div class="card">
+            <div class="card-title">
+                <span class="step-number">1</span>
+                Enter Image Reference
+            </div>
+            <input type="text" id="imageRef" placeholder="hub.bilibili.co/nyx-base/zstd-test:v1">
+            <div class="button-group">
+                <button class="btn-primary" onclick="generateCommand()">Generate Command</button>
+                <button class="btn-secondary" onclick="loadSample()">Sample</button>
+                <button class="btn-clear" onclick="clearAll()">Clear</button>
+            </div>
+
+            <!-- Generated command -->
+            <div class="command-section" id="commandSection">
+                <div class="card-title" style="margin-top: 20px;">
+                    <span class="step-number">2</span>
+                    Run in Terminal
+                </div>
+                <div class="command-box" id="skopeoCommand"></div>
+                <button class="btn-copy" onclick="copyCommand()">Copy Command</button>
+            </div>
+        </div>
+
+        <!-- Step 3: Paste manifest -->
+        <div class="card">
+            <div class="card-title">
+                <span class="step-number">3</span>
+                Paste Manifest JSON
+            </div>
+            <textarea id="manifestInput" placeholder='Paste the output from skopeo here...'></textarea>
+            <div class="button-group">
+                <button class="btn-primary" onclick="parseManifest()">Analyze</button>
+            </div>
+        </div>
+
+        <div id="message" class="message"></div>
+
+        <!-- Results -->
+        <div id="result" class="result-section">
+            <!-- Status Banner -->
+            <div id="statusBanner" class="status-banner success">
+                <div class="status-icon">📦</div>
+                <div class="status-text">
+                    <h3 id="statusTitle">Image Analyzed</h3>
+                    <p id="statusDesc">Successfully parsed manifest</p>
+                </div>
+            </div>
+
+            <!-- Basic Info -->
+            <div class="card">
+                <div class="card-title">Basic Information</div>
+                <div class="info-grid" id="basicInfo"></div>
+            </div>
+
+            <!-- Media Type Summary -->
+            <div class="card" id="mediaTypeSummaryCard" style="display: none;">
+                <div class="card-title">Media Type Summary</div>
+                <div class="format-badges" id="formatBadges"></div>
+                <div class="media-type-list" id="mediaTypeList"></div>
+            </div>
+
+            <!-- Architecture List (for multi-arch images) -->
+            <div class="card" id="archCard" style="display: none;">
+                <div class="card-title">Available Architectures</div>
+                <div class="arch-list" id="archList"></div>
+                <div class="arch-hint" id="archHint"></div>
+            </div>
+
+            <!-- Manifest Details -->
+            <div class="card" id="manifestCard" style="display: none;">
+                <div class="card-title">Config</div>
+                <div id="manifestDetails"></div>
+            </div>
+
+            <!-- Layers -->
+            <div class="card" id="layersCard" style="display: none;">
+                <div class="card-title">Layers</div>
+                <table class="layers-table">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Digest</th>
+                            <th>Size</th>
+                            <th>Compression</th>
+                        </tr>
+                    </thead>
+                    <tbody id="layersBody"></tbody>
+                </table>
+                <div class="total-size">
+                    <span class="total-size-label">Total Layers Size: </span>
+                    <span class="total-size-value" id="totalSize">-</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const imageRefEl = document.getElementById('imageRef');
+        const manifestInputEl = document.getElementById('manifestInput');
+        const messageEl = document.getElementById('message');
+        const resultEl = document.getElementById('result');
+        const commandSection = document.getElementById('commandSection');
+
+        let currentImageRef = null;
+        let manifestListData = null;
+
+        function showMessage(text, type = 'error') {
+            messageEl.textContent = text;
+            messageEl.className = 'message ' + type;
+            setTimeout(() => { messageEl.className = 'message'; }, 3000);
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        function formatBytes(bytes) {
+            if (bytes === 0) return '0 B';
+            const k = 1024;
+            const sizes = ['B', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        }
+
+        // Parse image reference
+        function parseImageRef(ref) {
+            ref = ref.trim();
+
+            let registry, repository, tag, digest;
+
+            // Check for digest
+            if (ref.includes('@sha256:')) {
+                const [rest, d] = ref.split('@sha256:');
+                digest = 'sha256:' + d;
+                ref = rest;
+            } else if (ref.includes('@')) {
+                const [rest, d] = ref.split('@');
+                digest = d;
+                ref = rest;
+            }
+
+            // Check for tag
+            const lastColon = ref.lastIndexOf(':');
+            if (lastColon !== -1 && !ref.substring(lastColon).includes('/')) {
+                tag = ref.substring(lastColon + 1);
+                ref = ref.substring(0, lastColon);
+            }
+
+            // Parse registry and repository
+            const parts = ref.split('/');
+
+            if (parts.length === 1) {
+                registry = 'docker.io';
+                repository = 'library/' + parts[0];
+            } else if (parts.length === 2 && !parts[0].includes('.') && !parts[0].includes(':')) {
+                registry = 'docker.io';
+                repository = ref;
+            } else {
+                registry = parts[0];
+                repository = parts.slice(1).join('/');
+            }
+
+            if (!tag && !digest) {
+                tag = 'latest';
+            }
+
+            return { registry, repository, tag, digest };
+        }
+
+        function getSkopeoCommand(registry, repository, ref) {
+            const imageBase = `${registry}/${repository}`;
+            let imageRef = imageBase;
+            if (ref.startsWith('sha256:')) {
+                imageRef += `@${ref}`;
+            } else {
+                imageRef += `:${ref}`;
+            }
+            // Generate a command that fetches manifest list and all arch manifests in one go
+            // Output format: JSON array [manifestList, archManifest1, archManifest2, ...]
+            // Wrap in bash -c to ensure consistent shell behavior
+            return `bash -c '( echo "["; skopeo inspect --raw docker://${imageRef}; for d in $(skopeo inspect --raw docker://${imageRef} 2>/dev/null | jq -r ".manifests[]?.digest // empty"); do echo ","; skopeo inspect --raw docker://${imageBase}@$d; done; echo "]" ) | pbcopy'`;
+        }
+
+        function generateCommand() {
+            const ref = imageRefEl.value.trim();
+            if (!ref) {
+                showMessage('Please enter an image reference');
+                return;
+            }
+
+            currentImageRef = parseImageRef(ref);
+            const refValue = currentImageRef.digest || currentImageRef.tag;
+            const cmd = getSkopeoCommand(
+                currentImageRef.registry,
+                currentImageRef.repository,
+                refValue
+            );
+
+            document.getElementById('skopeoCommand').textContent = cmd;
+            commandSection.classList.add('show');
+            resultEl.classList.remove('show');
+        }
+
+        function copyCommand() {
+            const cmd = document.getElementById('skopeoCommand').textContent;
+            navigator.clipboard.writeText(cmd).then(() => {
+                showMessage('Copied to clipboard', 'success');
+            });
+        }
+
+        function parseManifest() {
+            const input = manifestInputEl.value.trim();
+            if (!input) {
+                showMessage('Please paste the manifest JSON');
+                return;
+            }
+
+            try {
+                const data = JSON.parse(input);
+
+                // Check if it's an array (multi-arch with all manifests)
+                if (Array.isArray(data) && data.length > 0) {
+                    const manifestList = data[0];
+                    const archManifests = data.slice(1);
+                    displayManifestWithArchData(manifestList, archManifests);
+                } else {
+                    displayManifest(data, null);
+                }
+            } catch (e) {
+                showMessage('Invalid JSON: ' + e.message);
+            }
+        }
+
+        let archManifestsData = null; // Store detailed manifests for each architecture
+
+        function displayManifestWithArchData(manifestList, archManifests) {
+            archManifestsData = archManifests;
+            displayManifest(manifestList, archManifests);
+        }
+
+        function displayManifest(manifest, archManifests) {
+            resultEl.classList.add('show');
+
+            const mediaType = manifest.mediaType || 'unknown';
+            const isManifestList = mediaType.includes('manifest.list') || mediaType.includes('image.index');
+
+            // Status banner
+            const banner = document.getElementById('statusBanner');
+            banner.className = 'status-banner ' + (isManifestList ? 'info' : 'success');
+            document.getElementById('statusTitle').textContent = isManifestList ? 'Multi-Architecture Image' : 'Single Architecture Image';
+            document.getElementById('statusDesc').textContent = isManifestList
+                ? `Found ${manifest.manifests?.length || 0} platform variants`
+                : 'Successfully parsed manifest';
+
+            // Basic info
+            const basicInfo = document.getElementById('basicInfo');
+            basicInfo.innerHTML = `
+                <div class="info-item highlight">
+                    <div class="info-label">Media Type</div>
+                    <div class="info-value">${escapeHtml(mediaType)}</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">Schema Version</div>
+                    <div class="info-value">${manifest.schemaVersion || 'N/A'}</div>
+                </div>
+            `;
+
+            // Display media type summary
+            displayMediaTypeSummary(manifest, archManifests);
+
+            if (isManifestList) {
+                manifestListData = manifest;
+                displayArchitectures(manifest.manifests, archManifests);
+                document.getElementById('archCard').style.display = 'block';
+                document.getElementById('manifestCard').style.display = 'none';
+                document.getElementById('layersCard').style.display = 'none';
+            } else {
+                manifestListData = null;
+                archManifestsData = null;
+                document.getElementById('archCard').style.display = 'none';
+                displaySingleManifest(manifest);
+            }
+        }
+
+        function displayArchitectures(manifests, archManifests) {
+            const archList = document.getElementById('archList');
+            archList.innerHTML = '';
+
+            const hasDetailedData = archManifests && archManifests.length > 0;
+
+            manifests.forEach((m, index) => {
+                const platform = m.platform || {};
+                const os = platform.os || 'unknown';
+                const arch = platform.architecture || 'unknown';
+                const variant = platform.variant ? `/${platform.variant}` : '';
+
+                // Get layer count if we have detailed data
+                let layerInfo = '';
+                if (hasDetailedData && archManifests[index]) {
+                    const layers = archManifests[index].layers || [];
+                    const totalSize = layers.reduce((sum, l) => sum + (l.size || 0), 0);
+                    layerInfo = `<div style="font-size: 11px; color: #10b981; margin-top: 4px;">${layers.length} layers, ${formatBytes(totalSize)}</div>`;
+                }
+
+                const item = document.createElement('div');
+                item.className = 'arch-item';
+                item.innerHTML = `
+                    <div class="arch-name">${escapeHtml(os)}/${escapeHtml(arch)}${escapeHtml(variant)}</div>
+                    <div class="arch-digest">${escapeHtml(m.digest?.substring(0, 24) || 'N/A')}...</div>
+                    ${layerInfo}
+                `;
+                item.onclick = () => selectArchitecture(index);
+                archList.appendChild(item);
+            });
+
+            // Update hint
+            const hint = document.getElementById('archHint');
+            hint.innerHTML = hasDetailedData
+                ? 'Click an architecture to view its layers and details.'
+                : 'Click an architecture to generate the skopeo command for its details.';
+        }
+
+        function selectArchitecture(index) {
+            if (!manifestListData || !manifestListData.manifests[index]) return;
+
+            const manifestEntry = manifestListData.manifests[index];
+
+            // Update selection UI
+            document.querySelectorAll('.arch-item').forEach((el, i) => {
+                el.classList.toggle('active', i === index);
+            });
+
+            // Check if we have detailed manifest data
+            if (archManifestsData && archManifestsData[index]) {
+                // We have the full manifest, display it directly
+                const detailedManifest = archManifestsData[index];
+
+                document.getElementById('manifestCard').style.display = 'block';
+                document.getElementById('layersCard').style.display = 'block';
+
+                const details = document.getElementById('manifestDetails');
+                const config = detailedManifest.config || {};
+
+                details.innerHTML = `
+                    <div class="info-grid">
+                        <div class="info-item">
+                            <div class="info-label">Platform</div>
+                            <div class="info-value">${escapeHtml((manifestEntry.platform?.os || 'unknown') + '/' + (manifestEntry.platform?.architecture || 'unknown') + (manifestEntry.platform?.variant ? '/' + manifestEntry.platform.variant : ''))}</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">Manifest Digest</div>
+                            <div class="info-value mono">${escapeHtml(manifestEntry.digest || 'N/A')}</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">Config Media Type</div>
+                            <div class="info-value">${escapeHtml(config.mediaType || 'N/A')}</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">Config Digest</div>
+                            <div class="info-value mono">${escapeHtml(config.digest || 'N/A')}</div>
+                        </div>
+                    </div>
+                `;
+
+                // Display layers
+                const layers = detailedManifest.layers || [];
+                const layersBody = document.getElementById('layersBody');
+                layersBody.innerHTML = '';
+
+                let totalSize = 0;
+
+                layers.forEach((layer, idx) => {
+                    totalSize += layer.size || 0;
+                    const compression = getCompressionType(layer.mediaType);
+
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>${idx + 1}</td>
+                        <td class="digest">${escapeHtml(layer.digest?.substring(0, 32) || 'N/A')}...</td>
+                        <td class="size">${formatBytes(layer.size || 0)}</td>
+                        <td>
+                            <span class="compression-badge ${compression.class}">${compression.name}</span>
+                            <div class="media-type-hint">${escapeHtml(layer.mediaType || '')}</div>
+                        </td>
+                    `;
+                    layersBody.appendChild(row);
+                });
+
+                document.getElementById('totalSize').textContent = formatBytes(totalSize);
+            } else {
+                // No detailed data, show command to fetch it
+                if (currentImageRef && manifestEntry.digest) {
+                    const imageBase = `${currentImageRef.registry}/${currentImageRef.repository}`;
+                    const cmd = `skopeo inspect --raw docker://${imageBase}@${manifestEntry.digest} | pbcopy`;
+                    document.getElementById('skopeoCommand').textContent = cmd;
+                    commandSection.classList.add('show');
+
+                    document.getElementById('manifestCard').style.display = 'block';
+                    document.getElementById('layersCard').style.display = 'none';
+
+                    const details = document.getElementById('manifestDetails');
+                    details.innerHTML = `
+                        <div class="info-grid">
+                            <div class="info-item">
+                                <div class="info-label">Media Type</div>
+                                <div class="info-value">${escapeHtml(manifestEntry.mediaType || 'N/A')}</div>
+                            </div>
+                            <div class="info-item">
+                                <div class="info-label">Digest</div>
+                                <div class="info-value mono">${escapeHtml(manifestEntry.digest || 'N/A')}</div>
+                            </div>
+                            <div class="info-item">
+                                <div class="info-label">Size</div>
+                                <div class="info-value">${formatBytes(manifestEntry.size || 0)}</div>
+                            </div>
+                        </div>
+                        <p style="margin-top: 15px; color: #f59e0b; font-size: 13px;">
+                            Run the command above to get layer details for this architecture.
+                        </p>
+                    `;
+
+                    showMessage('Command updated for this architecture', 'success');
+                }
+            }
+        }
+
+        function displaySingleManifest(manifest) {
+            document.getElementById('manifestCard').style.display = 'block';
+            document.getElementById('layersCard').style.display = 'block';
+
+            const details = document.getElementById('manifestDetails');
+            const config = manifest.config || {};
+
+            details.innerHTML = `
+                <div class="info-grid">
+                    <div class="info-item">
+                        <div class="info-label">Config Media Type</div>
+                        <div class="info-value">${escapeHtml(config.mediaType || 'N/A')}</div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label">Config Digest</div>
+                        <div class="info-value mono">${escapeHtml(config.digest || 'N/A')}</div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label">Config Size</div>
+                        <div class="info-value">${formatBytes(config.size || 0)}</div>
+                    </div>
+                </div>
+            `;
+
+            // Layers
+            const layers = manifest.layers || [];
+            const layersBody = document.getElementById('layersBody');
+            layersBody.innerHTML = '';
+
+            let totalSize = 0;
+
+            layers.forEach((layer, index) => {
+                totalSize += layer.size || 0;
+                const compression = getCompressionType(layer.mediaType);
+
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${index + 1}</td>
+                    <td class="digest">${escapeHtml(layer.digest?.substring(0, 32) || 'N/A')}...</td>
+                    <td class="size">${formatBytes(layer.size || 0)}</td>
+                    <td>
+                        <span class="compression-badge ${compression.class}">${compression.name}</span>
+                        <div class="media-type-hint">${escapeHtml(layer.mediaType || '')}</div>
+                    </td>
+                `;
+                layersBody.appendChild(row);
+            });
+
+            document.getElementById('totalSize').textContent = formatBytes(totalSize);
+        }
+
+        function getCompressionType(mediaType) {
+            if (!mediaType) return { name: 'unknown', class: 'none' };
+
+            if (mediaType.includes('gzip') || mediaType.includes('.tar.gzip')) {
+                return { name: 'gzip', class: 'gzip' };
+            }
+            if (mediaType.includes('zstd')) {
+                return { name: 'zstd', class: 'zstd' };
+            }
+            if (mediaType.includes('tar') && !mediaType.includes('gzip') && !mediaType.includes('zstd')) {
+                return { name: 'none', class: 'none' };
+            }
+            return { name: 'unknown', class: 'none' };
+        }
+
+        function getMediaTypeFormat(mediaType) {
+            if (!mediaType) return 'other';
+            if (mediaType.includes('vnd.oci.')) return 'oci';
+            if (mediaType.includes('vnd.docker.')) return 'docker';
+            return 'other';
+        }
+
+        function collectMediaTypes(manifestList, archManifests) {
+            const mediaTypes = {};
+
+            function addMediaType(type) {
+                if (!type) return;
+                mediaTypes[type] = (mediaTypes[type] || 0) + 1;
+            }
+
+            // Collect from manifest list
+            if (manifestList) {
+                addMediaType(manifestList.mediaType);
+
+                // From manifest list entries
+                if (manifestList.manifests) {
+                    manifestList.manifests.forEach(m => {
+                        addMediaType(m.mediaType);
+                    });
+                }
+
+                // If single manifest (has config and layers)
+                if (manifestList.config) {
+                    addMediaType(manifestList.config.mediaType);
+                }
+                if (manifestList.layers) {
+                    manifestList.layers.forEach(l => addMediaType(l.mediaType));
+                }
+            }
+
+            // Collect from architecture manifests
+            if (archManifests && archManifests.length > 0) {
+                archManifests.forEach(manifest => {
+                    addMediaType(manifest.mediaType);
+                    if (manifest.config) {
+                        addMediaType(manifest.config.mediaType);
+                    }
+                    if (manifest.layers) {
+                        manifest.layers.forEach(l => addMediaType(l.mediaType));
+                    }
+                });
+            }
+
+            return mediaTypes;
+        }
+
+        function displayMediaTypeSummary(manifestList, archManifests) {
+            const mediaTypes = collectMediaTypes(manifestList, archManifests);
+            const card = document.getElementById('mediaTypeSummaryCard');
+
+            if (Object.keys(mediaTypes).length === 0) {
+                card.style.display = 'none';
+                return;
+            }
+
+            card.style.display = 'block';
+
+            // Count OCI vs Docker
+            let ociCount = 0;
+            let dockerCount = 0;
+            let otherCount = 0;
+
+            Object.entries(mediaTypes).forEach(([type, count]) => {
+                const format = getMediaTypeFormat(type);
+                if (format === 'oci') ociCount += count;
+                else if (format === 'docker') dockerCount += count;
+                else otherCount += count;
+            });
+
+            // Display format badges
+            const formatBadges = document.getElementById('formatBadges');
+            let badgesHtml = '';
+
+            if (ociCount > 0) {
+                badgesHtml += `<div class="format-badge oci">OCI <span class="count">${ociCount}</span></div>`;
+            }
+            if (dockerCount > 0) {
+                badgesHtml += `<div class="format-badge docker">Docker <span class="count">${dockerCount}</span></div>`;
+            }
+
+            formatBadges.innerHTML = badgesHtml;
+
+            // Display media type list sorted by count
+            const sortedTypes = Object.entries(mediaTypes)
+                .sort((a, b) => b[1] - a[1]);
+
+            const mediaTypeList = document.getElementById('mediaTypeList');
+            mediaTypeList.innerHTML = sortedTypes.map(([type, count]) => {
+                const format = getMediaTypeFormat(type);
+                return `
+                    <div class="media-type-item ${format}">
+                        <span class="type-name">${escapeHtml(type)}</span>
+                        <span class="type-count">${count}</span>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function loadSample() {
+            imageRefEl.value = 'docker.io/library/alpine:latest';
+            generateCommand();
+        }
+
+        function clearAll() {
+            imageRefEl.value = '';
+            manifestInputEl.value = '';
+            resultEl.classList.remove('show');
+            commandSection.classList.remove('show');
+            document.getElementById('mediaTypeSummaryCard').style.display = 'none';
+            currentImageRef = null;
+            manifestListData = null;
+            archManifestsData = null;
+        }
+    </script>
+</body>
+
+</html>
