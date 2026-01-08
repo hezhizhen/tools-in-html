@@ -561,10 +561,9 @@
                 <span class="step-number">1</span>
                 Enter Image Reference
             </div>
-            <input type="text" id="imageRef" placeholder="hub.bilibili.co/nyx-base/zstd-test:v1">
+            <input type="text" id="imageRef" placeholder="docker.io/library/nginx:latest">
             <div class="button-group">
                 <button class="btn-primary" onclick="generateCommand()">Generate Command</button>
-                <button class="btn-secondary" onclick="loadSample()">Sample</button>
                 <button class="btn-clear" onclick="clearAll()">Clear</button>
             </div>
 
@@ -1151,11 +1150,6 @@
                     </div>
                 `;
             }).join('');
-        }
-
-        function loadSample() {
-            imageRefEl.value = 'docker.io/library/alpine:latest';
-            generateCommand();
         }
 
         function clearAll() {
