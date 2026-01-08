@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta content="width=device-width, initial-scale=1.0" name="viewport">
     <title>Text Diff Tool</title>
     <style>
         * {
@@ -371,241 +371,245 @@
     </style>
 </head>
 <body>
-    <div class="container">
-        <a href="index.html" class="back-link">← Back to Tools</a>
-        <h1>Text Diff Tool</h1>
-        <p class="subtitle">Compare two texts and highlight the differences</p>
+<div class="container">
+    <a class="back-link" href="index.html">← Back to Tools</a>
+    <h1>Text Diff Tool</h1>
+    <p class="subtitle">Compare two texts and highlight the differences</p>
 
-        <div class="card">
-            <div class="input-grid">
-                <div class="input-section">
-                    <label for="text1">Original Text</label>
-                    <div class="editor-container">
-                        <div class="line-numbers" id="lineNumbers1"><div>1</div></div>
-                        <textarea id="text1" placeholder="Enter original text..."></textarea>
+    <div class="card">
+        <div class="input-grid">
+            <div class="input-section">
+                <label for="text1">Original Text</label>
+                <div class="editor-container">
+                    <div class="line-numbers" id="lineNumbers1">
+                        <div>1</div>
                     </div>
-                </div>
-                <div class="input-section">
-                    <label for="text2">Modified Text</label>
-                    <div class="editor-container">
-                        <div class="line-numbers" id="lineNumbers2"><div>1</div></div>
-                        <textarea id="text2" placeholder="Enter modified text..."></textarea>
-                    </div>
+                    <textarea id="text1" placeholder="Enter original text..."></textarea>
                 </div>
             </div>
-
-            <div class="button-group">
-                <button class="btn-compare" onclick="compare()">Compare</button>
-                <button class="btn-swap" onclick="swap()">Swap</button>
-                <button class="btn-clear" onclick="clearAll()">Clear</button>
+            <div class="input-section">
+                <label for="text2">Modified Text</label>
+                <div class="editor-container">
+                    <div class="line-numbers" id="lineNumbers2">
+                        <div>1</div>
+                    </div>
+                    <textarea id="text2" placeholder="Enter modified text..."></textarea>
+                </div>
             </div>
         </div>
 
-        <div id="result" class="result-section">
-            <div class="card">
-                <div class="card-title">Diff Result</div>
-
-                <div class="mode-toggle">
-                    <button class="mode-btn active" onclick="setMode('line')" id="modeLineBtn">Line by Line</button>
-                    <button class="mode-btn" onclick="setMode('char')" id="modeCharBtn">Character</button>
-                </div>
-
-                <div class="stats" id="stats"></div>
-                <div class="diff-output" id="diffOutput"></div>
-            </div>
+        <div class="button-group">
+            <button class="btn-compare" onclick="compare()">Compare</button>
+            <button class="btn-swap" onclick="swap()">Swap</button>
+            <button class="btn-clear" onclick="clearAll()">Clear</button>
         </div>
     </div>
 
-    <script>
-        const text1El = document.getElementById('text1');
-        const text2El = document.getElementById('text2');
-        const resultEl = document.getElementById('result');
-        const diffOutputEl = document.getElementById('diffOutput');
-        const statsEl = document.getElementById('stats');
-        const lineNumbers1 = document.getElementById('lineNumbers1');
-        const lineNumbers2 = document.getElementById('lineNumbers2');
+    <div class="result-section" id="result">
+        <div class="card">
+            <div class="card-title">Diff Result</div>
 
-        let currentMode = 'line';
+            <div class="mode-toggle">
+                <button class="mode-btn active" id="modeLineBtn" onclick="setMode('line')">Line by Line</button>
+                <button class="mode-btn" id="modeCharBtn" onclick="setMode('char')">Character</button>
+            </div>
 
-        // Update line numbers for a textarea
-        function updateLineNumbers(textarea, lineNumbersEl) {
-            const lines = textarea.value.split('\n');
-            const count = lines.length;
-            let html = '';
-            for (let i = 1; i <= count; i++) {
-                html += `<div>${i}</div>`;
-            }
-            lineNumbersEl.innerHTML = html;
+            <div class="stats" id="stats"></div>
+            <div class="diff-output" id="diffOutput"></div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const text1El = document.getElementById('text1');
+    const text2El = document.getElementById('text2');
+    const resultEl = document.getElementById('result');
+    const diffOutputEl = document.getElementById('diffOutput');
+    const statsEl = document.getElementById('stats');
+    const lineNumbers1 = document.getElementById('lineNumbers1');
+    const lineNumbers2 = document.getElementById('lineNumbers2');
+
+    let currentMode = 'line';
+
+    // Update line numbers for a textarea
+    function updateLineNumbers(textarea, lineNumbersEl) {
+        const lines = textarea.value.split('\n');
+        const count = lines.length;
+        let html = '';
+        for (let i = 1; i <= count; i++) {
+            html += `<div>${i}</div>`;
         }
+        lineNumbersEl.innerHTML = html;
+    }
 
-        // Sync scroll between textarea and line numbers
-        function syncScroll(textarea, lineNumbersEl) {
-            lineNumbersEl.scrollTop = textarea.scrollTop;
-        }
+    // Sync scroll between textarea and line numbers
+    function syncScroll(textarea, lineNumbersEl) {
+        lineNumbersEl.scrollTop = textarea.scrollTop;
+    }
 
-        // Initialize line numbers and event listeners
-        function initEditor(textarea, lineNumbersEl) {
-            updateLineNumbers(textarea, lineNumbersEl);
-            textarea.addEventListener('input', () => {
-                autoResize(textarea);
-                updateLineNumbers(textarea, lineNumbersEl);
-            });
-            textarea.addEventListener('scroll', () => syncScroll(textarea, lineNumbersEl));
-            // Initial resize
+    // Initialize line numbers and event listeners
+    function initEditor(textarea, lineNumbersEl) {
+        updateLineNumbers(textarea, lineNumbersEl);
+        textarea.addEventListener('input', () => {
             autoResize(textarea);
+            updateLineNumbers(textarea, lineNumbersEl);
+        });
+        textarea.addEventListener('scroll', () => syncScroll(textarea, lineNumbersEl));
+        // Initial resize
+        autoResize(textarea);
+    }
+
+    // Auto-resize textarea
+    function autoResize(textarea) {
+        textarea.style.height = 'auto';
+        textarea.style.height = textarea.scrollHeight + 'px';
+    }
+
+    initEditor(text1El, lineNumbers1);
+    initEditor(text2El, lineNumbers2);
+    let lastText1 = '';
+    let lastText2 = '';
+
+    function setMode(mode) {
+        currentMode = mode;
+        document.getElementById('modeLineBtn').classList.toggle('active', mode === 'line');
+        document.getElementById('modeCharBtn').classList.toggle('active', mode === 'char');
+        if (lastText1 || lastText2) {
+            displayDiff(lastText1, lastText2);
         }
+    }
 
-        // Auto-resize textarea
-        function autoResize(textarea) {
-            textarea.style.height = 'auto';
-            textarea.style.height = textarea.scrollHeight + 'px';
-        }
+    // Longest Common Subsequence for diff
+    function lcs(a, b) {
+        const m = a.length;
+        const n = b.length;
+        const dp = Array(m + 1).fill(null).map(() => Array(n + 1).fill(0));
 
-        initEditor(text1El, lineNumbers1);
-        initEditor(text2El, lineNumbers2);
-        let lastText1 = '';
-        let lastText2 = '';
-
-        function setMode(mode) {
-            currentMode = mode;
-            document.getElementById('modeLineBtn').classList.toggle('active', mode === 'line');
-            document.getElementById('modeCharBtn').classList.toggle('active', mode === 'char');
-            if (lastText1 || lastText2) {
-                displayDiff(lastText1, lastText2);
-            }
-        }
-
-        // Longest Common Subsequence for diff
-        function lcs(a, b) {
-            const m = a.length;
-            const n = b.length;
-            const dp = Array(m + 1).fill(null).map(() => Array(n + 1).fill(0));
-
-            for (let i = 1; i <= m; i++) {
-                for (let j = 1; j <= n; j++) {
-                    if (a[i - 1] === b[j - 1]) {
-                        dp[i][j] = dp[i - 1][j - 1] + 1;
-                    } else {
-                        dp[i][j] = Math.max(dp[i - 1][j], dp[i][j - 1]);
-                    }
-                }
-            }
-
-            // Backtrack to find diff
-            const diff = [];
-            let i = m, j = n;
-            while (i > 0 || j > 0) {
-                if (i > 0 && j > 0 && a[i - 1] === b[j - 1]) {
-                    diff.unshift({ type: 'unchanged', value: a[i - 1] });
-                    i--;
-                    j--;
-                } else if (j > 0 && (i === 0 || dp[i][j - 1] >= dp[i - 1][j])) {
-                    diff.unshift({ type: 'added', value: b[j - 1] });
-                    j--;
+        for (let i = 1; i <= m; i++) {
+            for (let j = 1; j <= n; j++) {
+                if (a[i - 1] === b[j - 1]) {
+                    dp[i][j] = dp[i - 1][j - 1] + 1;
                 } else {
-                    diff.unshift({ type: 'removed', value: a[i - 1] });
-                    i--;
+                    dp[i][j] = Math.max(dp[i - 1][j], dp[i][j - 1]);
                 }
             }
-
-            return diff;
         }
 
-        const MAX_LINES_WARNING = 5000;
-        const MAX_CHARS_WARNING = 100000;
-
-        function compare() {
-            const t1 = text1El.value;
-            const t2 = text2El.value;
-
-            if (!t1 && !t2) {
-                return;
-            }
-
-            // Performance warning for large texts
-            const lines1 = t1.split('\n').length;
-            const lines2 = t2.split('\n').length;
-            const totalChars = t1.length + t2.length;
-
-            if (lines1 > MAX_LINES_WARNING || lines2 > MAX_LINES_WARNING || totalChars > MAX_CHARS_WARNING) {
-                if (!confirm(`Warning: Large text detected (${Math.max(lines1, lines2)} lines, ${totalChars} characters). This may cause the browser to slow down. Continue?`)) {
-                    return;
-                }
-            }
-
-            lastText1 = t1;
-            lastText2 = t2;
-
-            resultEl.classList.add('show');
-            displayDiff(t1, t2);
-        }
-
-        function displayDiff(t1, t2) {
-            if (t1 === t2) {
-                statsEl.innerHTML = '';
-                diffOutputEl.innerHTML = '<div class="identical-message">Texts are identical</div>';
-                return;
-            }
-
-            if (currentMode === 'line') {
-                displayLineDiff(t1, t2);
+        // Backtrack to find diff
+        const diff = [];
+        let i = m, j = n;
+        while (i > 0 || j > 0) {
+            if (i > 0 && j > 0 && a[i - 1] === b[j - 1]) {
+                diff.unshift({type: 'unchanged', value: a[i - 1]});
+                i--;
+                j--;
+            } else if (j > 0 && (i === 0 || dp[i][j - 1] >= dp[i - 1][j])) {
+                diff.unshift({type: 'added', value: b[j - 1]});
+                j--;
             } else {
-                displayCharDiff(t1, t2);
+                diff.unshift({type: 'removed', value: a[i - 1]});
+                i--;
             }
         }
 
-        function displayLineDiff(t1, t2) {
-            // Normalize: remove trailing empty line from split result if text doesn't end with newline
-            const lines1 = t1.split('\n');
-            const lines2 = t2.split('\n');
+        return diff;
+    }
 
-            // Track if texts end with newline
-            const t1EndsWithNewline = t1.endsWith('\n');
-            const t2EndsWithNewline = t2.endsWith('\n');
+    const MAX_LINES_WARNING = 5000;
+    const MAX_CHARS_WARNING = 100000;
 
-            // Remove the trailing empty string that split creates for trailing newlines
-            // We'll handle newline endings separately
-            if (t1EndsWithNewline && lines1[lines1.length - 1] === '') lines1.pop();
-            if (t2EndsWithNewline && lines2[lines2.length - 1] === '') lines2.pop();
+    function compare() {
+        const t1 = text1El.value;
+        const t2 = text2El.value;
 
-            const diff = lcs(lines1, lines2);
+        if (!t1 && !t2) {
+            return;
+        }
 
-            let added = 0, removed = 0, unchanged = 0;
-            let html = '';
-            let lineNum1 = 1, lineNum2 = 1;
+        // Performance warning for large texts
+        const lines1 = t1.split('\n').length;
+        const lines2 = t2.split('\n').length;
+        const totalChars = t1.length + t2.length;
 
-            diff.forEach(item => {
-                const escaped = escapeHtml(item.value);
-                const displayValue = escaped === '' ? '<span style="opacity:0.5;font-style:italic">(empty line)</span>' : escaped;
-
-                if (item.type === 'added') {
-                    html += `<div class="diff-line added"><span class="line-num">+${lineNum2}</span>${displayValue}</div>`;
-                    lineNum2++;
-                    added++;
-                } else if (item.type === 'removed') {
-                    html += `<div class="diff-line removed"><span class="line-num">-${lineNum1}</span>${displayValue}</div>`;
-                    lineNum1++;
-                    removed++;
-                } else {
-                    html += `<div class="diff-line unchanged"><span class="line-num">${lineNum1}</span>${displayValue}</div>`;
-                    lineNum1++;
-                    lineNum2++;
-                    unchanged++;
-                }
-            });
-
-            // Show trailing newline difference
-            if (t1EndsWithNewline !== t2EndsWithNewline) {
-                if (t1EndsWithNewline && !t2EndsWithNewline) {
-                    html += `<div class="diff-line removed"><span class="line-num">-</span><span style="opacity:0.7;font-style:italic">⏎ (trailing newline)</span></div>`;
-                    removed++;
-                } else {
-                    html += `<div class="diff-line added"><span class="line-num">+</span><span style="opacity:0.7;font-style:italic">⏎ (trailing newline)</span></div>`;
-                    added++;
-                }
+        if (lines1 > MAX_LINES_WARNING || lines2 > MAX_LINES_WARNING || totalChars > MAX_CHARS_WARNING) {
+            if (!confirm(`Warning: Large text detected (${Math.max(lines1, lines2)} lines, ${totalChars} characters). This may cause the browser to slow down. Continue?`)) {
+                return;
             }
+        }
 
-            statsEl.innerHTML = `
+        lastText1 = t1;
+        lastText2 = t2;
+
+        resultEl.classList.add('show');
+        displayDiff(t1, t2);
+    }
+
+    function displayDiff(t1, t2) {
+        if (t1 === t2) {
+            statsEl.innerHTML = '';
+            diffOutputEl.innerHTML = '<div class="identical-message">Texts are identical</div>';
+            return;
+        }
+
+        if (currentMode === 'line') {
+            displayLineDiff(t1, t2);
+        } else {
+            displayCharDiff(t1, t2);
+        }
+    }
+
+    function displayLineDiff(t1, t2) {
+        // Normalize: remove trailing empty line from split result if text doesn't end with newline
+        const lines1 = t1.split('\n');
+        const lines2 = t2.split('\n');
+
+        // Track if texts end with newline
+        const t1EndsWithNewline = t1.endsWith('\n');
+        const t2EndsWithNewline = t2.endsWith('\n');
+
+        // Remove the trailing empty string that split creates for trailing newlines
+        // We'll handle newline endings separately
+        if (t1EndsWithNewline && lines1[lines1.length - 1] === '') lines1.pop();
+        if (t2EndsWithNewline && lines2[lines2.length - 1] === '') lines2.pop();
+
+        const diff = lcs(lines1, lines2);
+
+        let added = 0, removed = 0, unchanged = 0;
+        let html = '';
+        let lineNum1 = 1, lineNum2 = 1;
+
+        diff.forEach(item => {
+            const escaped = escapeHtml(item.value);
+            const displayValue = escaped === '' ? '<span style="opacity:0.5;font-style:italic">(empty line)</span>' : escaped;
+
+            if (item.type === 'added') {
+                html += `<div class="diff-line added"><span class="line-num">+${lineNum2}</span>${displayValue}</div>`;
+                lineNum2++;
+                added++;
+            } else if (item.type === 'removed') {
+                html += `<div class="diff-line removed"><span class="line-num">-${lineNum1}</span>${displayValue}</div>`;
+                lineNum1++;
+                removed++;
+            } else {
+                html += `<div class="diff-line unchanged"><span class="line-num">${lineNum1}</span>${displayValue}</div>`;
+                lineNum1++;
+                lineNum2++;
+                unchanged++;
+            }
+        });
+
+        // Show trailing newline difference
+        if (t1EndsWithNewline !== t2EndsWithNewline) {
+            if (t1EndsWithNewline && !t2EndsWithNewline) {
+                html += `<div class="diff-line removed"><span class="line-num">-</span><span style="opacity:0.7;font-style:italic">⏎ (trailing newline)</span></div>`;
+                removed++;
+            } else {
+                html += `<div class="diff-line added"><span class="line-num">+</span><span style="opacity:0.7;font-style:italic">⏎ (trailing newline)</span></div>`;
+                added++;
+            }
+        }
+
+        statsEl.innerHTML = `
                 <div class="stat-item added">
                     <div>
                         <div class="stat-value" style="color: #10b981">${added}</div>
@@ -626,60 +630,60 @@
                 </div>
             `;
 
-            diffOutputEl.innerHTML = html;
-        }
+        diffOutputEl.innerHTML = html;
+    }
 
-        function displayCharDiff(t1, t2) {
-            const chars1 = t1.split('');
-            const chars2 = t2.split('');
-            const diff = lcs(chars1, chars2);
+    function displayCharDiff(t1, t2) {
+        const chars1 = t1.split('');
+        const chars2 = t2.split('');
+        const diff = lcs(chars1, chars2);
 
-            let added = 0, removed = 0;
-            let lineNum = 1;
-            let html = '<div class="char-diff-container">';
-            html += `<span class="char-line-num">${lineNum}</span>`;
+        let added = 0, removed = 0;
+        let lineNum = 1;
+        let html = '<div class="char-diff-container">';
+        html += `<span class="char-line-num">${lineNum}</span>`;
 
-            diff.forEach(item => {
-                const escaped = escapeHtml(item.value);
+        diff.forEach(item => {
+            const escaped = escapeHtml(item.value);
 
-                if (item.type === 'added') {
-                    if (item.value === '\n') {
-                        html += `<span class="char-added char-newline">↵</span><br>`;
-                        lineNum++;
-                        html += `<span class="char-line-num">${lineNum}</span>`;
-                    } else if (item.value === ' ') {
-                        html += `<span class="char-added char-space">·</span>`;
-                    } else if (item.value === '\t') {
-                        html += `<span class="char-added char-tab">→</span>`;
-                    } else {
-                        html += `<span class="char-added">${escaped}</span>`;
-                    }
-                    added++;
-                } else if (item.type === 'removed') {
-                    if (item.value === '\n') {
-                        html += `<span class="char-removed char-newline">↵</span>`;
-                    } else if (item.value === ' ') {
-                        html += `<span class="char-removed char-space">·</span>`;
-                    } else if (item.value === '\t') {
-                        html += `<span class="char-removed char-tab">→</span>`;
-                    } else {
-                        html += `<span class="char-removed">${escaped}</span>`;
-                    }
-                    removed++;
+            if (item.type === 'added') {
+                if (item.value === '\n') {
+                    html += `<span class="char-added char-newline">↵</span><br>`;
+                    lineNum++;
+                    html += `<span class="char-line-num">${lineNum}</span>`;
+                } else if (item.value === ' ') {
+                    html += `<span class="char-added char-space">·</span>`;
+                } else if (item.value === '\t') {
+                    html += `<span class="char-added char-tab">→</span>`;
                 } else {
-                    if (item.value === '\n') {
-                        html += '<br>';
-                        lineNum++;
-                        html += `<span class="char-line-num">${lineNum}</span>`;
-                    } else {
-                        html += escaped;
-                    }
+                    html += `<span class="char-added">${escaped}</span>`;
                 }
-            });
+                added++;
+            } else if (item.type === 'removed') {
+                if (item.value === '\n') {
+                    html += `<span class="char-removed char-newline">↵</span>`;
+                } else if (item.value === ' ') {
+                    html += `<span class="char-removed char-space">·</span>`;
+                } else if (item.value === '\t') {
+                    html += `<span class="char-removed char-tab">→</span>`;
+                } else {
+                    html += `<span class="char-removed">${escaped}</span>`;
+                }
+                removed++;
+            } else {
+                if (item.value === '\n') {
+                    html += '<br>';
+                    lineNum++;
+                    html += `<span class="char-line-num">${lineNum}</span>`;
+                } else {
+                    html += escaped;
+                }
+            }
+        });
 
-            html += '</div>';
+        html += '</div>';
 
-            statsEl.innerHTML = `
+        statsEl.innerHTML = `
                 <div class="stat-item added">
                     <div>
                         <div class="stat-value" style="color: #10b981">${added}</div>
@@ -694,36 +698,36 @@
                 </div>
             `;
 
-            diffOutputEl.innerHTML = html;
-        }
+        diffOutputEl.innerHTML = html;
+    }
 
-        function escapeHtml(text) {
-            const div = document.createElement('div');
-            div.textContent = text;
-            return div.innerHTML;
-        }
+    function escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
 
-        function swap() {
-            const temp = text1El.value;
-            text1El.value = text2El.value;
-            text2El.value = temp;
-            updateLineNumbers(text1El, lineNumbers1);
-            updateLineNumbers(text2El, lineNumbers2);
-            autoResize(text1El);
-            autoResize(text2El);
-        }
+    function swap() {
+        const temp = text1El.value;
+        text1El.value = text2El.value;
+        text2El.value = temp;
+        updateLineNumbers(text1El, lineNumbers1);
+        updateLineNumbers(text2El, lineNumbers2);
+        autoResize(text1El);
+        autoResize(text2El);
+    }
 
-        function clearAll() {
-            text1El.value = '';
-            text2El.value = '';
-            resultEl.classList.remove('show');
-            lastText1 = '';
-            lastText2 = '';
-            updateLineNumbers(text1El, lineNumbers1);
-            updateLineNumbers(text2El, lineNumbers2);
-            autoResize(text1El);
-            autoResize(text2El);
-        }
-    </script>
+    function clearAll() {
+        text1El.value = '';
+        text2El.value = '';
+        resultEl.classList.remove('show');
+        lastText1 = '';
+        lastText2 = '';
+        updateLineNumbers(text1El, lineNumbers1);
+        updateLineNumbers(text2El, lineNumbers2);
+        autoResize(text1El);
+        autoResize(text2El);
+    }
+</script>
 </body>
 </html>

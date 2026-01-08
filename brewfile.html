@@ -2,9 +2,9 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta content="width=device-width, initial-scale=1.0" name="viewport">
     <title>Brewfile Analyzer</title>
-    <script src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
+    <script src="https://unpkg.com/cytoscape/dist/cytoscape.min.js"></script>
     <style>
         * {
             margin: 0;
@@ -350,7 +350,9 @@
         }
 
         @keyframes spin {
-            to { transform: rotate(360deg); }
+            to {
+                transform: rotate(360deg);
+            }
         }
 
         .loading-text {
@@ -432,337 +434,493 @@
                 height: 350px;
             }
         }
+
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 1000;
+            backdrop-filter: blur(4px);
+        }
+
+        .modal-overlay.show {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal {
+            background: #1f2937;
+            border-radius: 16px;
+            padding: 24px;
+            max-width: 500px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .modal-title {
+            font-size: 1.2rem;
+            color: #f97316;
+            font-weight: 600;
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            color: #9ca3af;
+            font-size: 24px;
+            cursor: pointer;
+            padding: 0;
+            line-height: 1;
+        }
+
+        .modal-close:hover {
+            color: #fff;
+        }
+
+        .dep-tree {
+            font-family: 'Consolas', 'Monaco', monospace;
+            font-size: 13px;
+            line-height: 1.6;
+        }
+
+        .dep-tree ul {
+            list-style: none;
+            padding-left: 20px;
+            margin: 0;
+        }
+
+        .dep-tree > ul {
+            padding-left: 0;
+        }
+
+        .dep-tree li {
+            position: relative;
+            color: #e5e7eb;
+        }
+
+        .dep-tree li::before {
+            content: '';
+            position: absolute;
+            left: -16px;
+            top: 0;
+            height: 100%;
+            border-left: 1px solid #4b5563;
+        }
+
+        .dep-tree li::after {
+            content: '';
+            position: absolute;
+            left: -16px;
+            top: 0.7em;
+            width: 12px;
+            border-bottom: 1px solid #4b5563;
+        }
+
+        .dep-tree li:last-child::before {
+            height: 0.7em;
+        }
+
+        .dep-tree > ul > li::before,
+        .dep-tree > ul > li::after {
+            display: none;
+        }
+
+        .dep-tree .node-name {
+            padding: 2px 6px;
+            border-radius: 4px;
+            display: inline-block;
+        }
+
+        .dep-tree .node-root {
+            background: #f97316;
+            color: #fff;
+            font-weight: bold;
+        }
+
+        .dep-tree .node-dep {
+            background: #374151;
+            color: #e5e7eb;
+        }
+
+        .dep-tree .node-build {
+            background: rgba(168, 85, 247, 0.2);
+            color: #c084fc;
+            font-style: italic;
+        }
+
+        .formula-name.clickable {
+            cursor: pointer;
+            transition: color 0.2s;
+        }
+
+        .formula-name.clickable:hover {
+            text-decoration: underline;
+        }
     </style>
 </head>
 <body>
-    <div class="container">
-        <a href="index.html" class="back-link">&larr; Back to Tools</a>
-        <h1>Brewfile Analyzer</h1>
-        <p class="subtitle">Analyze Homebrew formulas, versions, and dependencies</p>
+<div class="container">
+    <a class="back-link" href="index.html">&larr; Back to Tools</a>
+    <h1>Brewfile Analyzer</h1>
+    <p class="subtitle">Analyze Homebrew formulas, versions, and dependencies</p>
 
-        <div class="card">
-            <label>Upload or Paste Brewfile</label>
-            <div id="dropZone" class="drop-zone">
-                <div class="drop-zone-text">
-                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                        <polyline points="17 8 12 3 7 8"></polyline>
-                        <line x1="12" y1="3" x2="12" y2="15"></line>
-                    </svg>
-                    <p>Drop Brewfile here or click to upload</p>
-                    <span class="drop-zone-hint">or paste content below</span>
-                </div>
-                <input type="file" id="fileInput" accept="Brewfile,Brewfile.*,*.txt" style="display: none;">
+    <div class="card">
+        <label>Upload or Paste Brewfile</label>
+        <div class="drop-zone" id="dropZone">
+            <div class="drop-zone-text">
+                <svg fill="none" height="48" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" width="48">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                    <polyline points="17 8 12 3 7 8"></polyline>
+                    <line x1="12" x2="12" y1="3" y2="15"></line>
+                </svg>
+                <p>Drop Brewfile here or click to upload</p>
+                <span class="drop-zone-hint">or paste content below</span>
             </div>
-            <div class="editor-container">
-                <div class="line-numbers" id="lineNumbers"><div>1</div></div>
-                <textarea id="input" placeholder='brew "wget"
+            <input accept="Brewfile,Brewfile.*,*.txt" id="fileInput" style="display: none;" type="file">
+        </div>
+        <div class="editor-container">
+            <div class="line-numbers" id="lineNumbers">
+                <div>1</div>
+            </div>
+            <textarea id="input" placeholder='brew "wget"
 brew "python@3.12"
 brew "openssl@3"
 brew "node"'></textarea>
-            </div>
-
-            <div class="button-group">
-                <button class="btn-analyze" onclick="analyze()">Analyze</button>
-                <button class="btn-clear" onclick="clearAll()">Clear</button>
-            </div>
         </div>
 
-        <div id="loading" class="loading" style="display: none;">
-            <div class="spinner"></div>
-            <div class="loading-text" id="loadingText">Fetching formula information...</div>
-        </div>
-
-        <div id="result" class="result-section">
-            <div class="card">
-                <div class="stats" id="stats"></div>
-            </div>
-
-            <div class="card">
-                <div class="section-title">Dependency Graph</div>
-                <div id="graph-container"></div>
-            </div>
-
-            <div class="card">
-                <div class="tabs">
-                    <button class="tab-btn active" onclick="showTab('all')">All Formulas</button>
-                    <button class="tab-btn" onclick="showTab('brewfile')">From Brewfile Only</button>
-                </div>
-
-                <div class="table-container">
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>Name</th>
-                                <th>Version</th>
-                                <th>Description</th>
-                                <th>License</th>
-                                <th>Homepage</th>
-                                <th>Dependencies</th>
-                            </tr>
-                        </thead>
-                        <tbody id="formulaTable"></tbody>
-                    </table>
-                </div>
-            </div>
+        <div class="button-group">
+            <button class="btn-analyze" onclick="analyze()">Analyze</button>
+            <button class="btn-clear" onclick="clearAll()">Clear</button>
         </div>
     </div>
 
-    <div id="message" class="message"></div>
+    <div class="loading" id="loading" style="display: none;">
+        <div class="spinner"></div>
+        <div class="loading-text" id="loadingText">Fetching formula information...</div>
+    </div>
 
-    <script>
-        const inputEl = document.getElementById('input');
-        const resultEl = document.getElementById('result');
-        const loadingEl = document.getElementById('loading');
-        const loadingTextEl = document.getElementById('loadingText');
-        const messageEl = document.getElementById('message');
-        const statsEl = document.getElementById('stats');
-        const formulaTableEl = document.getElementById('formulaTable');
-        const dropZone = document.getElementById('dropZone');
-        const fileInput = document.getElementById('fileInput');
+    <div class="result-section" id="result">
+        <div class="card">
+            <div class="stats" id="stats"></div>
+        </div>
 
-        let allFormulas = [];
-        let failedFormulas = [];
+        <div class="card">
+            <div class="section-title">Dependency Graph</div>
+            <div id="graph-container"></div>
+        </div>
 
-        // File upload handling
-        dropZone.addEventListener('click', () => fileInput.click());
+        <div class="card">
+            <div class="tabs">
+                <button class="tab-btn active" onclick="showTab('all')">All Formulas</button>
+                <button class="tab-btn" onclick="showTab('brewfile')">From Brewfile Only</button>
+            </div>
 
-        fileInput.addEventListener('change', (e) => {
-            if (e.target.files.length > 0) {
-                handleFile(e.target.files[0]);
-            }
-        });
+            <div class="table-container">
+                <table>
+                    <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Version</th>
+                        <th>Description</th>
+                        <th>License</th>
+                        <th>Homepage</th>
+                        <th>Dependencies</th>
+                    </tr>
+                    </thead>
+                    <tbody id="formulaTable"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
 
-        // Drag and drop
-        dropZone.addEventListener('dragover', (e) => {
-            e.preventDefault();
-            dropZone.classList.add('drag-over');
-        });
+<div class="message" id="message"></div>
 
-        dropZone.addEventListener('dragleave', () => {
-            dropZone.classList.remove('drag-over');
-        });
+<div class="modal-overlay" id="modalOverlay">
+    <div class="modal">
+        <div class="modal-header">
+            <span class="modal-title" id="modalTitle">Dependency Tree</span>
+            <button class="modal-close" onclick="closeModal()">&times;</button>
+        </div>
+        <div class="dep-tree" id="depTreeContent"></div>
+    </div>
+</div>
 
-        dropZone.addEventListener('drop', (e) => {
-            e.preventDefault();
-            dropZone.classList.remove('drag-over');
-            if (e.dataTransfer.files.length > 0) {
-                handleFile(e.dataTransfer.files[0]);
-            }
-        });
+<script>
+    const inputEl = document.getElementById('input');
+    const resultEl = document.getElementById('result');
+    const loadingEl = document.getElementById('loading');
+    const loadingTextEl = document.getElementById('loadingText');
+    const messageEl = document.getElementById('message');
+    const statsEl = document.getElementById('stats');
+    const formulaTableEl = document.getElementById('formulaTable');
+    const dropZone = document.getElementById('dropZone');
+    const fileInput = document.getElementById('fileInput');
 
-        function handleFile(file) {
-            const reader = new FileReader();
-            reader.onload = (e) => {
-                const content = e.target.result;
-                // Filter to only show lines that will be analyzed (brew "formula" format)
-                const filteredLines = content.split('\n')
-                    .filter(line => /^\s*brew\s+["']([^"']+)["']/.test(line))
-                    .join('\n');
-                inputEl.value = filteredLines;
-                updateLineNumbers();
-                autoResize();
-                dropZone.classList.add('has-file');
-                dropZone.querySelector('.drop-zone-text p').textContent = file.name;
-                const totalLines = content.split('\n').length;
-                const keptLines = filteredLines ? filteredLines.split('\n').length : 0;
-                showMessage(`Loaded ${file.name}: ${keptLines}/${totalLines} lines`, 'success');
-            };
-            reader.onerror = () => {
-                showMessage('Error reading file', 'error');
-            };
-            reader.readAsText(file);
+    let allFormulas = [];
+    let failedFormulas = [];
+
+    // File upload handling
+    dropZone.addEventListener('click', () => fileInput.click());
+
+    fileInput.addEventListener('change', (e) => {
+        if (e.target.files.length > 0) {
+            handleFile(e.target.files[0]);
         }
+    });
 
-        let brewfileFormulas = [];
-        let currentTab = 'all';
-        let network = null;
+    // Drag and drop
+    dropZone.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        dropZone.classList.add('drag-over');
+    });
 
-        const lineNumbersEl = document.getElementById('lineNumbers');
+    dropZone.addEventListener('dragleave', () => {
+        dropZone.classList.remove('drag-over');
+    });
 
-        function updateLineNumbers() {
-            const lines = inputEl.value.split('\n');
-            const count = lines.length || 1;
-            let html = '';
-            for (let i = 1; i <= count; i++) {
-                html += `<div>${i}</div>`;
-            }
-            lineNumbersEl.innerHTML = html;
+    dropZone.addEventListener('drop', (e) => {
+        e.preventDefault();
+        dropZone.classList.remove('drag-over');
+        if (e.dataTransfer.files.length > 0) {
+            handleFile(e.dataTransfer.files[0]);
         }
+    });
 
-        function syncScroll() {
-            lineNumbersEl.scrollTop = inputEl.scrollTop;
-        }
-
-        function autoResize() {
-            inputEl.style.height = 'auto';
-            inputEl.style.height = inputEl.scrollHeight + 'px';
-        }
-
-        // Initialize line numbers and event listeners
-        updateLineNumbers();
-        inputEl.addEventListener('input', () => {
+    function handleFile(file) {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            const content = e.target.result;
+            // Filter to only show lines that will be analyzed (brew "formula" format)
+            const filteredLines = content.split('\n')
+                .filter(line => /^\s*brew\s+["']([^"']+)["']/.test(line))
+                .join('\n');
+            inputEl.value = filteredLines;
             updateLineNumbers();
             autoResize();
-        });
-        inputEl.addEventListener('scroll', syncScroll);
+            dropZone.classList.add('has-file');
+            dropZone.querySelector('.drop-zone-text p').textContent = file.name;
+            const totalLines = content.split('\n').length;
+            const keptLines = filteredLines ? filteredLines.split('\n').length : 0;
+            showMessage(`Loaded ${file.name}: ${keptLines}/${totalLines} lines`, 'success');
+        };
+        reader.onerror = () => {
+            showMessage('Error reading file', 'error');
+        };
+        reader.readAsText(file);
+    }
 
-        // Initial resize
+    let brewfileFormulas = [];
+    let currentTab = 'all';
+    let cy = null;
+
+    const lineNumbersEl = document.getElementById('lineNumbers');
+
+    function updateLineNumbers() {
+        const lines = inputEl.value.split('\n');
+        const count = lines.length || 1;
+        let html = '';
+        for (let i = 1; i <= count; i++) {
+            html += `<div>${i}</div>`;
+        }
+        lineNumbersEl.innerHTML = html;
+    }
+
+    function syncScroll() {
+        lineNumbersEl.scrollTop = inputEl.scrollTop;
+    }
+
+    function autoResize() {
+        inputEl.style.height = 'auto';
+        inputEl.style.height = inputEl.scrollHeight + 'px';
+    }
+
+    // Initialize line numbers and event listeners
+    updateLineNumbers();
+    inputEl.addEventListener('input', () => {
+        updateLineNumbers();
         autoResize();
+    });
+    inputEl.addEventListener('scroll', syncScroll);
 
-        function showMessage(text, type) {
-            messageEl.textContent = text;
-            messageEl.className = 'message ' + type;
-            setTimeout(() => {
-                messageEl.className = 'message';
-            }, 3000);
-        }
+    // Initial resize
+    autoResize();
 
-        function escapeHtml(str) {
-            if (str === null || str === undefined) return '';
-            const s = String(str);
-            return s.replace(/[&<>"']/g, c => ({
-                '&': '&amp;',
-                '<': '&lt;',
-                '>': '&gt;',
-                '"': '&quot;',
-                "'": '&#39;'
-            }[c]));
-        }
+    function showMessage(text, type) {
+        messageEl.textContent = text;
+        messageEl.className = 'message ' + type;
+        setTimeout(() => {
+            messageEl.className = 'message';
+        }, 3000);
+    }
 
-        function parseBrewfile(content) {
-            const formulas = [];
-            const lines = content.split('\n');
-            for (const line of lines) {
-                // Match: brew "formula" or brew 'formula'
-                const match = line.match(/^\s*brew\s+["']([^"']+)["']/);
-                if (match) {
-                    formulas.push(match[1]);
-                }
-            }
-            return formulas;
-        }
+    function escapeHtml(str) {
+        if (str === null || str === undefined) return '';
+        const s = String(str);
+        return s.replace(/[&<>"']/g, c => ({
+            '&': '&amp;',
+            '<': '&lt;',
+            '>': '&gt;',
+            '"': '&quot;',
+            "'": '&#39;'
+        }[c]));
+    }
 
-        async function fetchFormulaInfo(name) {
-            try {
-                const res = await fetch(`https://formulae.brew.sh/api/formula/${name}.json`);
-                if (!res.ok) {
-                    return { error: true, name, reason: `HTTP ${res.status}` };
-                }
-                return await res.json();
-            } catch (e) {
-                return { error: true, name, reason: e.message || 'Network error' };
+    function parseBrewfile(content) {
+        const formulas = [];
+        const lines = content.split('\n');
+        for (const line of lines) {
+            // Match: brew "formula" or brew 'formula'
+            const match = line.match(/^\s*brew\s+["']([^"']+)["']/);
+            if (match) {
+                formulas.push(match[1]);
             }
         }
+        return formulas;
+    }
 
-        async function fetchAllWithProgress(names, onProgress) {
-            const results = [];
-            const total = names.length;
-            for (let i = 0; i < total; i++) {
-                const name = names[i];
-                onProgress(`Fetching ${i + 1}/${total}: ${name}...`);
+    async function fetchFormulaInfo(name) {
+        try {
+            const res = await fetch(`https://formulae.brew.sh/api/formula/${name}.json`);
+            if (!res.ok) {
+                return {error: true, name, reason: `HTTP ${res.status}`};
+            }
+            return await res.json();
+        } catch (e) {
+            return {error: true, name, reason: e.message || 'Network error'};
+        }
+    }
+
+    async function fetchAllWithProgress(names, onProgress) {
+        const results = [];
+        const total = names.length;
+        for (let i = 0; i < total; i++) {
+            const name = names[i];
+            onProgress(`Fetching ${i + 1}/${total}: ${name}...`);
+            const info = await fetchFormulaInfo(name);
+            if (info) {
+                results.push(info);
+            }
+            // Small delay to avoid overwhelming the API
+            if (i < total - 1) {
+                await new Promise(r => setTimeout(r, 50));
+            }
+        }
+        return results;
+    }
+
+    async function analyze() {
+        const content = inputEl.value.trim();
+        if (!content) {
+            showMessage('Please enter a Brewfile', 'error');
+            return;
+        }
+
+        const formulas = parseBrewfile(content);
+        if (formulas.length === 0) {
+            showMessage('No formulas found in Brewfile', 'error');
+            return;
+        }
+
+        loadingEl.style.display = 'block';
+        resultEl.classList.remove('show');
+
+        try {
+            failedFormulas = [];
+            const brewfileSet = new Set(formulas);
+            const fetched = new Map(); // name -> formula info (cache)
+            const queue = [...formulas]; // formulas to fetch
+            let fetchCount = 0;
+
+            // Recursively fetch all dependencies
+            while (queue.length > 0) {
+                const name = queue.shift();
+
+                // Skip if already fetched
+                if (fetched.has(name)) continue;
+
+                fetchCount++;
+                loadingTextEl.textContent = `Fetching ${fetchCount}: ${name}...`;
+
                 const info = await fetchFormulaInfo(name);
-                if (info) {
-                    results.push(info);
-                }
-                // Small delay to avoid overwhelming the API
-                if (i < total - 1) {
-                    await new Promise(r => setTimeout(r, 50));
-                }
-            }
-            return results;
-        }
+                fetched.set(name, info);
 
-        async function analyze() {
-            const content = inputEl.value.trim();
-            if (!content) {
-                showMessage('Please enter a Brewfile', 'error');
-                return;
-            }
-
-            const formulas = parseBrewfile(content);
-            if (formulas.length === 0) {
-                showMessage('No formulas found in Brewfile', 'error');
-                return;
-            }
-
-            loadingEl.style.display = 'block';
-            resultEl.classList.remove('show');
-
-            try {
-                failedFormulas = [];
-                const brewfileResults = await fetchAllWithProgress(formulas, (msg) => {
-                    loadingTextEl.textContent = msg;
-                });
-
-                // Separate successful and failed results
-                brewfileFormulas = brewfileResults.filter(r => !r.error);
-                failedFormulas = brewfileResults.filter(r => r.error);
-
-                if (brewfileFormulas.length === 0) {
-                    showMessage('No valid formulas found', 'error');
-                    loadingEl.style.display = 'none';
-                    return;
-                }
-
-                // Collect all dependencies recursively
-                const allNames = new Set(formulas);
-                const toFetch = [];
-
-                for (const formula of brewfileFormulas) {
+                // If successful, add dependencies to queue
+                if (!info.error) {
                     const deps = [
-                        ...(formula.dependencies || []),
-                        ...(formula.build_dependencies || [])
+                        ...(info.dependencies || []),
+                        ...(info.build_dependencies || [])
                     ];
                     for (const dep of deps) {
-                        if (!allNames.has(dep)) {
-                            allNames.add(dep);
-                            toFetch.push(dep);
+                        if (!fetched.has(dep) && !queue.includes(dep)) {
+                            queue.push(dep);
                         }
                     }
                 }
 
-                loadingTextEl.textContent = `Fetching ${toFetch.length} dependencies...`;
-                const depResults = await fetchAllWithProgress(toFetch, (msg) => {
-                    loadingTextEl.textContent = msg;
-                });
-
-                // Separate successful and failed dependency results
-                const depFormulas = depResults.filter(r => !r.error);
-                failedFormulas = [...failedFormulas, ...depResults.filter(r => r.error)];
-
-                allFormulas = [...brewfileFormulas, ...depFormulas];
-
-                renderStats();
-                renderGraph();
-                renderTable();
-
-                resultEl.classList.add('show');
-                showMessage(`Analyzed ${allFormulas.length} formulas`, 'success');
-
-            } catch (e) {
-                showMessage('Error: ' + e.message, 'error');
-            } finally {
-                loadingEl.style.display = 'none';
+                // Small delay to avoid overwhelming the API
+                if (queue.length > 0) {
+                    await new Promise(r => setTimeout(r, 50));
+                }
             }
+
+            // Separate successful and failed results
+            const allResults = Array.from(fetched.values());
+            brewfileFormulas = allResults.filter(r => !r.error && brewfileSet.has(r.name));
+            failedFormulas = allResults.filter(r => r.error);
+            allFormulas = allResults.filter(r => !r.error);
+
+            if (brewfileFormulas.length === 0) {
+                showMessage('No valid formulas found', 'error');
+                loadingEl.style.display = 'none';
+                return;
+            }
+
+            renderStats();
+            renderGraph();
+            renderTable();
+
+            resultEl.classList.add('show');
+            showMessage(`Analyzed ${allFormulas.length} formulas`, 'success');
+
+        } catch (e) {
+            showMessage('Error: ' + e.message, 'error');
+        } finally {
+            loadingEl.style.display = 'none';
         }
+    }
 
-        function renderStats() {
-            const brewfileSet = new Set(brewfileFormulas.map(f => f.name));
-            const depCount = allFormulas.filter(f => !brewfileSet.has(f.name)).length;
+    function renderStats() {
+        const brewfileSet = new Set(brewfileFormulas.map(f => f.name));
+        const depCount = allFormulas.filter(f => !brewfileSet.has(f.name)).length;
 
-            let failedHtml = '';
-            if (failedFormulas.length > 0) {
-                failedHtml = `
+        let failedHtml = '';
+        if (failedFormulas.length > 0) {
+            failedHtml = `
                 <div class="stat-item" style="flex-basis:100%;background:rgba(239,68,68,0.1);">
                     <div class="stat-value" style="color:#f87171;">${failedFormulas.length} Failed</div>
                     <div class="stat-label" style="color:#f87171;">
                         ${failedFormulas.map(f => `<span class="dep-tag" style="background:rgba(239,68,68,0.2);color:#f87171;margin:2px;" title="${escapeHtml(f.reason)}">${escapeHtml(f.name)}</span>`).join('')}
                     </div>
                 </div>`;
-            }
+        }
 
-            statsEl.innerHTML = `
+        statsEl.innerHTML = `
                 <div class="stat-item">
                     <div class="stat-value">${allFormulas.length}</div>
                     <div class="stat-label">Total Formulas</div>
@@ -777,99 +935,170 @@ brew "node"'></textarea>
                 </div>
                 ${failedHtml}
             `;
-        }
+    }
 
-        function renderGraph() {
-            const brewfileSet = new Set(brewfileFormulas.map(f => f.name));
-            const nodes = [];
-            const edges = [];
+    function renderGraph() {
+        const brewfileSet = new Set(brewfileFormulas.map(f => f.name));
+        const allFormulaNames = new Set(allFormulas.map(f => f.name));
+        const elements = [];
 
-            for (const formula of allFormulas) {
-                const isFromBrewfile = brewfileSet.has(formula.name);
-                nodes.push({
+        for (const formula of allFormulas) {
+            const isFromBrewfile = brewfileSet.has(formula.name);
+            elements.push({
+                data: {
                     id: formula.name,
                     label: formula.name,
-                    color: {
-                        background: isFromBrewfile ? '#f97316' : '#4b5563',
-                        border: isFromBrewfile ? '#ea580c' : '#374151'
-                    },
-                    font: {
-                        color: '#fff',
-                        size: isFromBrewfile ? 16 : 12
-                    },
-                    title: `${escapeHtml(formula.name)} ${escapeHtml(formula.versions?.stable || '')}\n${escapeHtml(formula.desc || '')}`
-                });
+                    isFromBrewfile: isFromBrewfile,
+                    tooltip: `${formula.name} ${formula.versions?.stable || ''}\n${formula.desc || ''}`
+                }
+            });
 
-                const deps = [
-                    ...(formula.dependencies || []),
-                    ...(formula.build_dependencies || [])
-                ];
-                for (const dep of deps) {
-                    edges.push({
-                        from: formula.name,
-                        to: dep,
-                        arrows: 'to',
-                        color: {
-                            color: 'rgba(255, 255, 255, 0.2)',
-                            highlight: '#f97316'
-                        },
-                        dashes: formula.build_dependencies?.includes(dep)
+            const deps = [
+                ...(formula.dependencies || []),
+                ...(formula.build_dependencies || [])
+            ];
+            for (const dep of deps) {
+                // Only create edge if target node exists
+                if (allFormulaNames.has(dep)) {
+                    elements.push({
+                        data: {
+                            id: `${formula.name}->${dep}`,
+                            source: formula.name,
+                            target: dep,
+                            isBuildDep: formula.build_dependencies?.includes(dep)
+                        }
                     });
                 }
             }
-
-            const container = document.getElementById('graph-container');
-            const data = { nodes: new vis.DataSet(nodes), edges: new vis.DataSet(edges) };
-            const options = {
-                physics: {
-                    stabilization: true,
-                    barnesHut: {
-                        gravitationalConstant: -3000,
-                        springConstant: 0.04,
-                        springLength: 95
-                    }
-                },
-                nodes: {
-                    shape: 'box',
-                    margin: 10,
-                    widthConstraint: {
-                        maximum: 200
-                    }
-                },
-                edges: {
-                    smooth: {
-                        type: 'continuous'
-                    }
-                },
-                interaction: {
-                    hover: true,
-                    tooltipDelay: 100
-                }
-            };
-
-            if (network) {
-                network.destroy();
-            }
-            network = new vis.Network(container, data, options);
         }
 
-        function renderTable() {
-            const brewfileSet = new Set(brewfileFormulas.map(f => f.name));
-            let html = '';
+        const container = document.getElementById('graph-container');
 
-            for (const formula of allFormulas) {
-                const isFromBrewfile = brewfileSet.has(formula.name);
-                if (currentTab === 'brewfile' && !isFromBrewfile) continue;
+        if (cy) {
+            cy.destroy();
+        }
 
-                const deps = [
-                    ...(formula.dependencies || []),
-                    ...(formula.build_dependencies || [])
-                ];
+        cy = cytoscape({
+            container: container,
+            elements: elements,
+            style: [
+                {
+                    selector: 'node',
+                    style: {
+                        'background-color': '#374151',
+                        'background-opacity': 0.95,
+                        'border-color': '#6b7280',
+                        'border-width': 1,
+                        'label': 'data(label)',
+                        'color': '#e5e7eb',
+                        'text-valign': 'center',
+                        'text-halign': 'center',
+                        'font-family': '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+                        'font-size': '11px',
+                        'text-wrap': 'wrap',
+                        'text-max-width': '100px',
+                        'width': 'label',
+                        'height': 'label',
+                        'padding': '8px',
+                        'shape': 'round-rectangle',
+                        'text-outline-color': '#1f2937',
+                        'text-outline-width': 0.5
+                    }
+                },
+                {
+                    selector: 'node[?isFromBrewfile]',
+                    style: {
+                        'background-color': '#f97316',
+                        'background-opacity': 1,
+                        'border-color': '#fb923c',
+                        'border-width': 2,
+                        'color': '#fff',
+                        'font-size': '12px',
+                        'font-weight': 'bold',
+                        'text-outline-color': '#c2410c',
+                        'text-outline-width': 0.5
+                    }
+                },
+                {
+                    selector: 'edge',
+                    style: {
+                        'width': 1.5,
+                        'line-color': '#6b7280',
+                        'line-opacity': 0.5,
+                        'target-arrow-color': '#9ca3af',
+                        'target-arrow-shape': 'triangle',
+                        'arrow-scale': 0.7,
+                        'curve-style': 'bezier'
+                    }
+                },
+                {
+                    selector: 'edge[?isBuildDep]',
+                    style: {
+                        'line-style': 'dashed',
+                        'line-dash-pattern': [5, 3],
+                        'line-opacity': 0.35
+                    }
+                },
+                {
+                    selector: 'node:selected',
+                    style: {
+                        'border-color': '#fbbf24',
+                        'border-width': 3,
+                        'background-color': '#f59e0b'
+                    }
+                },
+                {
+                    selector: 'edge:selected',
+                    style: {
+                        'line-color': '#fbbf24',
+                        'line-opacity': 1,
+                        'target-arrow-color': '#fbbf24',
+                        'width': 2
+                    }
+                },
+                {
+                    selector: 'node:active',
+                    style: {
+                        'overlay-opacity': 0.15,
+                        'overlay-color': '#f97316'
+                    }
+                }
+            ],
+            layout: {
+                name: 'breadthfirst',
+                directed: true,
+                spacingFactor: 1.25,
+                avoidOverlap: true,
+                nodeDimensionsIncludeLabels: true
+            },
+            minZoom: 0.15,
+            maxZoom: 3,
+            wheelSensitivity: 0.3
+        });
 
-                html += `
+        // Fit graph to container after layout completes
+        cy.on('layoutstop', () => {
+            cy.fit(undefined, 30);
+        });
+    }
+
+    function renderTable() {
+        const brewfileSet = new Set(brewfileFormulas.map(f => f.name));
+        let html = '';
+
+        for (const formula of allFormulas) {
+            const isFromBrewfile = brewfileSet.has(formula.name);
+            if (currentTab === 'brewfile' && !isFromBrewfile) continue;
+
+            const deps = [
+                ...(formula.dependencies || []),
+                ...(formula.build_dependencies || [])
+            ];
+
+            html += `
                     <tr>
                         <td>
-                            <span class="formula-name ${isFromBrewfile ? '' : 'is-dependency'}">${escapeHtml(formula.name)}</span>
+                            <span class="formula-name clickable ${isFromBrewfile ? '' : 'is-dependency'}" onclick="showDependencyTree('${escapeHtml(formula.name)}')">${escapeHtml(formula.name)}</span>
                             ${!isFromBrewfile ? '<span style="color:#6b7280;font-size:11px;margin-left:4px;">(dep)</span>' : ''}
                         </td>
                         <td><span class="version-tag">${escapeHtml(formula.versions?.stable || 'N/A')}</span></td>
@@ -883,36 +1112,125 @@ brew "node"'></textarea>
                         </td>
                     </tr>
                 `;
+        }
+
+        formulaTableEl.innerHTML = html || '<tr><td colspan="6" style="text-align:center;color:#6b7280;">No formulas found</td></tr>';
+    }
+
+    function showTab(tab) {
+        currentTab = tab;
+        document.querySelectorAll('.tab-btn').forEach(btn => {
+            btn.classList.toggle('active', btn.textContent.toLowerCase().includes(tab === 'all' ? 'all' : 'brewfile'));
+        });
+        renderTable();
+    }
+
+    function clearAll() {
+        inputEl.value = '';
+        autoResize();
+        updateLineNumbers();
+        resultEl.classList.remove('show');
+        allFormulas = [];
+        brewfileFormulas = [];
+        failedFormulas = [];
+        dropZone.classList.remove('has-file');
+        dropZone.querySelector('.drop-zone-text p').textContent = 'Drop Brewfile here or click to upload';
+        fileInput.value = '';
+        if (cy) {
+            cy.destroy();
+            cy = null;
+        }
+        showMessage('Cleared', 'success');
+    }
+
+    const modalOverlay = document.getElementById('modalOverlay');
+    const modalTitle = document.getElementById('modalTitle');
+    const depTreeContent = document.getElementById('depTreeContent');
+
+    function showDependencyTree(name) {
+        const formulaMap = new Map(allFormulas.map(f => [f.name, f]));
+        const formula = formulaMap.get(name);
+        if (!formula) return;
+
+        modalTitle.textContent = `${name} - Dependency Tree`;
+
+        function buildTree(formulaName, visited = new Set()) {
+            if (visited.has(formulaName)) {
+                return `<li><span class="node-name node-dep">${escapeHtml(formulaName)}</span> <span style="color:#6b7280;font-size:11px;">(circular)</span></li>`;
+            }
+            visited.add(formulaName);
+
+            const f = formulaMap.get(formulaName);
+            if (!f) {
+                return `<li><span class="node-name node-dep">${escapeHtml(formulaName)}</span> <span style="color:#6b7280;font-size:11px;">(not found)</span></li>`;
             }
 
-            formulaTableEl.innerHTML = html || '<tr><td colspan="6" style="text-align:center;color:#6b7280;">No formulas found</td></tr>';
-        }
+            const deps = f.dependencies || [];
+            const buildDeps = f.build_dependencies || [];
+            const isRoot = formulaName === name;
 
-        function showTab(tab) {
-            currentTab = tab;
-            document.querySelectorAll('.tab-btn').forEach(btn => {
-                btn.classList.toggle('active', btn.textContent.toLowerCase().includes(tab === 'all' ? 'all' : 'brewfile'));
-            });
-            renderTable();
-        }
+            let html = `<li><span class="node-name ${isRoot ? 'node-root' : 'node-dep'}">${escapeHtml(formulaName)}</span>`;
 
-        function clearAll() {
-            inputEl.value = '';
-            autoResize();
-            updateLineNumbers();
-            resultEl.classList.remove('show');
-            allFormulas = [];
-            brewfileFormulas = [];
-            failedFormulas = [];
-            dropZone.classList.remove('has-file');
-            dropZone.querySelector('.drop-zone-text p').textContent = 'Drop Brewfile here or click to upload';
-            fileInput.value = '';
-            if (network) {
-                network.destroy();
-                network = null;
+            if (deps.length > 0 || buildDeps.length > 0) {
+                html += '<ul>';
+                for (const dep of deps) {
+                    html += buildTree(dep, new Set(visited));
+                }
+                for (const dep of buildDeps) {
+                    if (!deps.includes(dep)) {
+                        const f2 = formulaMap.get(dep);
+                        if (visited.has(dep)) {
+                            html += `<li><span class="node-name node-build">${escapeHtml(dep)}</span> <span style="color:#6b7280;font-size:11px;">(build, circular)</span></li>`;
+                        } else if (!f2) {
+                            html += `<li><span class="node-name node-build">${escapeHtml(dep)}</span> <span style="color:#6b7280;font-size:11px;">(build, not found)</span></li>`;
+                        } else {
+                            const innerVisited = new Set(visited);
+                            innerVisited.add(dep);
+                            const innerDeps = [...(f2.dependencies || []), ...(f2.build_dependencies || [])];
+                            if (innerDeps.length > 0) {
+                                html += `<li><span class="node-name node-build">${escapeHtml(dep)}</span> <span style="color:#6b7280;font-size:11px;">(build)</span>`;
+                                html += '<ul>';
+                                for (const d of f2.dependencies || []) {
+                                    html += buildTree(d, new Set(innerVisited));
+                                }
+                                for (const d of f2.build_dependencies || []) {
+                                    if (!(f2.dependencies || []).includes(d)) {
+                                        html += buildTree(d, new Set(innerVisited));
+                                    }
+                                }
+                                html += '</ul></li>';
+                            } else {
+                                html += `<li><span class="node-name node-build">${escapeHtml(dep)}</span> <span style="color:#6b7280;font-size:11px;">(build)</span></li>`;
+                            }
+                        }
+                    }
+                }
+                html += '</ul>';
             }
-            showMessage('Cleared', 'success');
+
+            html += '</li>';
+            return html;
         }
-    </script>
+
+        depTreeContent.innerHTML = '<ul>' + buildTree(name) + '</ul>';
+        modalOverlay.classList.add('show');
+    }
+
+    function closeModal() {
+        modalOverlay.classList.remove('show');
+    }
+
+    modalOverlay.addEventListener('click', (e) => {
+        if (e.target === modalOverlay) {
+            closeModal();
+        }
+    });
+
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+            closeModal();
+        }
+    });
+</script>
 </body>
 </html>

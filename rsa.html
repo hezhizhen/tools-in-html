@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta content="width=device-width, initial-scale=1.0" name="viewport">
     <title>RSA Private Key Parser</title>
     <style>
         * {
@@ -316,19 +316,20 @@
     </style>
 </head>
 <body>
-    <div class="container">
-        <a href="index.html" class="back-link">← Back to Tools</a>
-        <h1>RSA Private Key Parser</h1>
-        <p class="subtitle">Parse PEM format RSA private keys and view components</p>
+<div class="container">
+    <a class="back-link" href="index.html">← Back to Tools</a>
+    <h1>RSA Private Key Parser</h1>
+    <p class="subtitle">Parse PEM format RSA private keys and view components</p>
 
-        <div class="warning">
-            <span class="warning-icon">⚠️</span>
-            <strong>Security Notice:</strong> This tool runs entirely in your browser. No data is uploaded. However, please protect your private keys and avoid using real keys in untrusted environments.
-        </div>
+    <div class="warning">
+        <span class="warning-icon">⚠️</span>
+        <strong>Security Notice:</strong> This tool runs entirely in your browser. No data is uploaded. However, please
+        protect your private keys and avoid using real keys in untrusted environments.
+    </div>
 
-        <div class="card">
-            <div class="card-title">Input RSA Private Key (PEM format)</div>
-            <textarea id="input" placeholder="-----BEGIN RSA PRIVATE KEY-----
+    <div class="card">
+        <div class="card-title">Input RSA Private Key (PEM format)</div>
+        <textarea id="input" placeholder="-----BEGIN RSA PRIVATE KEY-----
 MIIEpAIBAAKCAQEA...
 -----END RSA PRIVATE KEY-----
 
@@ -338,296 +339,296 @@ or
 MIIEvgIBADANBgkqhkiG9w0BAQEFAASC...
 -----END PRIVATE KEY-----"></textarea>
 
-            <div class="button-group">
-                <button class="btn-parse" onclick="parseKey()">Parse Key</button>
-                <button class="btn-sample" onclick="loadSample()">Load Sample</button>
-                <button class="btn-clear" onclick="clearAll()">Clear</button>
-            </div>
-        </div>
-    <div id="message" class="message"></div>
-
-        <div id="result" class="result-section">
-            <div class="card">
-                <div class="card-title">Key Information</div>
-                <div class="info-grid">
-                    <div class="info-item">
-                        <div class="info-label">Key Type</div>
-                        <div class="info-value" id="keyType">-</div>
-                    </div>
-                    <div class="info-item">
-                        <div class="info-label">Key Size</div>
-                        <div class="info-value" id="keySize">-</div>
-                    </div>
-                    <div class="info-item">
-                        <div class="info-label">Format</div>
-                        <div class="info-value" id="keyFormat">-</div>
-                    </div>
-                    <div class="info-item">
-                        <div class="info-label">Version</div>
-                        <div class="info-value" id="keyVersion">-</div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="card">
-                <div class="card-title">Key Components</div>
-                <div id="components"></div>
-            </div>
+        <div class="button-group">
+            <button class="btn-parse" onclick="parseKey()">Parse Key</button>
+            <button class="btn-sample" onclick="loadSample()">Load Sample</button>
+            <button class="btn-clear" onclick="clearAll()">Clear</button>
         </div>
     </div>
+    <div class="message" id="message"></div>
 
-    <script>
-        const inputEl = document.getElementById('input');
-        const messageEl = document.getElementById('message');
-        const resultEl = document.getElementById('result');
+    <div class="result-section" id="result">
+        <div class="card">
+            <div class="card-title">Key Information</div>
+            <div class="info-grid">
+                <div class="info-item">
+                    <div class="info-label">Key Type</div>
+                    <div class="info-value" id="keyType">-</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">Key Size</div>
+                    <div class="info-value" id="keySize">-</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">Format</div>
+                    <div class="info-value" id="keyFormat">-</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">Version</div>
+                    <div class="info-value" id="keyVersion">-</div>
+                </div>
+            </div>
+        </div>
 
-        // Auto-resize textarea
-        function autoResize() {
-            inputEl.style.height = 'auto';
-            inputEl.style.height = inputEl.scrollHeight + 'px';
+        <div class="card">
+            <div class="card-title">Key Components</div>
+            <div id="components"></div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const inputEl = document.getElementById('input');
+    const messageEl = document.getElementById('message');
+    const resultEl = document.getElementById('result');
+
+    // Auto-resize textarea
+    function autoResize() {
+        inputEl.style.height = 'auto';
+        inputEl.style.height = inputEl.scrollHeight + 'px';
+    }
+
+    inputEl.addEventListener('input', autoResize);
+
+    // Initial resize
+    autoResize();
+
+    function showMessage(text, type) {
+        messageEl.textContent = text;
+        messageEl.className = 'message ' + type;
+        setTimeout(() => {
+            messageEl.className = 'message';
+        }, 5000);
+    }
+
+    // Base64 decode
+    function base64Decode(str) {
+        const binary = atob(str);
+        const bytes = new Uint8Array(binary.length);
+        for (let i = 0; i < binary.length; i++) {
+            bytes[i] = binary.charCodeAt(i);
+        }
+        return bytes;
+    }
+
+    // ASN.1 DER Parser
+    class ASN1Parser {
+        constructor(data) {
+            this.data = data;
+            this.pos = 0;
         }
 
-        inputEl.addEventListener('input', autoResize);
-
-        // Initial resize
-        autoResize();
-
-        function showMessage(text, type) {
-            messageEl.textContent = text;
-            messageEl.className = 'message ' + type;
-            setTimeout(() => {
-                messageEl.className = 'message';
-            }, 5000);
+        readByte() {
+            return this.data[this.pos++];
         }
 
-        // Base64 decode
-        function base64Decode(str) {
-            const binary = atob(str);
-            const bytes = new Uint8Array(binary.length);
-            for (let i = 0; i < binary.length; i++) {
-                bytes[i] = binary.charCodeAt(i);
-            }
-            return bytes;
-        }
-
-        // ASN.1 DER Parser
-        class ASN1Parser {
-            constructor(data) {
-                this.data = data;
-                this.pos = 0;
-            }
-
-            readByte() {
-                return this.data[this.pos++];
-            }
-
-            readLength() {
-                let length = this.readByte();
-                if (length & 0x80) {
-                    const numBytes = length & 0x7f;
-                    length = 0;
-                    for (let i = 0; i < numBytes; i++) {
-                        length = (length << 8) | this.readByte();
-                    }
+        readLength() {
+            let length = this.readByte();
+            if (length & 0x80) {
+                const numBytes = length & 0x7f;
+                length = 0;
+                for (let i = 0; i < numBytes; i++) {
+                    length = (length << 8) | this.readByte();
                 }
-                return length;
             }
-
-            readTag() {
-                return this.readByte();
-            }
-
-            readInteger() {
-                const tag = this.readTag();
-                if (tag !== 0x02) {
-                    throw new Error('Expected INTEGER tag');
-                }
-                const length = this.readLength();
-                const value = this.data.slice(this.pos, this.pos + length);
-                this.pos += length;
-                return value;
-            }
-
-            readSequence() {
-                const tag = this.readTag();
-                if (tag !== 0x30) {
-                    throw new Error('Expected SEQUENCE tag');
-                }
-                const length = this.readLength();
-                return length;
-            }
-
-            readOID() {
-                const tag = this.readTag();
-                if (tag !== 0x06) {
-                    throw new Error('Expected OID tag');
-                }
-                const length = this.readLength();
-                const value = this.data.slice(this.pos, this.pos + length);
-                this.pos += length;
-                return value;
-            }
-
-            readOctetString() {
-                const tag = this.readTag();
-                if (tag !== 0x04) {
-                    throw new Error('Expected OCTET STRING tag');
-                }
-                const length = this.readLength();
-                const value = this.data.slice(this.pos, this.pos + length);
-                this.pos += length;
-                return value;
-            }
-
-            skip(length) {
-                this.pos += length;
-            }
+            return length;
         }
 
-        // Convert bytes to hex string
-        function bytesToHex(bytes) {
-            return Array.from(bytes).map(b => b.toString(16).padStart(2, '0')).join('');
+        readTag() {
+            return this.readByte();
         }
 
-        // Calculate bit length of a big integer
-        function getBitLength(bytes) {
-            let i = 0;
-            // Skip leading zero bytes
-            while (i < bytes.length && bytes[i] === 0) i++;
-            if (i >= bytes.length) return 0;
-
-            const firstByte = bytes[i];
-            // Safety check for zero byte (should not happen after while loop, but defensive)
-            if (firstByte === 0) return 0;
-
-            const remainingBytes = bytes.length - i - 1;
-            // Calculate bits in the first non-zero byte
-            const firstByteBits = 32 - Math.clz32(firstByte);
-            return remainingBytes * 8 + firstByteBits;
+        readInteger() {
+            const tag = this.readTag();
+            if (tag !== 0x02) {
+                throw new Error('Expected INTEGER tag');
+            }
+            const length = this.readLength();
+            const value = this.data.slice(this.pos, this.pos + length);
+            this.pos += length;
+            return value;
         }
 
-        // Parse RSA private key
-        function parseRSAKey(pemData) {
-            let format = 'PKCS#1';
-            let base64Data = '';
-
-            // Check format
-            if (pemData.includes('-----BEGIN RSA PRIVATE KEY-----')) {
-                format = 'PKCS#1';
-                base64Data = pemData
-                    .replace('-----BEGIN RSA PRIVATE KEY-----', '')
-                    .replace('-----END RSA PRIVATE KEY-----', '')
-                    .replace(/\s/g, '');
-            } else if (pemData.includes('-----BEGIN PRIVATE KEY-----')) {
-                format = 'PKCS#8';
-                base64Data = pemData
-                    .replace('-----BEGIN PRIVATE KEY-----', '')
-                    .replace('-----END PRIVATE KEY-----', '')
-                    .replace(/\s/g, '');
-            } else {
-                throw new Error('Unsupported key format. Please use PEM format RSA private key');
+        readSequence() {
+            const tag = this.readTag();
+            if (tag !== 0x30) {
+                throw new Error('Expected SEQUENCE tag');
             }
-
-            const derData = base64Decode(base64Data);
-            const parser = new ASN1Parser(derData);
-
-            let components = {};
-
-            if (format === 'PKCS#8') {
-                // PKCS#8 format
-                parser.readSequence(); // outer sequence
-                parser.readInteger(); // version
-                parser.readSequence(); // algorithm identifier sequence
-                parser.readOID(); // algorithm OID
-
-                // Skip NULL if present
-                if (parser.data[parser.pos] === 0x05) {
-                    parser.pos += 2;
-                }
-
-                const privateKeyData = parser.readOctetString();
-                const innerParser = new ASN1Parser(privateKeyData);
-                innerParser.readSequence();
-
-                components.version = innerParser.readInteger();
-                components.modulus = innerParser.readInteger();
-                components.publicExponent = innerParser.readInteger();
-                components.privateExponent = innerParser.readInteger();
-                components.prime1 = innerParser.readInteger();
-                components.prime2 = innerParser.readInteger();
-                components.exponent1 = innerParser.readInteger();
-                components.exponent2 = innerParser.readInteger();
-                components.coefficient = innerParser.readInteger();
-            } else {
-                // PKCS#1 format
-                parser.readSequence();
-                components.version = parser.readInteger();
-                components.modulus = parser.readInteger();
-                components.publicExponent = parser.readInteger();
-                components.privateExponent = parser.readInteger();
-                components.prime1 = parser.readInteger();
-                components.prime2 = parser.readInteger();
-                components.exponent1 = parser.readInteger();
-                components.exponent2 = parser.readInteger();
-                components.coefficient = parser.readInteger();
-            }
-
-            return {
-                format,
-                components,
-                keySize: getBitLength(components.modulus)
-            };
+            const length = this.readLength();
+            return length;
         }
 
-        function parseKey() {
-            const pemData = inputEl.value.trim();
-            if (!pemData) {
-                showMessage('Please enter RSA private key', 'error');
-                return;
+        readOID() {
+            const tag = this.readTag();
+            if (tag !== 0x06) {
+                throw new Error('Expected OID tag');
             }
-
-            try {
-                const result = parseRSAKey(pemData);
-                displayResult(result);
-                showMessage('Parsed successfully', 'success');
-            } catch (e) {
-                showMessage('Parse failed: ' + e.message, 'error');
-                resultEl.classList.remove('show');
-            }
+            const length = this.readLength();
+            const value = this.data.slice(this.pos, this.pos + length);
+            this.pos += length;
+            return value;
         }
 
-        function displayResult(result) {
-            resultEl.classList.add('show');
+        readOctetString() {
+            const tag = this.readTag();
+            if (tag !== 0x04) {
+                throw new Error('Expected OCTET STRING tag');
+            }
+            const length = this.readLength();
+            const value = this.data.slice(this.pos, this.pos + length);
+            this.pos += length;
+            return value;
+        }
 
-            document.getElementById('keyType').textContent = 'RSA';
-            document.getElementById('keySize').textContent = result.keySize + ' bits';
-            document.getElementById('keyFormat').textContent = result.format;
-            document.getElementById('keyVersion').textContent = 'v' + (parseInt(bytesToHex(result.components.version), 16) + 1);
+        skip(length) {
+            this.pos += length;
+        }
+    }
 
-            const componentNames = {
-                modulus: { name: 'Modulus (n)', desc: 'n = p × q' },
-                publicExponent: { name: 'Public Exponent (e)', desc: 'public exponent' },
-                privateExponent: { name: 'Private Exponent (d)', desc: 'private exponent' },
-                prime1: { name: 'Prime 1 (p)', desc: 'first prime' },
-                prime2: { name: 'Prime 2 (q)', desc: 'second prime' },
-                exponent1: { name: 'Exponent 1 (dp)', desc: 'd mod (p-1)' },
-                exponent2: { name: 'Exponent 2 (dq)', desc: 'd mod (q-1)' },
-                coefficient: { name: 'Coefficient (qInv)', desc: 'q⁻¹ mod p' }
-            };
+    // Convert bytes to hex string
+    function bytesToHex(bytes) {
+        return Array.from(bytes).map(b => b.toString(16).padStart(2, '0')).join('');
+    }
 
-            const componentsEl = document.getElementById('components');
-            componentsEl.innerHTML = '';
+    // Calculate bit length of a big integer
+    function getBitLength(bytes) {
+        let i = 0;
+        // Skip leading zero bytes
+        while (i < bytes.length && bytes[i] === 0) i++;
+        if (i >= bytes.length) return 0;
 
-            for (const [key, value] of Object.entries(result.components)) {
-                if (key === 'version') continue;
+        const firstByte = bytes[i];
+        // Safety check for zero byte (should not happen after while loop, but defensive)
+        if (firstByte === 0) return 0;
 
-                const info = componentNames[key];
-                const hex = bytesToHex(value);
-                const bitLen = getBitLength(value);
+        const remainingBytes = bytes.length - i - 1;
+        // Calculate bits in the first non-zero byte
+        const firstByteBits = 32 - Math.clz32(firstByte);
+        return remainingBytes * 8 + firstByteBits;
+    }
 
-                const div = document.createElement('div');
-                div.className = 'component';
-                div.innerHTML = `
+    // Parse RSA private key
+    function parseRSAKey(pemData) {
+        let format = 'PKCS#1';
+        let base64Data = '';
+
+        // Check format
+        if (pemData.includes('-----BEGIN RSA PRIVATE KEY-----')) {
+            format = 'PKCS#1';
+            base64Data = pemData
+                .replace('-----BEGIN RSA PRIVATE KEY-----', '')
+                .replace('-----END RSA PRIVATE KEY-----', '')
+                .replace(/\s/g, '');
+        } else if (pemData.includes('-----BEGIN PRIVATE KEY-----')) {
+            format = 'PKCS#8';
+            base64Data = pemData
+                .replace('-----BEGIN PRIVATE KEY-----', '')
+                .replace('-----END PRIVATE KEY-----', '')
+                .replace(/\s/g, '');
+        } else {
+            throw new Error('Unsupported key format. Please use PEM format RSA private key');
+        }
+
+        const derData = base64Decode(base64Data);
+        const parser = new ASN1Parser(derData);
+
+        let components = {};
+
+        if (format === 'PKCS#8') {
+            // PKCS#8 format
+            parser.readSequence(); // outer sequence
+            parser.readInteger(); // version
+            parser.readSequence(); // algorithm identifier sequence
+            parser.readOID(); // algorithm OID
+
+            // Skip NULL if present
+            if (parser.data[parser.pos] === 0x05) {
+                parser.pos += 2;
+            }
+
+            const privateKeyData = parser.readOctetString();
+            const innerParser = new ASN1Parser(privateKeyData);
+            innerParser.readSequence();
+
+            components.version = innerParser.readInteger();
+            components.modulus = innerParser.readInteger();
+            components.publicExponent = innerParser.readInteger();
+            components.privateExponent = innerParser.readInteger();
+            components.prime1 = innerParser.readInteger();
+            components.prime2 = innerParser.readInteger();
+            components.exponent1 = innerParser.readInteger();
+            components.exponent2 = innerParser.readInteger();
+            components.coefficient = innerParser.readInteger();
+        } else {
+            // PKCS#1 format
+            parser.readSequence();
+            components.version = parser.readInteger();
+            components.modulus = parser.readInteger();
+            components.publicExponent = parser.readInteger();
+            components.privateExponent = parser.readInteger();
+            components.prime1 = parser.readInteger();
+            components.prime2 = parser.readInteger();
+            components.exponent1 = parser.readInteger();
+            components.exponent2 = parser.readInteger();
+            components.coefficient = parser.readInteger();
+        }
+
+        return {
+            format,
+            components,
+            keySize: getBitLength(components.modulus)
+        };
+    }
+
+    function parseKey() {
+        const pemData = inputEl.value.trim();
+        if (!pemData) {
+            showMessage('Please enter RSA private key', 'error');
+            return;
+        }
+
+        try {
+            const result = parseRSAKey(pemData);
+            displayResult(result);
+            showMessage('Parsed successfully', 'success');
+        } catch (e) {
+            showMessage('Parse failed: ' + e.message, 'error');
+            resultEl.classList.remove('show');
+        }
+    }
+
+    function displayResult(result) {
+        resultEl.classList.add('show');
+
+        document.getElementById('keyType').textContent = 'RSA';
+        document.getElementById('keySize').textContent = result.keySize + ' bits';
+        document.getElementById('keyFormat').textContent = result.format;
+        document.getElementById('keyVersion').textContent = 'v' + (parseInt(bytesToHex(result.components.version), 16) + 1);
+
+        const componentNames = {
+            modulus: {name: 'Modulus (n)', desc: 'n = p × q'},
+            publicExponent: {name: 'Public Exponent (e)', desc: 'public exponent'},
+            privateExponent: {name: 'Private Exponent (d)', desc: 'private exponent'},
+            prime1: {name: 'Prime 1 (p)', desc: 'first prime'},
+            prime2: {name: 'Prime 2 (q)', desc: 'second prime'},
+            exponent1: {name: 'Exponent 1 (dp)', desc: 'd mod (p-1)'},
+            exponent2: {name: 'Exponent 2 (dq)', desc: 'd mod (q-1)'},
+            coefficient: {name: 'Coefficient (qInv)', desc: 'q⁻¹ mod p'}
+        };
+
+        const componentsEl = document.getElementById('components');
+        componentsEl.innerHTML = '';
+
+        for (const [key, value] of Object.entries(result.components)) {
+            if (key === 'version') continue;
+
+            const info = componentNames[key];
+            const hex = bytesToHex(value);
+            const bitLen = getBitLength(value);
+
+            const div = document.createElement('div');
+            div.className = 'component';
+            div.innerHTML = `
                     <div class="component-header" onclick="this.parentElement.classList.toggle('open')">
                         <div>
                             <span class="component-name">${info.name}</span>
@@ -643,20 +644,20 @@ MIIEvgIBADANBgkqhkiG9w0BAQEFAASC...
                         <button class="copy-btn" onclick="copyValue('${key}')">Copy</button>
                     </div>
                 `;
-                componentsEl.appendChild(div);
-            }
+            componentsEl.appendChild(div);
         }
+    }
 
-        function copyValue(key) {
-            const el = document.getElementById('value-' + key);
-            navigator.clipboard.writeText(el.textContent).then(() => {
-                showMessage('Copied to clipboard', 'success');
-            });
-        }
+    function copyValue(key) {
+        const el = document.getElementById('value-' + key);
+        navigator.clipboard.writeText(el.textContent).then(() => {
+            showMessage('Copied to clipboard', 'success');
+        });
+    }
 
-        function loadSample() {
-            // This is a sample 512-bit RSA key for demonstration only
-            inputEl.value = `-----BEGIN RSA PRIVATE KEY-----
+    function loadSample() {
+        // This is a sample 512-bit RSA key for demonstration only
+        inputEl.value = `-----BEGIN RSA PRIVATE KEY-----
 MIIBOgIBAAJBALRiMLAHudeSA2ai2l5M0u/7xlm1OT5qq3VWzKS+0+MKk/xe6xvD
 t2oIv1HxZH5GJn8zPHgLzwbVRaMMPqxWlKUCAwEAAQJASxoz3x0dM5UhUvLDp7wu
 VCdHLnBbQxPokHriGeoAPlAP/5hu8DLZ1ISh1GlPwvMOoL5SVm+I2fFdLz8DdBsr
@@ -665,15 +666,15 @@ J+N8bsJO8sLO0NoNKCxmDAzqEyKzVfUCIFCL2rRcLXEcs+x2RjBM/n+FkkDlpPDz
 Iw5/eVaXnN4JAiEAh4BrYmXbxJVfMdWPaYPr6PL3evPRDNDF5RkOYptBeS0CIBC4
 J/5J64TQnykq8E5kZGk5SrVtQqm0BfR7L10Gh4EK
 -----END RSA PRIVATE KEY-----`;
-            autoResize();
-        }
+        autoResize();
+    }
 
-        function clearAll() {
-            inputEl.value = '';
-            resultEl.classList.remove('show');
-            autoResize();
-            showMessage('Cleared', 'success');
-        }
-    </script>
+    function clearAll() {
+        inputEl.value = '';
+        resultEl.classList.remove('show');
+        autoResize();
+        showMessage('Cleared', 'success');
+    }
+</script>
 </body>
 </html>

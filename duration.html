@@ -2,11 +2,11 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta content="width=device-width, initial-scale=1.0" name="viewport">
     <title>Duration Calculator</title>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/themes/dark.css">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/plugins/confirmDate/confirmDate.css">
+    <link href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/flatpickr/dist/themes/dark.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/flatpickr/dist/plugins/confirmDate/confirmDate.css" rel="stylesheet">
     <style>
         * {
             margin: 0;
@@ -437,8 +437,12 @@
         }
 
         @keyframes pulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.5; }
+            0%, 100% {
+                opacity: 1;
+            }
+            50% {
+                opacity: 0.5;
+            }
         }
 
         @media (max-width: 480px) {
@@ -474,446 +478,452 @@
     </style>
 </head>
 <body>
-    <div class="container">
-        <a href="index.html" class="back-link">← Back to Tools</a>
-        <h1>Duration Calculator</h1>
-        <p class="subtitle">Calculate the time difference between two dates</p>
+<div class="container">
+    <a class="back-link" href="index.html">← Back to Tools</a>
+    <h1>Duration Calculator</h1>
+    <p class="subtitle">Calculate the time difference between two dates</p>
 
-        <div class="card">
-            <label for="start">Start Time</label>
-            <input type="text" id="start" placeholder="Select start time">
-        </div>
+    <div class="card">
+        <label for="start">Start Time</label>
+        <input id="start" placeholder="Select start time" type="text">
+    </div>
 
-        <div class="card">
-            <label for="end">End Time</label>
-            <div class="end-time-row">
-                <input type="text" id="end" placeholder="Select end time">
-                <div class="checkbox-wrapper">
-                    <input type="checkbox" id="useNow">
-                    <label for="useNow">NOW</label>
-                </div>
-            </div>
-        </div>
-
-        <div class="card name-card">
-            <label for="name">Name (optional)</label>
-            <input type="text" id="name" placeholder="e.g. Project started, Vacation days...">
-        </div>
-
-        <div class="button-group">
-            <button class="btn-calculate" onclick="calculate()">Calculate</button>
-            <button class="btn-share" id="shareBtn" onclick="shareUrl()" disabled>Share</button>
-            <button class="btn-clear" onclick="clearAll()">Clear</button>
-        </div>
-
-        <div id="message" class="message"></div>
-
-        <div id="resultCard" class="card result-card" style="display: none;">
-            <div class="result">
-                <div id="resultTitle" style="color: #a0aec0; margin-bottom: 10px;">Duration</div>
-                <div id="resultValue" class="result-value"></div>
-                <div class="result-breakdown">
-                    <div class="result-item">
-                        <div id="days" class="result-item-value">0</div>
-                        <div class="result-item-label">Days</div>
-                    </div>
-                    <div class="result-item">
-                        <div id="hours" class="result-item-value">0</div>
-                        <div class="result-item-label">Hours</div>
-                    </div>
-                    <div class="result-item">
-                        <div id="minutes" class="result-item-value">0</div>
-                        <div class="result-item-label">Minutes</div>
-                    </div>
-                    <div class="result-item">
-                        <div id="seconds" class="result-item-value">0</div>
-                        <div class="result-item-label">Seconds</div>
-                    </div>
-                </div>
-                <div id="totalSeconds" class="result-total"></div>
+    <div class="card">
+        <label for="end">End Time</label>
+        <div class="end-time-row">
+            <input id="end" placeholder="Select end time" type="text">
+            <div class="checkbox-wrapper">
+                <input id="useNow" type="checkbox">
+                <label for="useNow">NOW</label>
             </div>
         </div>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
-    <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/plugins/confirmDate/confirmDate.js"></script>
-    <script>
-        const startEl = document.getElementById('start');
-        const endEl = document.getElementById('end');
-        const useNowEl = document.getElementById('useNow');
-        const nameEl = document.getElementById('name');
-        const resultCardEl = document.getElementById('resultCard');
-        const resultTitleEl = document.getElementById('resultTitle');
-        const resultValueEl = document.getElementById('resultValue');
-        const messageEl = document.getElementById('message');
+    <div class="card name-card">
+        <label for="name">Name (optional)</label>
+        <input id="name" placeholder="e.g. Project started, Vacation days..." type="text">
+    </div>
 
-        let intervalId = null;
-        let startPicker, endPicker;
+    <div class="button-group">
+        <button class="btn-calculate" onclick="calculate()">Calculate</button>
+        <button class="btn-share" disabled id="shareBtn" onclick="shareUrl()">Share</button>
+        <button class="btn-clear" onclick="clearAll()">Clear</button>
+    </div>
 
-        // Initialize Flatpickr
-        const flatpickrConfig = {
-            enableTime: true,
-            dateFormat: "Y-m-d H:i",
-            time_24hr: true,
-            allowInput: true,
-            disableMobile: true,
-            plugins: [new confirmDatePlugin({})]
-        };
+    <div class="message" id="message"></div>
 
-        const twoDaysAgo = new Date();
-        twoDaysAgo.setDate(twoDaysAgo.getDate() - 2);
-        twoDaysAgo.setSeconds(0, 0);
-        startPicker = flatpickr(startEl, {
-            ...flatpickrConfig,
-            defaultDate: twoDaysAgo,
-            onChange: (selectedDates) => {
-                if (selectedDates.length > 0) {
-                    selectedDates[0].setSeconds(0, 0);
-                }
-            }
-        });
+    <div class="card result-card" id="resultCard" style="display: none;">
+        <div class="result">
+            <div id="resultTitle" style="color: #a0aec0; margin-bottom: 10px;">Duration</div>
+            <div class="result-value" id="resultValue"></div>
+            <div class="result-breakdown">
+                <div class="result-item">
+                    <div class="result-item-value" id="days">0</div>
+                    <div class="result-item-label">Days</div>
+                </div>
+                <div class="result-item">
+                    <div class="result-item-value" id="hours">0</div>
+                    <div class="result-item-label">Hours</div>
+                </div>
+                <div class="result-item">
+                    <div class="result-item-value" id="minutes">0</div>
+                    <div class="result-item-label">Minutes</div>
+                </div>
+                <div class="result-item">
+                    <div class="result-item-value" id="seconds">0</div>
+                    <div class="result-item-label">Seconds</div>
+                </div>
+            </div>
+            <div class="result-total" id="totalSeconds"></div>
+        </div>
+    </div>
+</div>
 
-        endPicker = flatpickr(endEl, {
-            ...flatpickrConfig,
-            onChange: (selectedDates) => {
-                if (!useNowEl.checked && selectedDates.length > 0) {
-                    selectedDates[0].setSeconds(0, 0);
-                }
-            }
-        });
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+<script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/plugins/confirmDate/confirmDate.js"></script>
+<script>
+    const startEl = document.getElementById('start');
+    const endEl = document.getElementById('end');
+    const useNowEl = document.getElementById('useNow');
+    const nameEl = document.getElementById('name');
+    const resultCardEl = document.getElementById('resultCard');
+    const resultTitleEl = document.getElementById('resultTitle');
+    const resultValueEl = document.getElementById('resultValue');
+    const messageEl = document.getElementById('message');
 
-        function showMessage(text, type) {
-            messageEl.textContent = text;
-            messageEl.className = 'message ' + type;
-            setTimeout(() => {
-                messageEl.className = 'message';
-            }, 3000);
-        }
+    let intervalId = null;
+    let startPicker, endPicker;
 
-        function formatDateTime(date) {
-            const year = date.getFullYear();
-            const month = String(date.getMonth() + 1).padStart(2, '0');
-            const day = String(date.getDate()).padStart(2, '0');
-            const hours = String(date.getHours()).padStart(2, '0');
-            const minutes = String(date.getMinutes()).padStart(2, '0');
-            const seconds = String(date.getSeconds()).padStart(2, '0');
-            return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
-        }
+    // Initialize Flatpickr
+    const flatpickrConfig = {
+        enableTime: true,
+        dateFormat: "Y-m-d H:i",
+        time_24hr: true,
+        allowInput: true,
+        disableMobile: true,
+        plugins: [new confirmDatePlugin({})]
+    };
 
-        function updateNowDisplay() {
-            if (useNowEl.checked) {
-                endEl.value = formatDateTime(new Date());
-            }
-        }
-
-        // Clear hash when user modifies time
-        function clearHash() {
-            if (window.location.hash) {
-                history.replaceState(null, null, window.location.pathname);
-            }
-        }
-
-        useNowEl.addEventListener('change', function() {
-            clearHash();
-            if (this.checked) {
-                endPicker.clear();
-                updateNowDisplay();
-                if (intervalId) clearInterval(intervalId);
-                intervalId = setInterval(() => {
-                    updateNowDisplay();
-                    if (resultCardEl.style.display !== 'none') {
-                        calculate();
-                    }
-                }, 1000);
-            } else {
-                // Set end time to current time (without seconds)
-                const now = new Date();
-                now.setSeconds(0, 0);
-                endPicker.setDate(now);
-                if (intervalId) {
-                    clearInterval(intervalId);
-                    intervalId = null;
-                }
-            }
-            updateShareButton();
-        });
-
-        // Listen for Flatpickr changes to update share button and clear hash
-        startEl.addEventListener('change', () => { updateShareButton(); clearHash(); });
-        endEl.addEventListener('change', () => { updateShareButton(); clearHash(); });
-
-        function calculate() {
-            const startDate = startPicker.selectedDates[0];
-            if (!startDate) {
-                showMessage('Please enter a start time', 'error');
-                return;
-            }
-
-            let end;
-            if (useNowEl.checked) {
-                end = new Date();
-            } else {
-                const endDate = endPicker.selectedDates[0];
-                if (!endDate) {
-                    showMessage('Please enter an end time or use NOW', 'error');
-                    return;
-                }
-                end = endDate;
-            }
-
-            let diff = end - startDate;
-            const isNegative = diff < 0;
-            diff = Math.abs(diff);
-
-            const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-            const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-            const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-            const seconds = Math.floor((diff % (1000 * 60)) / 1000);
-
-            // Format main display
-            let parts = [];
-            if (days > 0) parts.push(days + 'd');
-            if (hours > 0 || days > 0) parts.push(hours + 'h');
-            if (minutes > 0 || hours > 0 || days > 0) parts.push(minutes + 'm');
-            parts.push(seconds + 's');
-
-            const displayValue = (isNegative ? '-' : '') + parts.join(' ');
-
-            // Update UI
-            resultCardEl.style.display = 'block';
-            resultValueEl.textContent = displayValue;
-            resultValueEl.className = 'result-value' + (isNegative ? ' negative' : '');
-
-            document.getElementById('days').textContent = days;
-            document.getElementById('hours').textContent = hours;
-            document.getElementById('minutes').textContent = minutes;
-            document.getElementById('seconds').textContent = seconds;
-
-            const totalSeconds = Math.floor(diff / 1000);
-            document.getElementById('totalSeconds').textContent =
-                `Total: ${totalSeconds.toLocaleString()} seconds`;
-
-            // Update title (use name if provided, otherwise "Duration")
-            const name = nameEl.value.trim();
-            let titleText = name || 'Duration';
-            if (isNegative && !name) {
-                titleText = 'Duration (negative)';
-            }
-
-            if (useNowEl.checked) {
-                resultTitleEl.innerHTML = titleText + ' <span class="live-badge">LIVE</span>';
-            } else {
-                resultTitleEl.textContent = titleText;
+    const twoDaysAgo = new Date();
+    twoDaysAgo.setDate(twoDaysAgo.getDate() - 2);
+    twoDaysAgo.setSeconds(0, 0);
+    startPicker = flatpickr(startEl, {
+        ...flatpickrConfig,
+        defaultDate: twoDaysAgo,
+        onChange: (selectedDates) => {
+            if (selectedDates.length > 0) {
+                selectedDates[0].setSeconds(0, 0);
             }
         }
+    });
 
-        function clearAll() {
-            startPicker.clear();
-            endPicker.clear();
-            endEl.value = '';
-            nameEl.value = '';
-            useNowEl.checked = false;
-            resultCardEl.style.display = 'none';
+    endPicker = flatpickr(endEl, {
+        ...flatpickrConfig,
+        onChange: (selectedDates) => {
+            if (!useNowEl.checked && selectedDates.length > 0) {
+                selectedDates[0].setSeconds(0, 0);
+            }
+        }
+    });
+
+    function showMessage(text, type) {
+        messageEl.textContent = text;
+        messageEl.className = 'message ' + type;
+        setTimeout(() => {
             messageEl.className = 'message';
+        }, 3000);
+    }
 
+    function formatDateTime(date) {
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        const hours = String(date.getHours()).padStart(2, '0');
+        const minutes = String(date.getMinutes()).padStart(2, '0');
+        const seconds = String(date.getSeconds()).padStart(2, '0');
+        return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+    }
+
+    function updateNowDisplay() {
+        if (useNowEl.checked) {
+            endEl.value = formatDateTime(new Date());
+        }
+    }
+
+    // Clear hash when user modifies time
+    function clearHash() {
+        if (window.location.hash) {
+            history.replaceState(null, null, window.location.pathname);
+        }
+    }
+
+    useNowEl.addEventListener('change', function () {
+        clearHash();
+        if (this.checked) {
+            endPicker.clear();
+            updateNowDisplay();
+            if (intervalId) clearInterval(intervalId);
+            intervalId = setInterval(() => {
+                updateNowDisplay();
+                if (resultCardEl.style.display !== 'none') {
+                    calculate();
+                }
+            }, 1000);
+        } else {
+            // Set end time to current time (without seconds)
+            const now = new Date();
+            now.setSeconds(0, 0);
+            endPicker.setDate(now);
             if (intervalId) {
                 clearInterval(intervalId);
                 intervalId = null;
             }
+        }
+        updateShareButton();
+    });
 
-            clearHash();
-            updateShareButton();
+    // Listen for Flatpickr changes to update share button and clear hash
+    startEl.addEventListener('change', () => {
+        updateShareButton();
+        clearHash();
+    });
+    endEl.addEventListener('change', () => {
+        updateShareButton();
+        clearHash();
+    });
+
+    function calculate() {
+        const startDate = startPicker.selectedDates[0];
+        if (!startDate) {
+            showMessage('Please enter a start time', 'error');
+            return;
         }
 
-        // Base62 charset
-        const BASE62 = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
-
-        // Encode number to Base62
-        function encodeBase62(num) {
-            if (num === 0n) return '0';
-            let arr = [];
-            while (num > 0n) {
-                arr.push(BASE62[Number(num % 62n)]);
-                num = num / 62n;
-            }
-            return arr.reverse().join('');
-        }
-
-        // Decode Base62 to number
-        function decodeBase62(str) {
-            let num = 0n;
-            for (let i = 0; i < str.length; i++) {
-                const idx = BASE62.indexOf(str[i]);
-                if (idx === -1) throw new Error('Invalid character');
-                num = num * 62n + BigInt(idx);
-            }
-            return num;
-        }
-
-        // NOW marker (max 32-bit value: 4294967295)
-        const NOW_MARKER = 0xFFFFFFFF;
-
-        // Base64URL encode (URL-safe, no padding)
-        function encodeBase64URL(str) {
-            const bytes = new TextEncoder().encode(str);
-            let binary = '';
-            bytes.forEach(b => binary += String.fromCharCode(b));
-            return btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
-        }
-
-        // Base64URL decode
-        function decodeBase64URL(str) {
-            str = str.replace(/-/g, '+').replace(/_/g, '/');
-            while (str.length % 4) str += '=';
-            const binary = atob(str);
-            const bytes = new Uint8Array(binary.length);
-            for (let i = 0; i < binary.length; i++) {
-                bytes[i] = binary.charCodeAt(i);
-            }
-            return new TextDecoder().decode(bytes);
-        }
-
-        // Encode share data to Base62
-        function encodeShareData(startTs, endTs, isNow) {
-            // If NOW mode, use marker for endTs
-            const endValue = isNow ? NOW_MARKER : endTs;
-            // Pack two 32-bit timestamps into a single number
-            // startTs in high 32 bits, endTs in low 32 bits
-            const packed = (BigInt(startTs) << 32n) | BigInt(endValue);
-            return encodeBase62(packed);
-        }
-
-        // Decode share data from Base62
-        function decodeShareData(base62) {
-            try {
-                const packed = decodeBase62(base62);
-                const startTs = Number(packed >> 32n);
-                const endTs = Number(packed & 0xFFFFFFFFn);
-                const isNow = endTs === NOW_MARKER;
-                return { s: startTs, e: endTs, isNow };
-            } catch (e) {
-                // Invalid hash, ignore
-            }
-            return null;
-        }
-
-        // Share URL function
-        function shareUrl() {
-            const startDate = startPicker.selectedDates[0];
-
-            if (!startDate) {
-                showMessage('Please set start time', 'error');
+        let end;
+        if (useNowEl.checked) {
+            end = new Date();
+        } else {
+            const endDate = endPicker.selectedDates[0];
+            if (!endDate) {
+                showMessage('Please enter an end time or use NOW', 'error');
                 return;
             }
-
-            const startTs = Math.floor(startDate.getTime() / 1000);
-            const isNow = useNowEl.checked;
-            let endTs = 0;
-
-            if (!isNow) {
-                const endDate = endPicker.selectedDates[0];
-                if (!endDate) {
-                    showMessage('Please set end time or use NOW', 'error');
-                    return;
-                }
-                endTs = Math.floor(endDate.getTime() / 1000);
-            }
-
-            const timeHash = encodeShareData(startTs, endTs, isNow);
-            const name = nameEl.value.trim();
-
-            // Format: #s={base62} or #s={base62}.{base64url_name}
-            let hash = timeHash;
-            if (name) {
-                hash += '.' + encodeBase64URL(name);
-            }
-
-            const url = window.location.origin + window.location.pathname + '#s=' + hash;
-
-            // Update current URL
-            history.pushState(null, null, '#s=' + hash);
-
-            navigator.clipboard.writeText(url).then(() => {
-                showMessage('Share link copied to clipboard!', 'success');
-            }).catch(() => {
-                showMessage('Failed to copy link', 'error');
-            });
+            end = endDate;
         }
 
-        // Update share button state
-        function updateShareButton() {
-            const shareBtn = document.getElementById('shareBtn');
-            const hasStart = startPicker.selectedDates.length > 0;
-            const hasEnd = endPicker.selectedDates.length > 0;
-            const isNowMode = useNowEl.checked;
+        let diff = end - startDate;
+        const isNegative = diff < 0;
+        diff = Math.abs(diff);
 
-            // Enable if start time is set, and either end time is set or NOW is checked
-            shareBtn.disabled = !hasStart || (!hasEnd && !isNowMode);
+        const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+        const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+        const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+        const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+
+        // Format main display
+        let parts = [];
+        if (days > 0) parts.push(days + 'd');
+        if (hours > 0 || days > 0) parts.push(hours + 'h');
+        if (minutes > 0 || hours > 0 || days > 0) parts.push(minutes + 'm');
+        parts.push(seconds + 's');
+
+        const displayValue = (isNegative ? '-' : '') + parts.join(' ');
+
+        // Update UI
+        resultCardEl.style.display = 'block';
+        resultValueEl.textContent = displayValue;
+        resultValueEl.className = 'result-value' + (isNegative ? ' negative' : '');
+
+        document.getElementById('days').textContent = days;
+        document.getElementById('hours').textContent = hours;
+        document.getElementById('minutes').textContent = minutes;
+        document.getElementById('seconds').textContent = seconds;
+
+        const totalSeconds = Math.floor(diff / 1000);
+        document.getElementById('totalSeconds').textContent =
+            `Total: ${totalSeconds.toLocaleString()} seconds`;
+
+        // Update title (use name if provided, otherwise "Duration")
+        const name = nameEl.value.trim();
+        let titleText = name || 'Duration';
+        if (isNegative && !name) {
+            titleText = 'Duration (negative)';
         }
 
-        // Parse hash on page load
-        function parseHash() {
-            const hash = window.location.hash;
-            if (hash && hash.startsWith('#s=')) {
-                const hashContent = hash.substring(3);
+        if (useNowEl.checked) {
+            resultTitleEl.innerHTML = titleText + ' <span class="live-badge">LIVE</span>';
+        } else {
+            resultTitleEl.textContent = titleText;
+        }
+    }
 
-                // Check if there's a name: format is {base62}.{base64url_name}
-                const dotIndex = hashContent.indexOf('.');
-                let timeHash, name = '';
+    function clearAll() {
+        startPicker.clear();
+        endPicker.clear();
+        endEl.value = '';
+        nameEl.value = '';
+        useNowEl.checked = false;
+        resultCardEl.style.display = 'none';
+        messageEl.className = 'message';
 
-                if (dotIndex !== -1) {
-                    timeHash = hashContent.substring(0, dotIndex);
-                    try {
-                        name = decodeBase64URL(hashContent.substring(dotIndex + 1));
-                    } catch (e) {
-                        // Invalid name encoding, ignore
-                    }
-                } else {
-                    timeHash = hashContent;
-                }
-
-                const data = decodeShareData(timeHash);
-
-                if (data) {
-                    const startDate = new Date(data.s * 1000);
-                    startDate.setSeconds(0, 0);
-                    startPicker.setDate(startDate);
-
-                    if (data.isNow) {
-                        // NOW mode
-                        useNowEl.checked = true;
-                        updateNowDisplay();
-                        // Start live update timer
-                        if (intervalId) clearInterval(intervalId);
-                        intervalId = setInterval(() => {
-                            updateNowDisplay();
-                            if (resultCardEl.style.display !== 'none') {
-                                calculate();
-                            }
-                        }, 1000);
-                    } else {
-                        // Fixed end time
-                        const endDate = new Date(data.e * 1000);
-                        endDate.setSeconds(0, 0);
-                        endPicker.setDate(endDate);
-                        useNowEl.checked = false;
-                    }
-
-                    // Set name if present
-                    if (name) {
-                        nameEl.value = name;
-                    }
-
-                    calculate();
-                }
-            }
+        if (intervalId) {
+            clearInterval(intervalId);
+            intervalId = null;
         }
 
-        // Parse hash on load
-        parseHash();
-
-        // Update share button state on init
+        clearHash();
         updateShareButton();
-    </script>
+    }
+
+    // Base62 charset
+    const BASE62 = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
+
+    // Encode number to Base62
+    function encodeBase62(num) {
+        if (num === 0n) return '0';
+        let arr = [];
+        while (num > 0n) {
+            arr.push(BASE62[Number(num % 62n)]);
+            num = num / 62n;
+        }
+        return arr.reverse().join('');
+    }
+
+    // Decode Base62 to number
+    function decodeBase62(str) {
+        let num = 0n;
+        for (let i = 0; i < str.length; i++) {
+            const idx = BASE62.indexOf(str[i]);
+            if (idx === -1) throw new Error('Invalid character');
+            num = num * 62n + BigInt(idx);
+        }
+        return num;
+    }
+
+    // NOW marker (max 32-bit value: 4294967295)
+    const NOW_MARKER = 0xFFFFFFFF;
+
+    // Base64URL encode (URL-safe, no padding)
+    function encodeBase64URL(str) {
+        const bytes = new TextEncoder().encode(str);
+        let binary = '';
+        bytes.forEach(b => binary += String.fromCharCode(b));
+        return btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+    }
+
+    // Base64URL decode
+    function decodeBase64URL(str) {
+        str = str.replace(/-/g, '+').replace(/_/g, '/');
+        while (str.length % 4) str += '=';
+        const binary = atob(str);
+        const bytes = new Uint8Array(binary.length);
+        for (let i = 0; i < binary.length; i++) {
+            bytes[i] = binary.charCodeAt(i);
+        }
+        return new TextDecoder().decode(bytes);
+    }
+
+    // Encode share data to Base62
+    function encodeShareData(startTs, endTs, isNow) {
+        // If NOW mode, use marker for endTs
+        const endValue = isNow ? NOW_MARKER : endTs;
+        // Pack two 32-bit timestamps into a single number
+        // startTs in high 32 bits, endTs in low 32 bits
+        const packed = (BigInt(startTs) << 32n) | BigInt(endValue);
+        return encodeBase62(packed);
+    }
+
+    // Decode share data from Base62
+    function decodeShareData(base62) {
+        try {
+            const packed = decodeBase62(base62);
+            const startTs = Number(packed >> 32n);
+            const endTs = Number(packed & 0xFFFFFFFFn);
+            const isNow = endTs === NOW_MARKER;
+            return {s: startTs, e: endTs, isNow};
+        } catch (e) {
+            // Invalid hash, ignore
+        }
+        return null;
+    }
+
+    // Share URL function
+    function shareUrl() {
+        const startDate = startPicker.selectedDates[0];
+
+        if (!startDate) {
+            showMessage('Please set start time', 'error');
+            return;
+        }
+
+        const startTs = Math.floor(startDate.getTime() / 1000);
+        const isNow = useNowEl.checked;
+        let endTs = 0;
+
+        if (!isNow) {
+            const endDate = endPicker.selectedDates[0];
+            if (!endDate) {
+                showMessage('Please set end time or use NOW', 'error');
+                return;
+            }
+            endTs = Math.floor(endDate.getTime() / 1000);
+        }
+
+        const timeHash = encodeShareData(startTs, endTs, isNow);
+        const name = nameEl.value.trim();
+
+        // Format: #s={base62} or #s={base62}.{base64url_name}
+        let hash = timeHash;
+        if (name) {
+            hash += '.' + encodeBase64URL(name);
+        }
+
+        const url = window.location.origin + window.location.pathname + '#s=' + hash;
+
+        // Update current URL
+        history.pushState(null, null, '#s=' + hash);
+
+        navigator.clipboard.writeText(url).then(() => {
+            showMessage('Share link copied to clipboard!', 'success');
+        }).catch(() => {
+            showMessage('Failed to copy link', 'error');
+        });
+    }
+
+    // Update share button state
+    function updateShareButton() {
+        const shareBtn = document.getElementById('shareBtn');
+        const hasStart = startPicker.selectedDates.length > 0;
+        const hasEnd = endPicker.selectedDates.length > 0;
+        const isNowMode = useNowEl.checked;
+
+        // Enable if start time is set, and either end time is set or NOW is checked
+        shareBtn.disabled = !hasStart || (!hasEnd && !isNowMode);
+    }
+
+    // Parse hash on page load
+    function parseHash() {
+        const hash = window.location.hash;
+        if (hash && hash.startsWith('#s=')) {
+            const hashContent = hash.substring(3);
+
+            // Check if there's a name: format is {base62}.{base64url_name}
+            const dotIndex = hashContent.indexOf('.');
+            let timeHash, name = '';
+
+            if (dotIndex !== -1) {
+                timeHash = hashContent.substring(0, dotIndex);
+                try {
+                    name = decodeBase64URL(hashContent.substring(dotIndex + 1));
+                } catch (e) {
+                    // Invalid name encoding, ignore
+                }
+            } else {
+                timeHash = hashContent;
+            }
+
+            const data = decodeShareData(timeHash);
+
+            if (data) {
+                const startDate = new Date(data.s * 1000);
+                startDate.setSeconds(0, 0);
+                startPicker.setDate(startDate);
+
+                if (data.isNow) {
+                    // NOW mode
+                    useNowEl.checked = true;
+                    updateNowDisplay();
+                    // Start live update timer
+                    if (intervalId) clearInterval(intervalId);
+                    intervalId = setInterval(() => {
+                        updateNowDisplay();
+                        if (resultCardEl.style.display !== 'none') {
+                            calculate();
+                        }
+                    }, 1000);
+                } else {
+                    // Fixed end time
+                    const endDate = new Date(data.e * 1000);
+                    endDate.setSeconds(0, 0);
+                    endPicker.setDate(endDate);
+                    useNowEl.checked = false;
+                }
+
+                // Set name if present
+                if (name) {
+                    nameEl.value = name;
+                }
+
+                calculate();
+            }
+        }
+    }
+
+    // Parse hash on load
+    parseHash();
+
+    // Update share button state on init
+    updateShareButton();
+</script>
 </body>
 </html>

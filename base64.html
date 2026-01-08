@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta content="width=device-width, initial-scale=1.0" name="viewport">
     <title>Base64 Encoder/Decoder</title>
     <style>
         * {
@@ -202,129 +202,129 @@
     </style>
 </head>
 <body>
-    <div class="container">
-        <a href="index.html" class="back-link">← Back to Tools</a>
-        <h1>Base64 Encoder/Decoder</h1>
-        <p class="subtitle">Encode and decode Base64 strings with Unicode support</p>
+<div class="container">
+    <a class="back-link" href="index.html">← Back to Tools</a>
+    <h1>Base64 Encoder/Decoder</h1>
+    <p class="subtitle">Encode and decode Base64 strings with Unicode support</p>
 
-        <div class="card">
-            <label for="input">Input</label>
-            <textarea id="input" placeholder="Enter text to encode or decode..."></textarea>
-        </div>
+    <div class="card">
+        <label for="input">Input</label>
+        <textarea id="input" placeholder="Enter text to encode or decode..."></textarea>
+    </div>
 
-        <div class="button-group">
-            <button class="btn-encode" onclick="encode()">Encode</button>
-            <button class="btn-decode" onclick="decode()">Decode</button>
-        </div>
+    <div class="button-group">
+        <button class="btn-encode" onclick="encode()">Encode</button>
+        <button class="btn-decode" onclick="decode()">Decode</button>
+    </div>
 
-        <div class="swap-btn">
-            <button onclick="swap()" title="Swap input and output">⇅</button>
-        </div>
+    <div class="swap-btn">
+        <button onclick="swap()" title="Swap input and output">⇅</button>
+    </div>
 
-        <div class="card">
-            <label for="output">Output</label>
-            <textarea id="output" readonly placeholder="Result will be shown here..."></textarea>
-            <div class="button-group" style="margin-bottom: 0;">
-                <button class="btn-copy" onclick="copyResult()">Copy</button>
-                <button class="btn-clear" onclick="clearAll()">Clear</button>
-            </div>
+    <div class="card">
+        <label for="output">Output</label>
+        <textarea id="output" placeholder="Result will be shown here..." readonly></textarea>
+        <div class="button-group" style="margin-bottom: 0;">
+            <button class="btn-copy" onclick="copyResult()">Copy</button>
+            <button class="btn-clear" onclick="clearAll()">Clear</button>
         </div>
     </div>
-    <div id="message" class="message"></div>
+</div>
+<div class="message" id="message"></div>
 
-    <script>
-        const inputEl = document.getElementById('input');
-        const outputEl = document.getElementById('output');
-        const messageEl = document.getElementById('message');
+<script>
+    const inputEl = document.getElementById('input');
+    const outputEl = document.getElementById('output');
+    const messageEl = document.getElementById('message');
 
-        // Auto-resize textarea
-        function autoResize(textarea) {
-            textarea.style.height = 'auto';
-            textarea.style.height = textarea.scrollHeight + 'px';
+    // Auto-resize textarea
+    function autoResize(textarea) {
+        textarea.style.height = 'auto';
+        textarea.style.height = textarea.scrollHeight + 'px';
+    }
+
+    inputEl.addEventListener('input', () => autoResize(inputEl));
+    outputEl.addEventListener('input', () => autoResize(outputEl));
+
+    // Initial resize
+    autoResize(inputEl);
+    autoResize(outputEl);
+
+    function showMessage(text, type) {
+        messageEl.textContent = text;
+        messageEl.className = 'message ' + type;
+        setTimeout(() => {
+            messageEl.className = 'message';
+        }, 3000);
+    }
+
+    function encode() {
+        const text = inputEl.value;
+        if (!text) {
+            showMessage('Please enter text to encode', 'error');
+            return;
         }
+        try {
+            // Support Unicode characters
+            const bytes = new TextEncoder().encode(text);
+            const encoded = btoa(Array.from(bytes, b => String.fromCharCode(b)).join(''));
+            outputEl.value = encoded;
+            autoResize(outputEl);
+            showMessage('Encoded successfully', 'success');
+        } catch (e) {
+            showMessage('Encode failed: ' + e.message, 'error');
+        }
+    }
 
-        inputEl.addEventListener('input', () => autoResize(inputEl));
-        outputEl.addEventListener('input', () => autoResize(outputEl));
+    function decode() {
+        const text = inputEl.value;
+        if (!text) {
+            showMessage('Please enter text to decode', 'error');
+            return;
+        }
+        try {
+            // Support Unicode characters
+            const bytes = Uint8Array.from(atob(text), c => c.charCodeAt(0));
+            const decoded = new TextDecoder().decode(bytes);
+            outputEl.value = decoded;
+            autoResize(outputEl);
+            showMessage('Decoded successfully', 'success');
+        } catch (e) {
+            showMessage('Decode failed: Please enter a valid Base64 string', 'error');
+        }
+    }
 
-        // Initial resize
+    function swap() {
+        const temp = inputEl.value;
+        inputEl.value = outputEl.value;
+        outputEl.value = temp;
         autoResize(inputEl);
         autoResize(outputEl);
+    }
 
-        function showMessage(text, type) {
-            messageEl.textContent = text;
-            messageEl.className = 'message ' + type;
-            setTimeout(() => {
-                messageEl.className = 'message';
-            }, 3000);
+    function copyResult() {
+        const text = outputEl.value;
+        if (!text) {
+            showMessage('Nothing to copy', 'error');
+            return;
         }
+        navigator.clipboard.writeText(text).then(() => {
+            showMessage('Copied to clipboard', 'success');
+        }).catch(() => {
+            // Fallback
+            outputEl.select();
+            document.execCommand('copy');
+            showMessage('Copied to clipboard', 'success');
+        });
+    }
 
-        function encode() {
-            const text = inputEl.value;
-            if (!text) {
-                showMessage('Please enter text to encode', 'error');
-                return;
-            }
-            try {
-                // Support Unicode characters
-                const bytes = new TextEncoder().encode(text);
-                const encoded = btoa(Array.from(bytes, b => String.fromCharCode(b)).join(''));
-                outputEl.value = encoded;
-                autoResize(outputEl);
-                showMessage('Encoded successfully', 'success');
-            } catch (e) {
-                showMessage('Encode failed: ' + e.message, 'error');
-            }
-        }
-
-        function decode() {
-            const text = inputEl.value;
-            if (!text) {
-                showMessage('Please enter text to decode', 'error');
-                return;
-            }
-            try {
-                // Support Unicode characters
-                const bytes = Uint8Array.from(atob(text), c => c.charCodeAt(0));
-                const decoded = new TextDecoder().decode(bytes);
-                outputEl.value = decoded;
-                autoResize(outputEl);
-                showMessage('Decoded successfully', 'success');
-            } catch (e) {
-                showMessage('Decode failed: Please enter a valid Base64 string', 'error');
-            }
-        }
-
-        function swap() {
-            const temp = inputEl.value;
-            inputEl.value = outputEl.value;
-            outputEl.value = temp;
-            autoResize(inputEl);
-            autoResize(outputEl);
-        }
-
-        function copyResult() {
-            const text = outputEl.value;
-            if (!text) {
-                showMessage('Nothing to copy', 'error');
-                return;
-            }
-            navigator.clipboard.writeText(text).then(() => {
-                showMessage('Copied to clipboard', 'success');
-            }).catch(() => {
-                // Fallback
-                outputEl.select();
-                document.execCommand('copy');
-                showMessage('Copied to clipboard', 'success');
-            });
-        }
-
-        function clearAll() {
-            inputEl.value = '';
-            outputEl.value = '';
-            autoResize(inputEl);
-            autoResize(outputEl);
-            showMessage('Cleared', 'success');
-        }
-    </script>
+    function clearAll() {
+        inputEl.value = '';
+        outputEl.value = '';
+        autoResize(inputEl);
+        autoResize(outputEl);
+        showMessage('Cleared', 'success');
+    }
+</script>
 </body>
 </html>

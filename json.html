@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta content="width=device-width, initial-scale=1.0" name="viewport">
     <title>JSON Formatter</title>
     <style>
         * {
@@ -99,11 +99,25 @@
             color: #4a5568;
         }
 
-        .json-key { color: #00d9ff; }
-        .json-string { color: #10b981; }
-        .json-number { color: #f59e0b; }
-        .json-boolean { color: #a855f7; }
-        .json-null { color: #6b7280; }
+        .json-key {
+            color: #00d9ff;
+        }
+
+        .json-string {
+            color: #10b981;
+        }
+
+        .json-number {
+            color: #f59e0b;
+        }
+
+        .json-boolean {
+            color: #a855f7;
+        }
+
+        .json-null {
+            color: #6b7280;
+        }
 
         .options {
             display: flex;
@@ -248,157 +262,157 @@
     </style>
 </head>
 <body>
-    <div class="container">
-        <a href="index.html" class="back-link">← Back to Tools</a>
-        <h1>JSON Formatter</h1>
-        <p class="subtitle">Format, minify, and validate JSON data</p>
+<div class="container">
+    <a class="back-link" href="index.html">← Back to Tools</a>
+    <h1>JSON Formatter</h1>
+    <p class="subtitle">Format, minify, and validate JSON data</p>
 
-        <div class="card">
-            <div class="options">
-                <span>Indent:</span>
-                <button class="option-btn active" data-indent="2" onclick="setIndent(2)">2 spaces</button>
-                <button class="option-btn" data-indent="4" onclick="setIndent(4)">4 spaces</button>
-                <button class="option-btn" data-indent="tab" onclick="setIndent('tab')">Tab</button>
-            </div>
-            <label for="input">Input</label>
-            <textarea id="input" placeholder='{"key": "value", "array": [1, 2, 3]}'></textarea>
+    <div class="card">
+        <div class="options">
+            <span>Indent:</span>
+            <button class="option-btn active" data-indent="2" onclick="setIndent(2)">2 spaces</button>
+            <button class="option-btn" data-indent="4" onclick="setIndent(4)">4 spaces</button>
+            <button class="option-btn" data-indent="tab" onclick="setIndent('tab')">Tab</button>
         </div>
-
-        <div class="button-group">
-            <button class="btn-format" onclick="formatJSON()">Format</button>
-            <button class="btn-minify" onclick="minifyJSON()">Minify</button>
-            <button class="btn-copy" onclick="copyResult()">Copy</button>
-            <button class="btn-clear" onclick="clearAll()">Clear</button>
-        </div>
-
-        <div class="card">
-            <label for="output">Output</label>
-            <pre id="output" style="min-height: 100px;"></pre>
-        </div>
+        <label for="input">Input</label>
+        <textarea id="input" placeholder='{"key": "value", "array": [1, 2, 3]}'></textarea>
     </div>
-    <div id="message" class="message"></div>
 
-    <script>
-        const inputEl = document.getElementById('input');
-        const outputEl = document.getElementById('output');
-        const messageEl = document.getElementById('message');
-        let currentIndent = 2;
+    <div class="button-group">
+        <button class="btn-format" onclick="formatJSON()">Format</button>
+        <button class="btn-minify" onclick="minifyJSON()">Minify</button>
+        <button class="btn-copy" onclick="copyResult()">Copy</button>
+        <button class="btn-clear" onclick="clearAll()">Clear</button>
+    </div>
 
-        // Auto-resize textarea
-        function autoResize() {
-            inputEl.style.height = 'auto';
-            inputEl.style.height = inputEl.scrollHeight + 'px';
+    <div class="card">
+        <label for="output">Output</label>
+        <pre id="output" style="min-height: 100px;"></pre>
+    </div>
+</div>
+<div class="message" id="message"></div>
+
+<script>
+    const inputEl = document.getElementById('input');
+    const outputEl = document.getElementById('output');
+    const messageEl = document.getElementById('message');
+    let currentIndent = 2;
+
+    // Auto-resize textarea
+    function autoResize() {
+        inputEl.style.height = 'auto';
+        inputEl.style.height = inputEl.scrollHeight + 'px';
+    }
+
+    inputEl.addEventListener('input', autoResize);
+
+    // Initial resize
+    autoResize();
+
+    function showMessage(text, type) {
+        messageEl.textContent = text;
+        messageEl.className = 'message ' + type;
+        setTimeout(() => {
+            messageEl.className = 'message';
+        }, 3000);
+    }
+
+    function setIndent(value) {
+        currentIndent = value;
+        document.querySelectorAll('.option-btn').forEach(btn => {
+            btn.classList.remove('active');
+            if (btn.dataset.indent === String(value)) {
+                btn.classList.add('active');
+            }
+        });
+    }
+
+    function sortKeys(obj) {
+        if (Array.isArray(obj)) {
+            return obj.map(sortKeys);
         }
+        if (obj !== null && typeof obj === 'object') {
+            return Object.keys(obj).sort().reduce((acc, key) => {
+                acc[key] = sortKeys(obj[key]);
+                return acc;
+            }, {});
+        }
+        return obj;
+    }
 
-        inputEl.addEventListener('input', autoResize);
+    function formatJSON() {
+        const text = inputEl.value.trim();
+        if (!text) {
+            showMessage('Please enter JSON to format', 'error');
+            return;
+        }
+        try {
+            const parsed = JSON.parse(text);
+            const sorted = sortKeys(parsed);
+            const indent = currentIndent === 'tab' ? '\t' : currentIndent;
+            const jsonStr = JSON.stringify(sorted, null, indent);
+            outputEl.innerHTML = syntaxHighlight(jsonStr);
+            outputEl.dataset.raw = jsonStr;
+            showMessage('Formatted successfully', 'success');
+        } catch (e) {
+            showMessage('Invalid JSON: ' + e.message, 'error');
+        }
+    }
 
-        // Initial resize
+    function minifyJSON() {
+        const text = inputEl.value.trim();
+        if (!text) {
+            showMessage('Please enter JSON to minify', 'error');
+            return;
+        }
+        try {
+            const parsed = JSON.parse(text);
+            const jsonStr = JSON.stringify(parsed);
+            outputEl.innerHTML = syntaxHighlight(jsonStr);
+            outputEl.dataset.raw = jsonStr;
+            showMessage('Minified successfully', 'success');
+        } catch (e) {
+            showMessage('Invalid JSON: ' + e.message, 'error');
+        }
+    }
+
+    function syntaxHighlight(json) {
+        json = json.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+        return json.replace(/("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g, function (match) {
+            let cls = 'json-number';
+            if (/^"/.test(match)) {
+                if (/:$/.test(match)) {
+                    cls = 'json-key';
+                } else {
+                    cls = 'json-string';
+                }
+            } else if (/true|false/.test(match)) {
+                cls = 'json-boolean';
+            } else if (/null/.test(match)) {
+                cls = 'json-null';
+            }
+            return '<span class="' + cls + '">' + match + '</span>';
+        });
+    }
+
+    function copyResult() {
+        const text = outputEl.dataset.raw || outputEl.textContent;
+        if (!text) {
+            showMessage('Nothing to copy', 'error');
+            return;
+        }
+        navigator.clipboard.writeText(text).then(() => {
+            showMessage('Copied to clipboard', 'success');
+        });
+    }
+
+    function clearAll() {
+        inputEl.value = '';
+        outputEl.innerHTML = '';
+        outputEl.dataset.raw = '';
         autoResize();
-
-        function showMessage(text, type) {
-            messageEl.textContent = text;
-            messageEl.className = 'message ' + type;
-            setTimeout(() => {
-                messageEl.className = 'message';
-            }, 3000);
-        }
-
-        function setIndent(value) {
-            currentIndent = value;
-            document.querySelectorAll('.option-btn').forEach(btn => {
-                btn.classList.remove('active');
-                if (btn.dataset.indent === String(value)) {
-                    btn.classList.add('active');
-                }
-            });
-        }
-
-        function sortKeys(obj) {
-            if (Array.isArray(obj)) {
-                return obj.map(sortKeys);
-            }
-            if (obj !== null && typeof obj === 'object') {
-                return Object.keys(obj).sort().reduce((acc, key) => {
-                    acc[key] = sortKeys(obj[key]);
-                    return acc;
-                }, {});
-            }
-            return obj;
-        }
-
-        function formatJSON() {
-            const text = inputEl.value.trim();
-            if (!text) {
-                showMessage('Please enter JSON to format', 'error');
-                return;
-            }
-            try {
-                const parsed = JSON.parse(text);
-                const sorted = sortKeys(parsed);
-                const indent = currentIndent === 'tab' ? '\t' : currentIndent;
-                const jsonStr = JSON.stringify(sorted, null, indent);
-                outputEl.innerHTML = syntaxHighlight(jsonStr);
-                outputEl.dataset.raw = jsonStr;
-                showMessage('Formatted successfully', 'success');
-            } catch (e) {
-                showMessage('Invalid JSON: ' + e.message, 'error');
-            }
-        }
-
-        function minifyJSON() {
-            const text = inputEl.value.trim();
-            if (!text) {
-                showMessage('Please enter JSON to minify', 'error');
-                return;
-            }
-            try {
-                const parsed = JSON.parse(text);
-                const jsonStr = JSON.stringify(parsed);
-                outputEl.innerHTML = syntaxHighlight(jsonStr);
-                outputEl.dataset.raw = jsonStr;
-                showMessage('Minified successfully', 'success');
-            } catch (e) {
-                showMessage('Invalid JSON: ' + e.message, 'error');
-            }
-        }
-
-        function syntaxHighlight(json) {
-            json = json.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-            return json.replace(/("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g, function (match) {
-                let cls = 'json-number';
-                if (/^"/.test(match)) {
-                    if (/:$/.test(match)) {
-                        cls = 'json-key';
-                    } else {
-                        cls = 'json-string';
-                    }
-                } else if (/true|false/.test(match)) {
-                    cls = 'json-boolean';
-                } else if (/null/.test(match)) {
-                    cls = 'json-null';
-                }
-                return '<span class="' + cls + '">' + match + '</span>';
-            });
-        }
-
-        function copyResult() {
-            const text = outputEl.dataset.raw || outputEl.textContent;
-            if (!text) {
-                showMessage('Nothing to copy', 'error');
-                return;
-            }
-            navigator.clipboard.writeText(text).then(() => {
-                showMessage('Copied to clipboard', 'success');
-            });
-        }
-
-        function clearAll() {
-            inputEl.value = '';
-            outputEl.innerHTML = '';
-            outputEl.dataset.raw = '';
-            autoResize();
-            showMessage('Cleared', 'success');
-        }
-    </script>
+        showMessage('Cleared', 'success');
+    }
+</script>
 </body>
 </html>
