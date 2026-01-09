@@ -5,6 +5,8 @@
     <meta content="width=device-width, initial-scale=1.0" name="viewport">
     <title>Brewfile Analyzer</title>
     <script src="https://unpkg.com/cytoscape/dist/cytoscape.min.js"></script>
+    <!-- CodeMirror CSS -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.css">
     <style>
         * {
             margin: 0;
@@ -71,52 +73,145 @@
             color: #a0aec0;
         }
 
-        .editor-container {
-            display: flex;
+        /* CodeMirror 主容器 */
+        .CodeMirror {
+            background: rgba(0, 0, 0, 0.4) !important;
+            height: auto;
+            min-height: 60px;
             border: 2px solid rgba(255, 255, 255, 0.1);
             border-radius: 12px;
-            background: rgba(0, 0, 0, 0.4);
-            overflow: hidden;
+            font-family: 'Consolas', 'Monaco', monospace;
+            font-size: 13px;
             transition: border-color 0.3s;
-        }
-
-        .editor-container:focus-within {
-            border-color: #f97316;
-        }
-
-        .line-numbers {
-            padding: 16px 0;
-            background: rgba(0, 0, 0, 0.3);
-            color: #6b7280;
-            font-size: 13px;
-            font-family: 'Consolas', 'Monaco', monospace;
-            line-height: 1.5;
-            text-align: right;
-            user-select: none;
-            min-width: 40px;
-            border-right: 1px solid rgba(255, 255, 255, 0.1);
-        }
-
-        .line-numbers div {
-            padding: 0 8px;
-        }
-
-        textarea {
-            width: 100%;
-            min-height: 60px;
-            padding: 16px;
-            border: none;
-            background: transparent;
-            color: #fff;
-            font-size: 13px;
-            font-family: 'Consolas', 'Monaco', monospace;
-            resize: none;
+            position: relative;
             overflow: hidden;
-            line-height: 1.5;
+            color: #fff !important;
         }
 
-        textarea:focus {
-            outline: none;
+        .CodeMirror-focused {
+            border-color: #f97316 !important;
+        }
+
+        /* 行号区 */
+        .CodeMirror-gutters {
+            background: rgba(0, 0, 0, 0.3) !important;
+            border-right: 1px solid rgba(255, 255, 255, 0.1) !important;
+            width: 3em !important;
+        }
+
+        .CodeMirror-linenumber {
+            color: rgba(107, 114, 128, 0.8) !important;
+            padding: 0 8px 0 3px !important;
+            min-width: 2em;
+            text-align: right;
+        }
+
+        /* 编辑器内容区 */
+        .CodeMirror-scroll {
+            overflow: auto !important;
+        }
+
+        .CodeMirror-lines {
+            padding: 16px 0; /* 适中的上下 padding，确保间距一致 */
+        }
+
+        .CodeMirror pre {
+            padding: 0 0.4em;
+            line-height: 1.5;
+            margin: 0; /* 确保没有额外的 margin */
+        }
+
+        /* 确保行间距一致 */
+        .CodeMirror-line {
+            padding: 0;
+            margin: 0;
+        }
+
+        /* 选中区域 */
+        .CodeMirror-selected {
+            background: rgba(249, 115, 22, 0.15) !important;
+        }
+
+        /* 当前行高亮 */
+        .CodeMirror-activeline-background {
+            background: rgba(255, 255, 255, 0.03) !important;
+        }
+
+        /* 光标 */
+        .CodeMirror-cursor {
+            border-left: 2px solid #f97316 !important;
+        }
+
+        /* 匹配的括号 */
+        .CodeMirror-matchingbracket {
+            color: #f97316 !important;
+            background: rgba(249, 115, 22, 0.3) !important;
+            font-weight: bold;
+            border-radius: 2px;
+            padding: 0 2px;
+            margin: 0 -2px;
+        }
+
+        /* Ruby 语法高亮 - 适配 Brewfile */
+        .cm-keyword {
+            color: #f97316 !important;
+            font-weight: bold;
+        }
+
+        .cm-string {
+            color: #10b981 !important;
+        }
+
+        .cm-atom {
+            color: #00d9ff !important;
+        }
+
+        .cm-variable {
+            color: #a0aec0 !important;
+        }
+
+        .cm-variable-2 {
+            color: #f87171 !important;
+        }
+
+        .cm-comment {
+            color: #6b7280 !important;
+            font-style: italic;
+        }
+
+        .cm-def {
+            color: #f97316 !important;
+            font-weight: bold;
+        }
+
+        .cm-property {
+            color: #00d9ff !important;
+        }
+
+        .cm-operator {
+            color: #a0aec0 !important;
+        }
+
+        .cm-punctuation {
+            color: #a0aec0 !important;
+        }
+
+        /* 滚动条 */
+        .CodeMirror-vscrollbar::-webkit-scrollbar,
+        .CodeMirror-hscrollbar::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+
+        .CodeMirror-vscrollbar::-webkit-scrollbar-thumb,
+        .CodeMirror-hscrollbar::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 4px;
+        }
+
+        .CodeMirror-vscrollbar::-webkit-scrollbar-track,
+        .CodeMirror-hscrollbar::-webkit-scrollbar-track {
+            background: transparent;
         }
 
         .drop-zone {
@@ -315,10 +410,6 @@
             text-decoration: underline;
         }
 
-        .error-text {
-            color: #f87171;
-        }
-
         .deps-list {
             display: flex;
             flex-wrap: wrap;
@@ -412,14 +503,6 @@
             background: rgba(255, 255, 255, 0.1);
         }
 
-        .tab-content {
-            display: none;
-        }
-
-        .tab-content.active {
-            display: block;
-        }
-
         @media (max-width: 768px) {
             h1 {
                 font-size: 1.4rem;
@@ -429,6 +512,9 @@
                 padding: 16px;
             }
 
+            .CodeMirror {
+                font-size: 11px;
+            }
 
             #graph-container {
                 height: 350px;
@@ -593,14 +679,8 @@
             </div>
             <input accept="Brewfile,Brewfile.*,*.txt" id="fileInput" style="display: none;" type="file">
         </div>
-        <div class="editor-container">
-            <div class="line-numbers" id="lineNumbers">
-                <div>1</div>
-            </div>
-            <textarea id="input" placeholder='brew "wget"
-brew "python@3.12"
-brew "openssl@3"
-brew "node"'></textarea>
+        <div id="editor-wrapper">
+            <textarea id="input" hidden></textarea>
         </div>
 
         <div class="button-group">
@@ -661,6 +741,12 @@ brew "node"'></textarea>
     </div>
 </div>
 
+<!-- CodeMirror JS -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/ruby/ruby.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/edit/matchbrackets.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/edit/closebrackets.min.js"></script>
+
 <script>
     const inputEl = document.getElementById('input');
     const resultEl = document.getElementById('result');
@@ -674,6 +760,26 @@ brew "node"'></textarea>
 
     let allFormulas = [];
     let failedFormulas = [];
+
+    // CodeMirror 配置
+    const codeMirrorConfig = {
+        mode: "text/x-ruby", // Ruby 模式支持 Brewfile 语法
+        lineNumbers: true,
+        lineWrapping: true,
+        matchBrackets: true,
+        autoCloseBrackets: true,
+        indentUnit: 2,
+        tabSize: 2,
+        indentWithTabs: false,
+        autofocus: false,
+        gutters: ["CodeMirror-linenumbers"]
+    };
+
+    // 初始化 CodeMirror 编辑器
+    const editor = CodeMirror.fromTextArea(inputEl, codeMirrorConfig);
+
+    // 初始化：刷新编辑器
+    setTimeout(() => editor.refresh(), 100);
 
     // File upload handling
     dropZone.addEventListener('click', () => fileInput.click());
@@ -705,19 +811,11 @@ brew "node"'></textarea>
     function handleFile(file) {
         const reader = new FileReader();
         reader.onload = (e) => {
-            const content = e.target.result;
-            // Filter to only show lines that will be analyzed (brew "formula" format)
-            const filteredLines = content.split('\n')
-                .filter(line => /^\s*brew\s+["']([^"']+)["']/.test(line))
-                .join('\n');
-            inputEl.value = filteredLines;
-            updateLineNumbers();
-            autoResize();
+            editor.setValue(e.target.result);
+            editor.refresh();
             dropZone.classList.add('has-file');
             dropZone.querySelector('.drop-zone-text p').textContent = file.name;
-            const totalLines = content.split('\n').length;
-            const keptLines = filteredLines ? filteredLines.split('\n').length : 0;
-            showMessage(`Loaded ${file.name}: ${keptLines}/${totalLines} lines`, 'success');
+            showMessage(`Loaded ${file.name}`, 'success');
         };
         reader.onerror = () => {
             showMessage('Error reading file', 'error');
@@ -728,38 +826,6 @@ brew "node"'></textarea>
     let brewfileFormulas = [];
     let currentTab = 'all';
     let cy = null;
-
-    const lineNumbersEl = document.getElementById('lineNumbers');
-
-    function updateLineNumbers() {
-        const lines = inputEl.value.split('\n');
-        const count = lines.length || 1;
-        let html = '';
-        for (let i = 1; i <= count; i++) {
-            html += `<div>${i}</div>`;
-        }
-        lineNumbersEl.innerHTML = html;
-    }
-
-    function syncScroll() {
-        lineNumbersEl.scrollTop = inputEl.scrollTop;
-    }
-
-    function autoResize() {
-        inputEl.style.height = 'auto';
-        inputEl.style.height = inputEl.scrollHeight + 'px';
-    }
-
-    // Initialize line numbers and event listeners
-    updateLineNumbers();
-    inputEl.addEventListener('input', () => {
-        updateLineNumbers();
-        autoResize();
-    });
-    inputEl.addEventListener('scroll', syncScroll);
-
-    // Initial resize
-    autoResize();
 
     function showMessage(text, type) {
         messageEl.textContent = text;
@@ -806,26 +872,8 @@ brew "node"'></textarea>
         }
     }
 
-    async function fetchAllWithProgress(names, onProgress) {
-        const results = [];
-        const total = names.length;
-        for (let i = 0; i < total; i++) {
-            const name = names[i];
-            onProgress(`Fetching ${i + 1}/${total}: ${name}...`);
-            const info = await fetchFormulaInfo(name);
-            if (info) {
-                results.push(info);
-            }
-            // Small delay to avoid overwhelming the API
-            if (i < total - 1) {
-                await new Promise(r => setTimeout(r, 50));
-            }
-        }
-        return results;
-    }
-
     async function analyze() {
-        const content = inputEl.value.trim();
+        const content = editor.getValue().trim();
         if (!content) {
             showMessage('Please enter a Brewfile', 'error');
             return;
@@ -1134,9 +1182,9 @@ brew "node"'></textarea>
     }
 
     function clearAll() {
-        inputEl.value = '';
-        autoResize();
-        updateLineNumbers();
+        editor.setValue('');
+        editor.clearHistory();
+        editor.refresh();
         resultEl.classList.remove('show');
         allFormulas = [];
         brewfileFormulas = [];
