@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta content="width=device-width, initial-scale=1.0" name="viewport">
     <title>JSON Formatter</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.css">
     <style>
         * {
             margin: 0;
@@ -55,68 +56,6 @@
             margin-bottom: 10px;
             font-weight: 500;
             color: #a0aec0;
-        }
-
-        textarea {
-            width: 100%;
-            min-height: 60px;
-            padding: 16px;
-            border: 2px solid rgba(255, 255, 255, 0.1);
-            border-radius: 12px;
-            background: rgba(0, 0, 0, 0.3);
-            color: #fff;
-            font-size: 13px;
-            font-family: 'Consolas', 'Monaco', monospace;
-            resize: none;
-            overflow: hidden;
-            transition: border-color 0.3s;
-        }
-
-        textarea:focus {
-            outline: none;
-            border-color: #00d9ff;
-        }
-
-        textarea::placeholder {
-            color: #4a5568;
-        }
-
-        pre#output {
-            padding: 16px;
-            border: 2px solid rgba(255, 255, 255, 0.1);
-            border-radius: 12px;
-            background: rgba(0, 0, 0, 0.3);
-            font-size: 13px;
-            font-family: 'Consolas', 'Monaco', monospace;
-            white-space: pre-wrap;
-            word-break: break-all;
-            margin: 0;
-            overflow-x: auto;
-        }
-
-        pre#output:empty::before {
-            content: 'Formatted JSON will appear here...';
-            color: #4a5568;
-        }
-
-        .json-key {
-            color: #00d9ff;
-        }
-
-        .json-string {
-            color: #10b981;
-        }
-
-        .json-number {
-            color: #f59e0b;
-        }
-
-        .json-boolean {
-            color: #a855f7;
-        }
-
-        .json-null {
-            color: #6b7280;
         }
 
         .options {
@@ -241,6 +180,147 @@
             color: #00d9ff;
         }
 
+        /* CodeMirror 主容器 */
+        .CodeMirror {
+            background: rgba(0, 0, 0, 0.3) !important;
+            height: auto;
+            min-height: 60px;
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            font-family: 'Consolas', 'Monaco', monospace;
+            font-size: 13px;
+            transition: border-color 0.3s;
+            position: relative;
+            overflow: hidden;
+            color: #fff !important;
+        }
+
+        .CodeMirror-focused {
+            border-color: #00d9ff !important;
+        }
+
+        /* 行号区 */
+        .CodeMirror-gutters {
+            background: rgba(0, 0, 0, 0.2) !important;
+            border-right: 1px solid rgba(255, 255, 255, 0.1) !important;
+            width: 3em !important;
+        }
+
+        .CodeMirror-linenumber {
+            color: rgba(160, 174, 192, 0.5) !important;
+            padding: 0 8px 0 3px !important;
+            min-width: 2em;
+            text-align: right;
+        }
+
+        /* 编辑器内容区 */
+        .CodeMirror-scroll {
+            overflow: auto !important;
+        }
+
+        /* 代码编辑区 */
+        .CodeMirror-lines {
+            padding: 15px 0;
+        }
+
+        /* 单行文本 */
+        .CodeMirror pre {
+            padding: 0 0.4em;
+        }
+
+        /* 选中区域 */
+        .CodeMirror-selected {
+            background: rgba(0, 217, 255, 0.15) !important;
+        }
+
+        /* 当前行高亮 */
+        .CodeMirror-activeline-background {
+            background: rgba(255, 255, 255, 0.03) !important;
+        }
+
+        /* 光标 */
+        .CodeMirror-cursor {
+            border-left: 2px solid #00d9ff !important;
+        }
+
+        /* 匹配的括号 */
+        .CodeMirror-matchingbracket {
+            color: #00d9ff !important;
+            background: rgba(0, 217, 255, 0.3) !important;
+            font-weight: bold;
+            border-radius: 2px;
+            padding: 0 2px;
+            margin: 0 -2px;
+        }
+
+        /* 非匹配括号 */
+        .CodeMirror-nonmatchingbracket {
+            color: #f87171 !important;
+            background: rgba(248, 113, 113, 0.2) !important;
+            border-radius: 2px;
+        }
+
+        /* 语法高亮颜色 */
+        .cm-string {
+            color: #10b981 !important;
+        }
+
+        .cm-number {
+            color: #f59e0b !important;
+        }
+
+        .cm-atom, .cm-keyword {
+            color: #a855f7 !important;
+        }
+
+        .cm-variable-2 {
+            color: #6b7280 !important;
+        }
+
+        .cm-def {
+            color: #f87171 !important;
+        }
+
+        /* 中性颜色 - 合并重复规则 */
+        .cm-operator, .cm-bracket, .cm-punctuation, .cm-meta {
+            color: #a0aec0 !important;
+        }
+
+        /* JSON key 颜色 - 简化选择器 */
+        .cm-property, .cm-variable, .cm-variable-3 {
+            color: #00d9ff !important;
+        }
+
+        /* JSON 错误高亮 */
+        .cm-error {
+            color: #f87171 !important;
+            background: rgba(248, 113, 113, 0.1) !important;
+            border-bottom: 1px dotted #f87171;
+        }
+
+        /* 输出框最小高度 */
+        #output-wrapper .CodeMirror {
+            min-height: 100px;
+        }
+
+        /* 滚动条 */
+        .CodeMirror-vscrollbar::-webkit-scrollbar,
+        .CodeMirror-hscrollbar::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+
+        .CodeMirror-vscrollbar::-webkit-scrollbar-thumb,
+        .CodeMirror-hscrollbar::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 4px;
+        }
+
+        .CodeMirror-vscrollbar::-webkit-scrollbar-track,
+        .CodeMirror-hscrollbar::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
         @media (max-width: 480px) {
             h1 {
                 font-size: 1.4rem;
@@ -250,7 +330,7 @@
                 padding: 16px;
             }
 
-            textarea {
+            .CodeMirror {
                 font-size: 11px;
             }
 
@@ -272,10 +352,11 @@
             <span>Indent:</span>
             <button class="option-btn active" data-indent="2" onclick="setIndent(2)">2 spaces</button>
             <button class="option-btn" data-indent="4" onclick="setIndent(4)">4 spaces</button>
-            <button class="option-btn" data-indent="tab" onclick="setIndent('tab')">Tab</button>
         </div>
-        <label for="input">Input</label>
-        <textarea id="input" placeholder='{"key": "value", "array": [1, 2, 3]}'></textarea>
+        <label>Input</label>
+        <div id="editor-wrapper">
+            <textarea id="input" hidden></textarea>
+        </div>
     </div>
 
     <div class="button-group">
@@ -286,11 +367,19 @@
     </div>
 
     <div class="card">
-        <label for="output">Output</label>
-        <pre id="output" style="min-height: 100px;"></pre>
+        <label>Output</label>
+        <div id="output-wrapper">
+            <textarea id="output" hidden></textarea>
+        </div>
     </div>
 </div>
 <div class="message" id="message"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/javascript/javascript.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/json/json.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/edit/matchbrackets.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/edit/closebrackets.min.js"></script>
 
 <script>
     const inputEl = document.getElementById('input');
@@ -298,16 +387,34 @@
     const messageEl = document.getElementById('message');
     let currentIndent = 2;
 
-    // Auto-resize textarea
-    function autoResize() {
-        inputEl.style.height = 'auto';
-        inputEl.style.height = inputEl.scrollHeight + 'px';
-    }
+    // 共享的 CodeMirror 配置
+    const codeMirrorConfig = {
+        mode: "application/json",
+        lineNumbers: true,
+        lineWrapping: true,
+        matchBrackets: true,
+        autoCloseBrackets: true,
+        indentUnit: 2,
+        tabSize: 2,
+        indentWithTabs: false,
+        autofocus: false,
+        gutters: ["CodeMirror-linenumbers"]
+    };
 
-    inputEl.addEventListener('input', autoResize);
+    // 初始化 CodeMirror 编辑器（输入框）
+    const editor = CodeMirror.fromTextArea(inputEl, codeMirrorConfig);
 
-    // Initial resize
-    autoResize();
+    // 初始化 CodeMirror 编辑器（输出框，只读）
+    const editorOutput = CodeMirror.fromTextArea(outputEl, {
+        ...codeMirrorConfig,
+        readOnly: true
+    });
+
+    // 强制更新编辑器（确保语法高亮正确）
+    setTimeout(() => {
+        editor.refresh();
+        editorOutput.refresh();
+    }, 100);
 
     function showMessage(text, type) {
         messageEl.textContent = text;
@@ -315,6 +422,15 @@
         setTimeout(() => {
             messageEl.className = 'message';
         }, 3000);
+    }
+
+    function validateInput(operation) {
+        const text = editor.getValue().trim();
+        if (!text) {
+            showMessage(`Please enter JSON to ${operation}`, 'error');
+            return null;
+        }
+        return text;
     }
 
     function setIndent(value) {
@@ -325,92 +441,66 @@
                 btn.classList.add('active');
             }
         });
+
+        // 同步 CodeMirror 缩进设置
+        editor.setOption('indentUnit', value);
+        editor.setOption('tabSize', value);
+        editor.setOption('indentWithTabs', false);
+        editorOutput.setOption('indentUnit', value);
+        editorOutput.setOption('tabSize', value);
     }
 
-    function sortKeys(obj) {
-        if (Array.isArray(obj)) {
-            return obj.map(sortKeys);
+    function processJSON(text, processor, successMessage) {
+        try {
+            const parsed = JSON.parse(text);
+            const result = processor(parsed);
+            editorOutput.setValue(result);
+            editorOutput.clearHistory();
+            editorOutput.refresh();
+            showMessage(successMessage, 'success');
+            return true;
+        } catch (e) {
+            showMessage('Invalid JSON: ' + e.message, 'error');
+            return false;
         }
-        if (obj !== null && typeof obj === 'object') {
-            return Object.keys(obj).sort().reduce((acc, key) => {
-                acc[key] = sortKeys(obj[key]);
-                return acc;
-            }, {});
-        }
-        return obj;
     }
 
     function formatJSON() {
-        const text = inputEl.value.trim();
-        if (!text) {
-            showMessage('Please enter JSON to format', 'error');
-            return;
-        }
-        try {
-            const parsed = JSON.parse(text);
-            const sorted = sortKeys(parsed);
-            const indent = currentIndent === 'tab' ? '\t' : currentIndent;
-            const jsonStr = JSON.stringify(sorted, null, indent);
-            outputEl.innerHTML = syntaxHighlight(jsonStr);
-            outputEl.dataset.raw = jsonStr;
-            showMessage('Formatted successfully', 'success');
-        } catch (e) {
-            showMessage('Invalid JSON: ' + e.message, 'error');
-        }
+        const text = validateInput('format');
+        if (!text) return;
+
+        processJSON(text, (parsed) => {
+            return JSON.stringify(parsed, null, currentIndent);
+        }, 'Formatted successfully');
     }
 
     function minifyJSON() {
-        const text = inputEl.value.trim();
-        if (!text) {
-            showMessage('Please enter JSON to minify', 'error');
-            return;
-        }
-        try {
-            const parsed = JSON.parse(text);
-            const jsonStr = JSON.stringify(parsed);
-            outputEl.innerHTML = syntaxHighlight(jsonStr);
-            outputEl.dataset.raw = jsonStr;
-            showMessage('Minified successfully', 'success');
-        } catch (e) {
-            showMessage('Invalid JSON: ' + e.message, 'error');
-        }
-    }
-
-    function syntaxHighlight(json) {
-        json = json.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-        return json.replace(/("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g, function (match) {
-            let cls = 'json-number';
-            if (/^"/.test(match)) {
-                if (/:$/.test(match)) {
-                    cls = 'json-key';
-                } else {
-                    cls = 'json-string';
-                }
-            } else if (/true|false/.test(match)) {
-                cls = 'json-boolean';
-            } else if (/null/.test(match)) {
-                cls = 'json-null';
-            }
-            return '<span class="' + cls + '">' + match + '</span>';
-        });
+        const text = validateInput('minify');
+        if (!text) return;
+        
+        processJSON(text, (parsed) => {
+            return JSON.stringify(parsed);
+        }, 'Minified successfully');
     }
 
     function copyResult() {
-        const text = outputEl.dataset.raw || outputEl.textContent;
+        const text = editorOutput.getValue();
         if (!text) {
             showMessage('Nothing to copy', 'error');
             return;
         }
         navigator.clipboard.writeText(text).then(() => {
             showMessage('Copied to clipboard', 'success');
+        }).catch(() => {
+            showMessage('Failed to copy', 'error');
         });
     }
 
     function clearAll() {
-        inputEl.value = '';
-        outputEl.innerHTML = '';
-        outputEl.dataset.raw = '';
-        autoResize();
+        editor.setValue('');
+        editor.clearHistory();
+        editorOutput.setValue('');
+        editorOutput.clearHistory();
         showMessage('Cleared', 'success');
     }
 </script>
