@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta content="width=device-width, initial-scale=1.0" name="viewport">
@@ -376,6 +377,7 @@
                 transform: translateX(100%);
                 opacity: 0;
             }
+
             to {
                 transform: translateX(0);
                 opacity: 1;
@@ -415,9 +417,12 @@
         }
 
         @keyframes pulse {
-            0%, 100% {
+
+            0%,
+            100% {
                 opacity: 1;
             }
+
             50% {
                 opacity: 0.5;
             }
@@ -455,340 +460,350 @@
         }
     </style>
 </head>
+
 <body>
-<div class="container">
-    <a class="back-link" href="index.html">← Back to Tools</a>
-    <h1>Countdown Timer</h1>
-    <p class="subtitle">Count down to a target date</p>
+    <div class="container">
+        <a class="back-link" href="index.html">← Back to Tools</a>
+        <h1>Countdown Timer</h1>
+        <p class="subtitle">Count down to a target date</p>
 
-    <div class="card">
-        <label for="target">Target Time</label>
-        <input id="target" placeholder="Select target time" type="text">
-    </div>
+        <div class="card">
+            <label for="target">Target Time</label>
+            <input id="target" placeholder="Select target time" type="text">
+        </div>
 
-    <div class="card">
-        <label for="name">Name (optional)</label>
-        <input id="name" placeholder="e.g. New Year, Project deadline..." type="text">
-    </div>
+        <div class="card">
+            <label for="name">Name (optional)</label>
+            <input id="name" placeholder="e.g. New Year, Project deadline..." type="text">
+        </div>
 
-    <div class="button-group">
-        <button class="btn-start" onclick="startCountdown()">Start</button>
-        <button class="btn-share" disabled id="shareBtn" onclick="shareUrl()">Share</button>
-        <button class="btn-clear" onclick="clearAll()">Clear</button>
-    </div>
+        <div class="button-group">
+            <button class="btn-start" onclick="startCountdown()">Start</button>
+            <button class="btn-share" disabled id="shareBtn" onclick="shareUrl()">Share</button>
+            <button class="btn-clear" onclick="clearAll()">Clear</button>
+        </div>
 
-    <div class="message" id="message"></div>
+        <div class="message" id="message"></div>
 
-    <div class="card result-card" id="resultCard" style="display: none;">
-        <div class="result">
-            <div id="resultTitle" style="color: #a0aec0; margin-bottom: 10px;">Countdown</div>
-            <div class="result-value" id="resultValue"></div>
-            <div class="result-breakdown">
-                <div class="result-item">
-                    <div class="result-item-value" id="days">0</div>
-                    <div class="result-item-label">Days</div>
+        <div class="card result-card" id="resultCard" style="display: none;">
+            <div class="result">
+                <div id="resultTitle" style="color: #a0aec0; margin-bottom: 10px;">Countdown</div>
+                <div class="result-value" id="resultValue"></div>
+                <div class="result-breakdown">
+                    <div class="result-item">
+                        <div class="result-item-value" id="days">0</div>
+                        <div class="result-item-label">Days</div>
+                    </div>
+                    <div class="result-item">
+                        <div class="result-item-value" id="hours">0</div>
+                        <div class="result-item-label">Hours</div>
+                    </div>
+                    <div class="result-item">
+                        <div class="result-item-value" id="minutes">0</div>
+                        <div class="result-item-label">Minutes</div>
+                    </div>
+                    <div class="result-item">
+                        <div class="result-item-value" id="seconds">0</div>
+                        <div class="result-item-label">Seconds</div>
+                    </div>
                 </div>
-                <div class="result-item">
-                    <div class="result-item-value" id="hours">0</div>
-                    <div class="result-item-label">Hours</div>
-                </div>
-                <div class="result-item">
-                    <div class="result-item-value" id="minutes">0</div>
-                    <div class="result-item-label">Minutes</div>
-                </div>
-                <div class="result-item">
-                    <div class="result-item-value" id="seconds">0</div>
-                    <div class="result-item-label">Seconds</div>
-                </div>
+                <div class="result-total" id="totalSeconds"></div>
             </div>
-            <div class="result-total" id="totalSeconds"></div>
         </div>
     </div>
-</div>
 
-<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
-<script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/plugins/confirmDate/confirmDate.js"></script>
-<script>
-    const targetEl = document.getElementById('target');
-    const nameEl = document.getElementById('name');
-    const resultCardEl = document.getElementById('resultCard');
-    const resultTitleEl = document.getElementById('resultTitle');
-    const resultValueEl = document.getElementById('resultValue');
-    const messageEl = document.getElementById('message');
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/plugins/confirmDate/confirmDate.js"></script>
+    <script>
+        const targetEl = document.getElementById('target');
+        const nameEl = document.getElementById('name');
+        const resultCardEl = document.getElementById('resultCard');
+        const resultTitleEl = document.getElementById('resultTitle');
+        const resultValueEl = document.getElementById('resultValue');
+        const messageEl = document.getElementById('message');
 
-    let intervalId = null;
-    let targetPicker;
+        let intervalId = null;
+        let targetPicker;
 
-    // Initialize Flatpickr
-    const flatpickrConfig = {
-        enableTime: true,
-        dateFormat: "Y-m-d H:i",
-        time_24hr: true,
-        allowInput: true,
-        disableMobile: true,
-        plugins: [new confirmDatePlugin({})]
-    };
+        // Initialize Flatpickr
+        const flatpickrConfig = {
+            enableTime: true,
+            dateFormat: "Y-m-d H:i",
+            time_24hr: true,
+            allowInput: true,
+            disableMobile: true,
+            plugins: [new confirmDatePlugin({})]
+        };
 
-    // Default target: tomorrow same time
-    const tomorrow = new Date();
-    tomorrow.setDate(tomorrow.getDate() + 1);
-    tomorrow.setSeconds(0, 0);
-
-    targetPicker = flatpickr(targetEl, {
-        ...flatpickrConfig,
-        defaultDate: tomorrow,
-        onChange: (selectedDates) => {
-            if (selectedDates.length > 0) {
-                selectedDates[0].setSeconds(0, 0);
-            }
-        }
-    });
-
-    function showMessage(text, type) {
-        messageEl.textContent = text;
-        messageEl.className = 'message ' + type;
-        setTimeout(() => {
-            messageEl.className = 'message';
-        }, 3000);
-    }
-
-    // Clear hash when user modifies time
-    function clearHash() {
-        if (window.location.hash) {
-            history.replaceState(null, null, window.location.pathname);
-        }
-    }
-
-    // Listen for Flatpickr changes
-    targetEl.addEventListener('change', () => {
-        updateShareButton();
-        clearHash();
-    });
-
-    function startCountdown() {
-        const targetDate = targetPicker.selectedDates[0];
-        if (!targetDate) {
-            showMessage('Please enter a target time', 'error');
-            return;
-        }
-
-        // Clear existing interval
-        if (intervalId) {
-            clearInterval(intervalId);
-        }
-
-        updateDisplay();
-        intervalId = setInterval(updateDisplay, 1000);
-    }
-
-    function updateDisplay() {
-        const targetDate = targetPicker.selectedDates[0];
-        if (!targetDate) return;
-
-        const now = new Date();
-        const diff = targetDate - now;
-        const isExpired = diff <= 0;
-        const absDiff = Math.abs(diff);
-
-        const days = Math.floor(absDiff / (1000 * 60 * 60 * 24));
-        const hours = Math.floor((absDiff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-        const minutes = Math.floor((absDiff % (1000 * 60 * 60)) / (1000 * 60));
-        const seconds = Math.floor((absDiff % (1000 * 60)) / 1000);
-
-        // Format main display
-        let parts = [];
-        if (days > 0) parts.push(days + 'd');
-        if (hours > 0 || days > 0) parts.push(hours + 'h');
-        if (minutes > 0 || hours > 0 || days > 0) parts.push(minutes + 'm');
-        parts.push(seconds + 's');
-
-        let displayValue;
-        if (isExpired) {
-            displayValue = 'EXPIRED';
-        } else {
-            displayValue = parts.join(' ');
-        }
-
-        // Update UI
-        resultCardEl.style.display = 'block';
-        resultValueEl.textContent = displayValue;
-        resultValueEl.className = 'result-value' + (isExpired ? ' expired' : '');
-
-        const daysEl = document.getElementById('days');
-        const hoursEl = document.getElementById('hours');
-        const minutesEl = document.getElementById('minutes');
-        const secondsEl = document.getElementById('seconds');
-
-        daysEl.textContent = days;
-        hoursEl.textContent = hours;
-        minutesEl.textContent = minutes;
-        secondsEl.textContent = seconds;
-
-        // Update total seconds
-        const totalSeconds = Math.floor(absDiff / 1000);
-        const totalSecondsEl = document.getElementById('totalSeconds');
-        if (isExpired) {
-            totalSecondsEl.textContent = `Expired: ${totalSeconds.toLocaleString()} seconds`;
-        } else {
-            totalSecondsEl.textContent = `Total: ${totalSeconds.toLocaleString()} seconds`;
-        }
-
-        // Update title
-        const name = nameEl.value.trim();
-        let titleText = name || 'Countdown';
-
-        const badgeClass = isExpired ? 'live-badge expired' : 'live-badge';
-        const badgeText = isExpired ? 'EXPIRED' : 'LIVE';
-        resultTitleEl.innerHTML = titleText + ' <span class="' + badgeClass + '">' + badgeText + '</span>';
-    }
-
-    function clearAll() {
-        if (intervalId) {
-            clearInterval(intervalId);
-            intervalId = null;
-        }
-
-        targetPicker.clear();
-        targetEl.value = '';
-        nameEl.value = '';
-        resultCardEl.style.display = 'none';
-        messageEl.className = 'message';
-        clearHash();
-        updateShareButton();
-
-        // Reset default target
+        // Default target: tomorrow same time
         const tomorrow = new Date();
         tomorrow.setDate(tomorrow.getDate() + 1);
         tomorrow.setSeconds(0, 0);
-        targetPicker.setDate(tomorrow);
-    }
 
-    // Base62 charset
-    const BASE62 = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
-
-    // Encode number to Base62
-    function encodeBase62(num) {
-        if (num === 0n) return '0';
-        let arr = [];
-        while (num > 0n) {
-            arr.push(BASE62[Number(num % 62n)]);
-            num = num / 62n;
-        }
-        return arr.reverse().join('');
-    }
-
-    // Decode Base62 to number
-    function decodeBase62(str) {
-        let num = 0n;
-        for (let i = 0; i < str.length; i++) {
-            const idx = BASE62.indexOf(str[i]);
-            if (idx === -1) throw new Error('Invalid character');
-            num = num * 62n + BigInt(idx);
-        }
-        return num;
-    }
-
-    // Base64URL encode (URL-safe, no padding)
-    function encodeBase64URL(str) {
-        const bytes = new TextEncoder().encode(str);
-        let binary = '';
-        bytes.forEach(b => binary += String.fromCharCode(b));
-        return btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
-    }
-
-    // Base64URL decode
-    function decodeBase64URL(str) {
-        str = str.replace(/-/g, '+').replace(/_/g, '/');
-        while (str.length % 4) str += '=';
-        const binary = atob(str);
-        const bytes = new Uint8Array(binary.length);
-        for (let i = 0; i < binary.length; i++) {
-            bytes[i] = binary.charCodeAt(i);
-        }
-        return new TextDecoder().decode(bytes);
-    }
-
-    // Share URL function
-    function shareUrl() {
-        const targetDate = targetPicker.selectedDates[0];
-        if (!targetDate) {
-            showMessage('Please set target time', 'error');
-            return;
-        }
-
-        const targetTs = Math.floor(targetDate.getTime() / 1000);
-        const timeHash = encodeBase62(BigInt(targetTs));
-        const name = nameEl.value.trim();
-
-        // Format: #s={base62} or #s={base62}.{base64url_name}
-        let hash = timeHash;
-        if (name) {
-            hash += '.' + encodeBase64URL(name);
-        }
-
-        const url = window.location.origin + window.location.pathname + '#s=' + hash;
-
-        // Update current URL
-        history.pushState(null, null, '#s=' + hash);
-
-        navigator.clipboard.writeText(url).then(() => {
-            showMessage('Share link copied to clipboard!', 'success');
-        }).catch(() => {
-            showMessage('Failed to copy link', 'error');
+        targetPicker = flatpickr(targetEl, {
+            ...flatpickrConfig,
+            defaultDate: tomorrow,
+            onChange: (selectedDates) => {
+                if (selectedDates.length > 0) {
+                    selectedDates[0].setSeconds(0, 0);
+                }
+            }
         });
-    }
 
-    // Update share button state
-    function updateShareButton() {
-        const shareBtn = document.getElementById('shareBtn');
-        const hasTarget = targetPicker.selectedDates.length > 0;
-        shareBtn.disabled = !hasTarget;
-    }
+        function showMessage(text, type) {
+            messageEl.textContent = text;
+            messageEl.className = 'message ' + type;
+            setTimeout(() => {
+                messageEl.className = 'message';
+            }, 3000);
+        }
 
-    // Parse hash on page load
-    function parseHash() {
-        const hash = window.location.hash;
-        if (hash && hash.startsWith('#s=')) {
-            const hashContent = hash.substring(3);
-
-            // Check if there's a name: format is {base62}.{base64url_name}
-            const dotIndex = hashContent.indexOf('.');
-            let timeHash, name = '';
-
-            if (dotIndex !== -1) {
-                timeHash = hashContent.substring(0, dotIndex);
-                try {
-                    name = decodeBase64URL(hashContent.substring(dotIndex + 1));
-                } catch (e) {
-                    // Invalid name encoding, ignore
-                }
-            } else {
-                timeHash = hashContent;
-            }
-
-            try {
-                const targetTs = Number(decodeBase62(timeHash));
-                const targetDate = new Date(targetTs * 1000);
-                targetDate.setSeconds(0, 0);
-                targetPicker.setDate(targetDate);
-
-                if (name) {
-                    nameEl.value = name;
-                }
-
-                // Auto start countdown
-                startCountdown();
-            } catch (e) {
-                // Invalid hash, ignore
+        // Clear hash when user modifies time
+        function clearHash() {
+            if (window.location.hash) {
+                history.replaceState(null, null, window.location.pathname);
             }
         }
-    }
 
-    // Parse hash on load
-    parseHash();
+        // Listen for Flatpickr changes
+        targetEl.addEventListener('change', () => {
+            updateShareButton();
+            clearHash();
+        });
 
-    // Update share button state on init
-    updateShareButton();
-</script>
+        function startCountdown() {
+            const targetDate = targetPicker.selectedDates[0];
+            if (!targetDate) {
+                showMessage('Please enter a target time', 'error');
+                return;
+            }
+
+            // Clear existing interval
+            if (intervalId) {
+                clearInterval(intervalId);
+            }
+
+            updateDisplay();
+            intervalId = setInterval(updateDisplay, 1000);
+        }
+
+        function updateDisplay() {
+            const targetDate = targetPicker.selectedDates[0];
+            if (!targetDate) return;
+
+            const now = new Date();
+            const diff = targetDate - now;
+            const isExpired = diff <= 0;
+            const absDiff = Math.abs(diff);
+
+            const days = Math.floor(absDiff / (1000 * 60 * 60 * 24));
+            const hours = Math.floor((absDiff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+            const minutes = Math.floor((absDiff % (1000 * 60 * 60)) / (1000 * 60));
+            const seconds = Math.floor((absDiff % (1000 * 60)) / 1000);
+
+            // Format main display
+            let parts = [];
+            if (days > 0) parts.push(days + 'd');
+            if (hours > 0 || days > 0) parts.push(hours + 'h');
+            if (minutes > 0 || hours > 0 || days > 0) parts.push(minutes + 'm');
+            parts.push(seconds + 's');
+
+            let displayValue;
+            if (isExpired) {
+                displayValue = 'EXPIRED';
+            } else {
+                displayValue = parts.join(' ');
+            }
+
+            // Update UI
+            resultCardEl.style.display = 'block';
+            resultValueEl.textContent = displayValue;
+            resultValueEl.className = 'result-value' + (isExpired ? ' expired' : '');
+
+            const daysEl = document.getElementById('days');
+            const hoursEl = document.getElementById('hours');
+            const minutesEl = document.getElementById('minutes');
+            const secondsEl = document.getElementById('seconds');
+
+            daysEl.textContent = days;
+            hoursEl.textContent = hours;
+            minutesEl.textContent = minutes;
+            secondsEl.textContent = seconds;
+
+            // Update total seconds
+            const totalSeconds = Math.floor(absDiff / 1000);
+            const totalSecondsEl = document.getElementById('totalSeconds');
+            if (isExpired) {
+                totalSecondsEl.textContent = `Expired: ${totalSeconds.toLocaleString()} seconds`;
+            } else {
+                totalSecondsEl.textContent = `Total: ${totalSeconds.toLocaleString()} seconds`;
+            }
+
+            // Update title
+            const name = nameEl.value.trim();
+            let titleText = name || 'Countdown';
+
+            const badgeClass = isExpired ? 'live-badge expired' : 'live-badge';
+            const badgeText = isExpired ? 'EXPIRED' : 'LIVE';
+
+            // Set title text safely
+            resultTitleEl.textContent = titleText;
+
+            // Create and append badge element
+            const badge = document.createElement('span');
+            badge.className = badgeClass;
+            badge.textContent = badgeText;
+            resultTitleEl.appendChild(badge);
+        }
+
+        function clearAll() {
+            if (intervalId) {
+                clearInterval(intervalId);
+                intervalId = null;
+            }
+
+            targetPicker.clear();
+            targetEl.value = '';
+            nameEl.value = '';
+            resultCardEl.style.display = 'none';
+            messageEl.className = 'message';
+            clearHash();
+            updateShareButton();
+
+            // Reset default target
+            const tomorrow = new Date();
+            tomorrow.setDate(tomorrow.getDate() + 1);
+            tomorrow.setSeconds(0, 0);
+            targetPicker.setDate(tomorrow);
+        }
+
+        // Base62 charset
+        const BASE62 = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
+
+        // Encode number to Base62
+        function encodeBase62(num) {
+            if (num === 0n) return '0';
+            let arr = [];
+            while (num > 0n) {
+                arr.push(BASE62[Number(num % 62n)]);
+                num = num / 62n;
+            }
+            return arr.reverse().join('');
+        }
+
+        // Decode Base62 to number
+        function decodeBase62(str) {
+            let num = 0n;
+            for (let i = 0; i < str.length; i++) {
+                const idx = BASE62.indexOf(str[i]);
+                if (idx === -1) throw new Error('Invalid character');
+                num = num * 62n + BigInt(idx);
+            }
+            return num;
+        }
+
+        // Base64URL encode (URL-safe, no padding)
+        function encodeBase64URL(str) {
+            const bytes = new TextEncoder().encode(str);
+            let binary = '';
+            bytes.forEach(b => binary += String.fromCharCode(b));
+            return btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+        }
+
+        // Base64URL decode
+        function decodeBase64URL(str) {
+            str = str.replace(/-/g, '+').replace(/_/g, '/');
+            while (str.length % 4) str += '=';
+            const binary = atob(str);
+            const bytes = new Uint8Array(binary.length);
+            for (let i = 0; i < binary.length; i++) {
+                bytes[i] = binary.charCodeAt(i);
+            }
+            return new TextDecoder().decode(bytes);
+        }
+
+        // Share URL function
+        function shareUrl() {
+            const targetDate = targetPicker.selectedDates[0];
+            if (!targetDate) {
+                showMessage('Please set target time', 'error');
+                return;
+            }
+
+            const targetTs = Math.floor(targetDate.getTime() / 1000);
+            const timeHash = encodeBase62(BigInt(targetTs));
+            const name = nameEl.value.trim();
+
+            // Format: #s={base62} or #s={base62}.{base64url_name}
+            let hash = timeHash;
+            if (name) {
+                hash += '.' + encodeBase64URL(name);
+            }
+
+            const url = window.location.origin + window.location.pathname + '#s=' + hash;
+
+            // Update current URL
+            history.pushState(null, null, '#s=' + hash);
+
+            navigator.clipboard.writeText(url).then(() => {
+                showMessage('Share link copied to clipboard!', 'success');
+            }).catch(() => {
+                showMessage('Failed to copy link', 'error');
+            });
+        }
+
+        // Update share button state
+        function updateShareButton() {
+            const shareBtn = document.getElementById('shareBtn');
+            const hasTarget = targetPicker.selectedDates.length > 0;
+            shareBtn.disabled = !hasTarget;
+        }
+
+        // Parse hash on page load
+        function parseHash() {
+            const hash = window.location.hash;
+            if (hash && hash.startsWith('#s=')) {
+                const hashContent = hash.substring(3);
+
+                // Check if there's a name: format is {base62}.{base64url_name}
+                const dotIndex = hashContent.indexOf('.');
+                let timeHash, name = '';
+
+                if (dotIndex !== -1) {
+                    timeHash = hashContent.substring(0, dotIndex);
+                    try {
+                        name = decodeBase64URL(hashContent.substring(dotIndex + 1));
+                    } catch (e) {
+                        // Invalid name encoding, ignore
+                    }
+                } else {
+                    timeHash = hashContent;
+                }
+
+                try {
+                    const targetTs = Number(decodeBase62(timeHash));
+                    const targetDate = new Date(targetTs * 1000);
+                    targetDate.setSeconds(0, 0);
+                    targetPicker.setDate(targetDate);
+
+                    if (name) {
+                        nameEl.value = name;
+                    }
+
+                    // Auto start countdown
+                    startCountdown();
+                } catch (e) {
+                    // Invalid hash, ignore
+                }
+            }
+        }
+
+        // Parse hash on load
+        parseHash();
+
+        // Update share button state on init
+        updateShareButton();
+    </script>
 </body>
+
 </html>
