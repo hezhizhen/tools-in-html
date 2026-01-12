@@ -244,7 +244,6 @@
     }
 
     inputEl.addEventListener('input', () => autoResize(inputEl));
-    outputEl.addEventListener('input', () => autoResize(outputEl));
 
     // Initial resize
     autoResize(inputEl);
@@ -259,7 +258,7 @@
     }
 
     function encode() {
-        const text = inputEl.value;
+        const text = inputEl.value.trim();
         if (!text) {
             showMessage('Please enter text to encode', 'error');
             return;
@@ -277,7 +276,7 @@
     }
 
     function decode() {
-        const text = inputEl.value;
+        const text = inputEl.value.trim();
         if (!text) {
             showMessage('Please enter text to decode', 'error');
             return;
