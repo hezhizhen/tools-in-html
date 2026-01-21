@@ -7,6 +7,7 @@
     <link rel="preload" href="https://cdn.jsdelivr.net/npm/codemirror@5.65.16/lib/codemirror.min.js" as="script">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/codemirror@5.65.16/lib/codemirror.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/codemirror@5.65.16/addon/fold/foldgutter.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/codemirror@5.65.16/theme/material-darker.css">
     <style>
         * {
             margin: 0;
@@ -193,7 +194,6 @@
             transition: border-color 0.3s;
             position: relative;
             overflow: hidden;
-            color: #fff !important;
         }
 
         .CodeMirror-focused {
@@ -258,44 +258,6 @@
             color: #f87171 !important;
             background: rgba(248, 113, 113, 0.2) !important;
             border-radius: 2px;
-        }
-
-        /* 语法高亮颜色 */
-        .cm-string {
-            color: #10b981 !important;
-        }
-
-        .cm-number {
-            color: #f59e0b !important;
-        }
-
-        .cm-atom, .cm-keyword {
-            color: #a855f7 !important;
-        }
-
-        .cm-variable-2 {
-            color: #6b7280 !important;
-        }
-
-        .cm-def {
-            color: #f87171 !important;
-        }
-
-        /* 中性颜色 - 合并重复规则 */
-        .cm-operator, .cm-bracket, .cm-punctuation, .cm-meta {
-            color: #a0aec0 !important;
-        }
-
-        /* JSON key 颜色 - 简化选择器 */
-        .cm-property, .cm-variable, .cm-variable-3 {
-            color: #00d9ff !important;
-        }
-
-        /* JSON 错误高亮 */
-        .cm-error {
-            color: #f87171 !important;
-            background: rgba(248, 113, 113, 0.1) !important;
-            border-bottom: 1px dotted #f87171;
         }
 
         /* 折叠功能样式 */
@@ -426,6 +388,7 @@
     // 共享的 CodeMirror 配置
     const baseConfig = {
         mode: "application/json",
+        theme: "material-darker",
         lineNumbers: true,
         lineWrapping: true,
         matchBrackets: true,

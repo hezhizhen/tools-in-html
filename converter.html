@@ -8,6 +8,7 @@
     <link rel="preload" href="https://cdn.jsdelivr.net/npm/codemirror@5.65.16/lib/codemirror.min.js" as="script">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/codemirror@5.65.16/lib/codemirror.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/codemirror@5.65.16/addon/fold/foldgutter.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/codemirror@5.65.16/theme/material-darker.css">
     <style>
         * {
             margin: 0;
@@ -201,7 +202,6 @@
             font-family: 'Consolas', 'Monaco', monospace;
             font-size: 13px;
             transition: border-color 0.3s;
-            color: #fff !important;
         }
 
         .CodeMirror-focused {
@@ -221,7 +221,7 @@
         }
 
         .CodeMirror-lines {
-            padding: 8px 0;
+            padding: 15px 0;
         }
 
         .CodeMirror-selected {
@@ -252,14 +252,6 @@
         .CodeMirror-line {
             background: transparent !important;
         }
-
-        .cm-s-default .cm-string { color: #a5d6ff !important; }
-        .cm-s-default .cm-number { color: #79c0ff !important; }
-        .cm-s-default .cm-property { color: #7ee787 !important; }
-        .cm-s-default .cm-atom { color: #ff7b72 !important; }
-        .cm-s-default .cm-keyword { color: #ff7b72 !important; }
-        .cm-s-default .cm-variable { color: #ffa657 !important; }
-        .cm-s-default .cm-comment { color: #8b949e !important; }
 
         .CodeMirror-matchingbracket {
             color: #00d9ff !important;
@@ -422,6 +414,7 @@
     };
 
     const baseConfig = {
+        theme: "material-darker",
         lineNumbers: true,
         lineWrapping: true,
         matchBrackets: true,
