@@ -7,6 +7,7 @@
     <script src="https://unpkg.com/cytoscape/dist/cytoscape.min.js"></script>
     <!-- CodeMirror CSS -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/codemirror@5.65.16/lib/codemirror.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/codemirror@5.65.16/theme/material-darker.css">
     <style>
         * {
             margin: 0;
@@ -117,18 +118,6 @@
             font-weight: bold;
             border-radius: 2px;
         }
-
-        /* Ruby 语法高亮 */
-        .cm-keyword { color: #f97316 !important; font-weight: bold; }
-        .cm-string { color: #10b981 !important; }
-        .cm-atom { color: #00d9ff !important; }
-        .cm-variable { color: #a0aec0 !important; }
-        .cm-variable-2 { color: #f87171 !important; }
-        .cm-comment { color: #6b7280 !important; font-style: italic; }
-        .cm-def { color: #f97316 !important; font-weight: bold; }
-        .cm-property { color: #00d9ff !important; }
-        .cm-operator { color: #a0aec0 !important; }
-        .cm-punctuation { color: #a0aec0 !important; }
 
         .drop-zone {
             border: 2px dashed rgba(255, 255, 255, 0.2);
@@ -679,15 +668,14 @@
 
     // CodeMirror 配置
     const codeMirrorConfig = {
-        mode: "text/x-ruby", // Ruby 模式支持 Brewfile 语法
+        mode: "text/x-ruby",
+        theme: "material-darker",
         lineNumbers: true,
         lineWrapping: true,
         matchBrackets: true,
         autoCloseBrackets: true,
         indentUnit: 2,
         tabSize: 2,
-        indentWithTabs: false,
-        autofocus: false,
         gutters: ["CodeMirror-linenumbers"]
     };
 
