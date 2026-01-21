@@ -5,6 +5,7 @@
     <meta content="width=device-width, initial-scale=1.0" name="viewport">
     <title>Format Converter</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/fold/foldgutter.min.css">
     <style>
         * {
             margin: 0;
@@ -239,6 +240,57 @@
         .cm-s-default .cm-variable { color: #ffa657 !important; }
         .cm-s-default .cm-comment { color: #8b949e !important; }
 
+        .CodeMirror-matchingbracket {
+            color: #00d9ff !important;
+            background: rgba(0, 217, 255, 0.3) !important;
+            font-weight: bold;
+            border-radius: 2px;
+        }
+
+        .CodeMirror-nonmatchingbracket {
+            color: #f87171 !important;
+            background: rgba(248, 113, 113, 0.2) !important;
+            border-radius: 2px;
+        }
+
+        .CodeMirror-foldgutter {
+            width: 1.2em;
+        }
+
+        .CodeMirror-foldgutter-open,
+        .CodeMirror-foldgutter-folded {
+            cursor: pointer;
+            color: #888;
+        }
+
+        .CodeMirror-foldgutter-open:after {
+            content: "\25BE";
+        }
+
+        .CodeMirror-foldgutter-folded:after {
+            content: "\25B8";
+        }
+
+        .CodeMirror-foldgutter-open:hover,
+        .CodeMirror-foldgutter-folded:hover {
+            color: #00d9ff;
+        }
+
+        .CodeMirror-foldmarker {
+            color: #00d9ff;
+            background: rgba(0, 217, 255, 0.15);
+            border-radius: 3px;
+            padding: 1px 6px;
+            margin: 0 3px;
+            cursor: pointer;
+            font-family: sans-serif;
+            font-size: 12px;
+        }
+
+        .CodeMirror-foldmarker:hover {
+            background: rgba(0, 217, 255, 0.25);
+        }
+
         @media (max-width: 480px) {
             h1 { font-size: 1.4rem; }
             .card { padding: 16px; }
@@ -284,6 +336,11 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/javascript/javascript.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/yaml/yaml.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/toml/toml.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/edit/matchbrackets.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/edit/closebrackets.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/fold/foldcode.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/fold/foldgutter.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/fold/brace-fold.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/js-yaml/4.1.0/js-yaml.min.js"></script>
 
 <script type="module">
@@ -306,8 +363,17 @@
     const baseConfig = {
         lineNumbers: true,
         lineWrapping: true,
+        matchBrackets: true,
+        autoCloseBrackets: true,
         indentUnit: 2,
-        tabSize: 2
+        tabSize: 2,
+        foldGutter: {
+            rangeFinder: CodeMirror.fold.brace
+        },
+        gutters: ["CodeMirror-linenumbers", "CodeMirror-foldgutter"],
+        extraKeys: {
+            "Ctrl-Q": function(cm) { cm.foldCode(cm.getCursor(), CodeMirror.fold.brace); }
+        }
     };
 
     const editor = CodeMirror.fromTextArea(inputEl, {
