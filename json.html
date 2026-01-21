@@ -55,94 +55,87 @@
         }
 
         label {
-            display: block;
+            display: flex;
+            align-items: center;
             margin-bottom: 10px;
             font-weight: 500;
             color: #a0aec0;
         }
 
-        .options {
+        .card-header {
             display: flex;
-            gap: 10px;
-            margin-bottom: 15px;
-            flex-wrap: wrap;
+            justify-content: space-between;
             align-items: center;
+            margin-bottom: 10px;
         }
 
-        .options span {
-            color: #6b7280;
-            font-size: 14px;
+        .card-header label {
+            margin-bottom: 0;
         }
 
-        .option-btn {
-            padding: 8px 16px;
+        .btn-clear-small {
+            padding: 4px 12px;
+            font-size: 12px;
+            background: rgba(239, 68, 68, 0.15);
+            color: #f87171;
+            border: 1px solid rgba(239, 68, 68, 0.25);
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s;
+            flex: none;
+        }
+
+        .btn-clear-small:hover {
+            background: rgba(239, 68, 68, 0.25);
+        }
+
+        .btn-copy-small {
+            padding: 4px 12px;
+            font-size: 12px;
+            background: rgba(16, 185, 129, 0.15);
+            color: #34d399;
+            border: 1px solid rgba(16, 185, 129, 0.25);
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s;
+            flex: none;
+        }
+
+        .btn-copy-small:hover {
+            background: rgba(16, 185, 129, 0.25);
+        }
+
+        .format-buttons {
+            display: inline-flex;
+            gap: 8px;
+            margin-left: 8px;
+        }
+
+        .format-btn {
+            padding: 4px 12px;
             border: 1px solid rgba(255, 255, 255, 0.2);
-            border-radius: 8px;
+            border-radius: 6px;
             background: rgba(255, 255, 255, 0.05);
             color: #a0aec0;
-            font-size: 13px;
-            cursor: pointer;
-            transition: all 0.3s;
-        }
-
-        .option-btn:hover {
-            background: rgba(255, 255, 255, 0.1);
-        }
-
-        .option-btn.active {
-            background: rgba(0, 217, 255, 0.2);
-            border-color: #00d9ff;
-            color: #00d9ff;
-        }
-
-        .button-group {
-            display: flex;
-            gap: 12px;
-            margin: 20px 0;
-            flex-wrap: wrap;
-        }
-
-        button {
-            flex: 1;
-            min-width: 100px;
-            padding: 14px 24px;
-            border: none;
-            border-radius: 10px;
-            font-size: 15px;
+            font-size: 11px;
             font-weight: 600;
             cursor: pointer;
-            transition: all 0.3s;
+            transition: all 0.2s;
+            flex: none;
         }
 
-        .btn-format {
-            background: linear-gradient(135deg, #00d9ff, #0099cc);
-            color: #000;
-        }
-
-        .btn-minify {
-            background: linear-gradient(135deg, #a855f7, #7c3aed);
-            color: #fff;
-        }
-
-        .btn-clear {
-            background: rgba(239, 68, 68, 0.2);
-            color: #f87171;
-            border: 1px solid rgba(239, 68, 68, 0.3);
-        }
-
-        .btn-copy {
+        .format-btn:hover {
             background: rgba(255, 255, 255, 0.1);
-            color: #fff;
-            border: 1px solid rgba(255, 255, 255, 0.2);
         }
 
-        button:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+        .format-btn.minify {
+            background: rgba(168, 85, 247, 0.15);
+            color: #c084fc;
+            border-color: rgba(168, 85, 247, 0.25);
         }
 
-        button:active {
-            transform: translateY(0);
+        .format-btn.minify:hover {
+            background: rgba(168, 85, 247, 0.25);
         }
 
         .message {
@@ -294,11 +287,6 @@
             .CodeMirror {
                 font-size: 11px;
             }
-
-            button {
-                padding: 12px 16px;
-                font-size: 14px;
-            }
         }
     </style>
 </head>
@@ -309,26 +297,26 @@
     <p class="subtitle">Format, minify, and validate JSON data</p>
 
     <div class="card">
-        <div class="options">
-            <span>Indent:</span>
-            <button class="option-btn active" data-indent="2" onclick="setIndent(2)">2 spaces</button>
-            <button class="option-btn" data-indent="4" onclick="setIndent(4)">4 spaces</button>
+        <div class="card-header">
+            <label>Input</label>
+            <button class="btn-clear-small" onclick="clearAll()">Clear</button>
         </div>
-        <label>Input</label>
         <div id="editor-wrapper">
             <textarea id="input" hidden></textarea>
         </div>
     </div>
 
-    <div class="button-group">
-        <button class="btn-format" onclick="formatJSON()">Format</button>
-        <button class="btn-minify" onclick="minifyJSON()">Minify</button>
-        <button class="btn-copy" onclick="copyResult()">Copy</button>
-        <button class="btn-clear" onclick="clearAll()">Clear</button>
-    </div>
-
     <div class="card">
-        <label>Output</label>
+        <div class="card-header">
+            <label>Output
+                <span class="format-buttons">
+                    <button class="format-btn" onclick="formatJSON(2)">2 spaces</button>
+                    <button class="format-btn" onclick="formatJSON(4)">4 spaces</button>
+                    <button class="format-btn minify" onclick="minifyJSON()">Minify</button>
+                </span>
+            </label>
+            <button class="btn-copy-small" onclick="copyResult()">Copy</button>
+        </div>
         <div id="output-wrapper">
             <textarea id="output" hidden></textarea>
         </div>
@@ -348,7 +336,6 @@
     const inputEl = document.getElementById('input');
     const outputEl = document.getElementById('output');
     const messageEl = document.getElementById('message');
-    let currentIndent = 2;
 
     // 共享的 CodeMirror 配置
     const baseConfig = {
@@ -403,23 +390,6 @@
         return text;
     }
 
-    function setIndent(value) {
-        currentIndent = value;
-        document.querySelectorAll('.option-btn').forEach(btn => {
-            btn.classList.remove('active');
-            if (btn.dataset.indent === String(value)) {
-                btn.classList.add('active');
-            }
-        });
-
-        // 同步 CodeMirror 缩进设置
-        editor.setOption('indentUnit', value);
-        editor.setOption('tabSize', value);
-        editor.setOption('indentWithTabs', false);
-        editorOutput.setOption('indentUnit', value);
-        editorOutput.setOption('tabSize', value);
-    }
-
     function processJSON(text, processor, successMessage) {
         try {
             const parsed = JSON.parse(text);
@@ -435,19 +405,19 @@
         }
     }
 
-    function formatJSON() {
+    function formatJSON(indent) {
         const text = validateInput('format');
         if (!text) return;
 
         processJSON(text, (parsed) => {
-            return JSON.stringify(parsed, null, currentIndent);
+            return JSON.stringify(parsed, null, indent);
         }, 'Formatted successfully');
     }
 
     function minifyJSON() {
         const text = validateInput('minify');
         if (!text) return;
-        
+
         processJSON(text, (parsed) => {
             return JSON.stringify(parsed);
         }, 'Minified successfully');
