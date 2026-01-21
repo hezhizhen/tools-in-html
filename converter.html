@@ -1,0 +1,534 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta content="width=device-width, initial-scale=1.0" name="viewport">
+    <title>Format Converter</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            min-height: 100vh;
+            padding: 20px;
+            color: #fff;
+        }
+
+        .container {
+            max-width: 90%;
+            margin: 0 auto;
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 10px;
+            font-size: 1.8rem;
+            background: linear-gradient(90deg, #00d9ff, #a855f7);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #6b7280;
+            margin-bottom: 30px;
+            font-size: 14px;
+        }
+
+        .card {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 16px;
+            padding: 24px;
+            margin-bottom: 20px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .card-header label {
+            margin-bottom: 0;
+        }
+
+        .btn-clear-small {
+            padding: 4px 12px;
+            font-size: 12px;
+            background: rgba(239, 68, 68, 0.15);
+            color: #f87171;
+            border: 1px solid rgba(239, 68, 68, 0.25);
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s;
+            flex: none;
+        }
+
+        .btn-clear-small:hover {
+            background: rgba(239, 68, 68, 0.25);
+        }
+
+        label {
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+            font-weight: 500;
+            color: #a0aec0;
+        }
+
+        .format-badge {
+            padding: 2px 10px;
+            margin-left: 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            background: rgba(0, 217, 255, 0.2);
+            color: #00d9ff;
+        }
+
+        .format-badge:empty {
+            display: none;
+        }
+
+        .format-buttons {
+            display: inline-flex;
+            gap: 8px;
+            margin-left: 8px;
+        }
+
+        .format-buttons .format-btn {
+            padding: 4px 12px;
+            font-size: 11px;
+        }
+
+        .format-btn {
+            padding: 8px 20px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.05);
+            color: #a0aec0;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-transform: uppercase;
+        }
+
+        .format-btn:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .format-btn.active {
+            background: rgba(0, 217, 255, 0.2);
+            border-color: #00d9ff;
+            color: #00d9ff;
+        }
+
+
+        .message {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 12px 16px;
+            border-radius: 8px;
+            font-size: 14px;
+            display: none;
+            z-index: 1000;
+        }
+
+        .message.success {
+            display: block;
+            background: rgba(16, 185, 129, 0.2);
+            color: #34d399;
+            border: 1px solid rgba(16, 185, 129, 0.3);
+        }
+
+        .message.error {
+            display: block;
+            background: rgba(239, 68, 68, 0.2);
+            color: #f87171;
+            border: 1px solid rgba(239, 68, 68, 0.3);
+        }
+
+        .back-link {
+            display: inline-block;
+            margin-bottom: 20px;
+            color: #a0aec0;
+            text-decoration: none;
+            font-size: 14px;
+            transition: color 0.2s;
+        }
+
+        .back-link:hover {
+            color: #00d9ff;
+        }
+
+        .CodeMirror {
+            background: rgba(0, 0, 0, 0.3) !important;
+            height: auto;
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            font-family: 'Consolas', 'Monaco', monospace;
+            font-size: 13px;
+            transition: border-color 0.3s;
+            color: #fff !important;
+        }
+
+        .CodeMirror-focused {
+            border-color: #00d9ff !important;
+        }
+
+        .CodeMirror-gutters {
+            background: rgba(0, 0, 0, 0.2) !important;
+            border-right: 1px solid rgba(255, 255, 255, 0.1) !important;
+        }
+
+        .CodeMirror-linenumber {
+            color: rgba(160, 174, 192, 0.5) !important;
+        }
+
+        .CodeMirror-lines {
+            padding: 8px 0;
+        }
+
+        .CodeMirror-selected {
+            background: rgba(0, 217, 255, 0.15) !important;
+        }
+
+        .CodeMirror-cursor {
+            border-left: 2px solid #00d9ff !important;
+        }
+
+        .CodeMirror pre.CodeMirror-line,
+        .CodeMirror pre.CodeMirror-line-like {
+            color: #e6edf3 !important;
+        }
+
+        .CodeMirror-sizer {
+            min-height: 0 !important;
+        }
+
+        .CodeMirror-scroll {
+            min-height: 0;
+        }
+
+        .CodeMirror pre {
+            background: transparent !important;
+        }
+
+        .CodeMirror-line {
+            background: transparent !important;
+        }
+
+        .cm-s-default .cm-string { color: #a5d6ff !important; }
+        .cm-s-default .cm-number { color: #79c0ff !important; }
+        .cm-s-default .cm-property { color: #7ee787 !important; }
+        .cm-s-default .cm-atom { color: #ff7b72 !important; }
+        .cm-s-default .cm-keyword { color: #ff7b72 !important; }
+        .cm-s-default .cm-variable { color: #ffa657 !important; }
+        .cm-s-default .cm-comment { color: #8b949e !important; }
+
+        @media (max-width: 480px) {
+            h1 { font-size: 1.4rem; }
+            .card { padding: 16px; }
+            .CodeMirror { font-size: 11px; }
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <a class="back-link" href="index.html">← Back to Tools</a>
+    <h1>Format Converter</h1>
+    <p class="subtitle">Convert between JSON, YAML, and TOML formats</p>
+
+    <div class="card">
+        <div class="card-header">
+            <label>Input <span id="detected-format" class="format-badge"></span></label>
+            <button class="btn-clear-small" onclick="clearAll()">Clear</button>
+        </div>
+        <div id="editor-wrapper">
+            <textarea id="input" hidden></textarea>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-header">
+            <label>Output
+                <span class="format-buttons">
+                    <button class="format-btn" data-format="json" onclick="setOutputFormat('json')">JSON</button>
+                    <button class="format-btn active" data-format="yaml" onclick="setOutputFormat('yaml')">YAML</button>
+                    <button class="format-btn" data-format="toml" onclick="setOutputFormat('toml')">TOML</button>
+                </span>
+            </label>
+            <button class="btn-clear-small" onclick="copyOutput()" style="background: rgba(16, 185, 129, 0.15); color: #34d399; border-color: rgba(16, 185, 129, 0.25);">Copy</button>
+        </div>
+        <div id="output-wrapper">
+            <textarea id="output" hidden></textarea>
+        </div>
+    </div>
+</div>
+<div class="message" id="message"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/javascript/javascript.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/yaml/yaml.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/toml/toml.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/js-yaml/4.1.0/js-yaml.min.js"></script>
+
+<script type="module">
+    import TOML from 'https://esm.sh/smol-toml@1.3.1';
+
+    const inputEl = document.getElementById('input');
+    const outputEl = document.getElementById('output');
+    const messageEl = document.getElementById('message');
+    const formatBadge = document.getElementById('detected-format');
+    
+    let inputFormat = 'json';
+    let outputFormat = 'yaml';
+
+    const modeMap = {
+        json: 'application/json',
+        yaml: 'yaml',
+        toml: 'toml'
+    };
+
+    const baseConfig = {
+        lineNumbers: true,
+        lineWrapping: true,
+        indentUnit: 2,
+        tabSize: 2
+    };
+
+    const editor = CodeMirror.fromTextArea(inputEl, {
+        ...baseConfig,
+        mode: modeMap[inputFormat]
+    });
+
+    const editorOutput = CodeMirror.fromTextArea(outputEl, {
+        ...baseConfig,
+        mode: modeMap[outputFormat],
+        readOnly: true
+    });
+
+    // Use requestAnimationFrame instead of arbitrary timeout for CodeMirror refresh
+    requestAnimationFrame(() => {
+        editor.refresh();
+        editorOutput.refresh();
+    });
+
+    function detectFormat(text) {
+        text = text.trim();
+        if (!text) return null;
+
+        // 1. JSON (strictest) - must start with { or [
+        if (text.startsWith('{') || text.startsWith('[')) {
+            try {
+                const result = JSON.parse(text);
+                if (typeof result === 'object' && result !== null) {
+                    return 'json';
+                }
+            } catch (e) {}
+        }
+
+        // 2. TOML (stricter than YAML)
+        try {
+            const result = TOML.parse(text);
+            if (typeof result === 'object' && Object.keys(result).length > 0) {
+                return 'toml';
+            }
+        } catch (e) {}
+
+        // 3. YAML (most lenient, fallback)
+        try {
+            const result = jsyaml.load(text);
+            if (typeof result === 'object' && result !== null) {
+                return 'yaml';
+            }
+        } catch (e) {}
+
+        return null;
+    }
+
+    let debounceTimeout;
+
+    function debouncedDetectAndConvert(immediate = false) {
+        const text = editor.getValue();
+
+        clearTimeout(debounceTimeout);
+
+        if (immediate) {
+            // Immediate detection and conversion for paste events
+            const detected = detectFormat(text);
+            if (detected && detected !== inputFormat) {
+                window.setInputFormat(detected);
+            }
+            if (text.trim()) {
+                window.convert();
+            } else {
+                editorOutput.setValue('');
+            }
+        } else {
+            // Single debounce for both detection and conversion
+            debounceTimeout = setTimeout(() => {
+                const detected = detectFormat(text);
+                if (detected && detected !== inputFormat) {
+                    window.setInputFormat(detected);
+                }
+                if (text.trim()) {
+                    window.convert();
+                } else {
+                    editorOutput.setValue('');
+                }
+            }, 400);
+        }
+    }
+
+    editor.on('change', function(cm, change) {
+        // Detect immediately on paste, debounce on typing
+        const isPaste = change.origin === 'paste';
+        debouncedDetectAndConvert(isPaste);
+    });
+
+    function showMessage(text, type) {
+        messageEl.textContent = text;
+        messageEl.className = 'message ' + type;
+        setTimeout(() => {
+            messageEl.className = 'message';
+        }, 3000);
+    }
+
+    window.setInputFormat = function(format) {
+        inputFormat = format;
+        editor.setOption('mode', modeMap[format]);
+        formatBadge.textContent = format.toUpperCase();
+    }
+
+    window.setOutputFormat = function(format) {
+        outputFormat = format;
+        editorOutput.setOption('mode', modeMap[format]);
+        updateFormatButtons();
+
+        if (editor.getValue().trim()) {
+            window.convert();
+        } else {
+            editorOutput.setValue('');
+        }
+    }
+
+    function updateFormatButtons() {
+        document.querySelectorAll('.format-buttons .format-btn').forEach(btn => {
+            btn.classList.toggle('active', btn.dataset.format === outputFormat);
+        });
+    }
+
+    function parseInput(text, format) {
+        switch (format) {
+            case 'json':
+                return JSON.parse(text);
+            case 'yaml':
+                return jsyaml.load(text);
+            case 'toml':
+                return TOML.parse(text);
+            default:
+                throw new Error('Unknown input format');
+        }
+    }
+
+    function stringify(data, format) {
+        switch (format) {
+            case 'json':
+                return JSON.stringify(data, null, 2);
+            case 'yaml':
+                return jsyaml.dump(data, { indent: 2, lineWidth: -1 });
+            case 'toml':
+                return stringifyToml(data);
+            default:
+                throw new Error('Unknown output format');
+        }
+    }
+
+    function stringifyToml(data) {
+        // TOML requires root to be an object/table
+        if (Array.isArray(data)) {
+            throw new Error('TOML does not support arrays at root level. Wrap in an object like { "items": [...] }');
+        }
+        if (data === null || typeof data !== 'object') {
+            throw new Error('TOML requires an object/table at root level');
+        }
+        try {
+            return TOML.stringify(data);
+        } catch (e) {
+            // Provide friendlier error messages for common TOML limitations
+            const msg = e.message || '';
+            if (msg.includes('mixed') || msg.includes('heterogeneous')) {
+                throw new Error('TOML arrays must contain values of the same type');
+            }
+            if (msg.includes('null') || msg.includes('undefined')) {
+                throw new Error('TOML does not support null values');
+            }
+            throw e;
+        }
+    }
+
+    window.convert = function() {
+        const text = editor.getValue().trim();
+        if (!text) {
+            showMessage('Please enter content to convert', 'error');
+            return;
+        }
+
+        let data;
+        try {
+            data = parseInput(text, inputFormat);
+        } catch (e) {
+            showMessage(`Invalid ${inputFormat.toUpperCase()}: ${e.message}`, 'error');
+            return;
+        }
+
+        try {
+            const result = stringify(data, outputFormat);
+            editorOutput.setValue(result);
+            showMessage(`Converted from ${inputFormat.toUpperCase()} to ${outputFormat.toUpperCase()}`, 'success');
+        } catch (e) {
+            showMessage(`Cannot convert to ${outputFormat.toUpperCase()}: ${e.message}`, 'error');
+        }
+    }
+
+    window.copyOutput = function() {
+        const result = editorOutput.getValue();
+        if (!result) {
+            showMessage('Nothing to copy', 'error');
+            return;
+        }
+        navigator.clipboard.writeText(result).then(() => {
+            showMessage('Copied to clipboard', 'success');
+        }).catch(() => {
+            showMessage('Failed to copy', 'error');
+        });
+    }
+
+    window.clearAll = function() {
+        clearTimeout(debounceTimeout);
+        editor.setValue('');
+        editor.clearHistory();
+        editorOutput.setValue('');
+        editorOutput.clearHistory();
+        formatBadge.textContent = '';
+        inputFormat = 'json';
+        editor.setOption('mode', modeMap['json']);
+        showMessage('Cleared', 'success');
+    }
+</script>
+</body>
+</html>
