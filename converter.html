@@ -82,6 +82,22 @@
             background: rgba(239, 68, 68, 0.25);
         }
 
+        .btn-copy-small {
+            padding: 4px 12px;
+            font-size: 12px;
+            background: rgba(16, 185, 129, 0.15);
+            color: #34d399;
+            border: 1px solid rgba(16, 185, 129, 0.25);
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s;
+            flex: none;
+        }
+
+        .btn-copy-small:hover {
+            background: rgba(16, 185, 129, 0.25);
+        }
+
         label {
             display: flex;
             align-items: center;
@@ -360,7 +376,7 @@
                     <button class="format-btn" data-format="toml" onclick="setOutputFormat('toml')">TOML</button>
                 </span>
             </label>
-            <button class="btn-clear-small" onclick="copyOutput()" style="background: rgba(16, 185, 129, 0.15); color: #34d399; border-color: rgba(16, 185, 129, 0.25);">Copy</button>
+            <button class="btn-copy-small" onclick="copyOutput()">Copy</button>
         </div>
         <div id="output-wrapper">
             <textarea id="output" hidden></textarea>
