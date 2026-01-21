@@ -4,8 +4,11 @@
     <meta charset="UTF-8">
     <meta content="width=device-width, initial-scale=1.0" name="viewport">
     <title>Format Converter</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/fold/foldgutter.min.css">
+    <!-- Preload critical resources -->
+    <link rel="preload" href="https://cdn.jsdelivr.net/npm/codemirror@5.65.16/lib/codemirror.min.css" as="style">
+    <link rel="preload" href="https://cdn.jsdelivr.net/npm/codemirror@5.65.16/lib/codemirror.min.js" as="script">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/codemirror@5.65.16/lib/codemirror.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/codemirror@5.65.16/addon/fold/foldgutter.css">
     <style>
         * {
             margin: 0;
@@ -296,9 +299,43 @@
             .card { padding: 16px; }
             .CodeMirror { font-size: 11px; }
         }
+
+        /* Loading indicator */
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+            transition: opacity 0.3s;
+        }
+
+        .loading-overlay.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .loading-spinner {
+            width: 40px;
+            height: 40px;
+            border: 3px solid rgba(0, 217, 255, 0.2);
+            border-top-color: #00d9ff;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
     </style>
 </head>
 <body>
+<div class="loading-overlay" id="loading"><div class="loading-spinner"></div></div>
 <div class="container">
     <a class="back-link" href="index.html">← Back to Tools</a>
     <h1>Format Converter</h1>
@@ -332,19 +369,25 @@
 </div>
 <div class="message" id="message"></div>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/javascript/javascript.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/yaml/yaml.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/toml/toml.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/edit/matchbrackets.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/edit/closebrackets.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/fold/foldcode.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/fold/foldgutter.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/fold/brace-fold.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/js-yaml/4.1.0/js-yaml.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/codemirror@5.65.16/lib/codemirror.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/codemirror@5.65.16/mode/javascript/javascript.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/codemirror@5.65.16/mode/yaml/yaml.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/codemirror@5.65.16/mode/toml/toml.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/codemirror@5.65.16/addon/edit/matchbrackets.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/codemirror@5.65.16/addon/edit/closebrackets.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/codemirror@5.65.16/addon/fold/foldcode.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/codemirror@5.65.16/addon/fold/foldgutter.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/codemirror@5.65.16/addon/fold/brace-fold.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/js-yaml@4.1.0/dist/js-yaml.min.js"></script>
 
-<script type="module">
-    import TOML from 'https://esm.sh/smol-toml@1.3.1';
+<script>
+    // Load TOML library asynchronously
+    let TOML = null;
+    const tomlReady = import('https://cdn.jsdelivr.net/npm/smol-toml@1.3.1/+esm').then(m => {
+        TOML = m.default;
+    }).catch(err => {
+        console.warn('TOML library failed to load:', err);
+    });
 
     const inputEl = document.getElementById('input');
     const outputEl = document.getElementById('output');
@@ -387,10 +430,11 @@
         readOnly: true
     });
 
-    // Use requestAnimationFrame instead of arbitrary timeout for CodeMirror refresh
+    // Hide loading overlay and refresh editors
     requestAnimationFrame(() => {
         editor.refresh();
         editorOutput.refresh();
+        document.getElementById('loading').classList.add('hidden');
     });
 
     function detectFormat(text) {
@@ -407,13 +451,15 @@
             } catch (e) {}
         }
 
-        // 2. TOML (stricter than YAML)
-        try {
-            const result = TOML.parse(text);
-            if (typeof result === 'object' && Object.keys(result).length > 0) {
-                return 'toml';
-            }
-        } catch (e) {}
+        // 2. TOML (stricter than YAML) - only if library is loaded
+        if (TOML) {
+            try {
+                const result = TOML.parse(text);
+                if (typeof result === 'object' && Object.keys(result).length > 0) {
+                    return 'toml';
+                }
+            } catch (e) {}
+        }
 
         // 3. YAML (most lenient, fallback)
         try {
@@ -505,6 +551,7 @@
             case 'yaml':
                 return jsyaml.load(text);
             case 'toml':
+                if (!TOML) throw new Error('TOML library is still loading, please try again');
                 return TOML.parse(text);
             default:
                 throw new Error('Unknown input format');
@@ -525,6 +572,9 @@
     }
 
     function stringifyToml(data) {
+        if (!TOML) {
+            throw new Error('TOML library is still loading, please try again');
+        }
         // TOML requires root to be an object/table
         if (Array.isArray(data)) {
             throw new Error('TOML does not support arrays at root level. Wrap in an object like { "items": [...] }');
