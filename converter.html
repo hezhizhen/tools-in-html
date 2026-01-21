@@ -374,7 +374,7 @@
             <label>Output
                 <span class="format-buttons">
                     <button class="format-btn" data-format="json" onclick="setOutputFormat('json')">JSON</button>
-                    <button class="format-btn active" data-format="yaml" onclick="setOutputFormat('yaml')">YAML</button>
+                    <button class="format-btn" data-format="yaml" onclick="setOutputFormat('yaml')">YAML</button>
                     <button class="format-btn" data-format="toml" onclick="setOutputFormat('toml')">TOML</button>
                 </span>
             </label>
@@ -413,7 +413,7 @@
     const formatBadge = document.getElementById('detected-format');
     
     let inputFormat = 'json';
-    let outputFormat = 'yaml';
+    let outputFormat = null;
 
     const modeMap = {
         json: 'application/json',
@@ -444,7 +444,7 @@
 
     const editorOutput = CodeMirror.fromTextArea(outputEl, {
         ...baseConfig,
-        mode: modeMap[outputFormat],
+        mode: null,
         readOnly: true
     });
 
@@ -498,27 +498,25 @@
         clearTimeout(debounceTimeout);
 
         if (immediate) {
-            // Immediate detection and conversion for paste events
+            // Immediate detection for paste events
             const detected = detectFormat(text);
-            if (detected && detected !== inputFormat) {
+            if (detected) {
                 window.setInputFormat(detected);
             }
-            if (text.trim()) {
+            // Only convert if output format is selected
+            if (outputFormat && text.trim()) {
                 window.convert();
-            } else {
-                editorOutput.setValue('');
             }
         } else {
-            // Single debounce for both detection and conversion
+            // Debounced detection
             debounceTimeout = setTimeout(() => {
                 const detected = detectFormat(text);
-                if (detected && detected !== inputFormat) {
+                if (detected) {
                     window.setInputFormat(detected);
                 }
-                if (text.trim()) {
+                // Only convert if output format is selected
+                if (outputFormat && text.trim()) {
                     window.convert();
-                } else {
-                    editorOutput.setValue('');
                 }
             }, 400);
         }
@@ -616,6 +614,10 @@
     }
 
     window.convert = function() {
+        if (!outputFormat) {
+            showMessage('Please select an output format', 'error');
+            return;
+        }
         const text = editor.getValue().trim();
         if (!text) {
             showMessage('Please enter content to convert', 'error');
@@ -658,9 +660,15 @@
         editor.clearHistory();
         editorOutput.setValue('');
         editorOutput.clearHistory();
+        editorOutput.setOption('mode', null);
         formatBadge.textContent = '';
         inputFormat = 'json';
+        outputFormat = null;
         editor.setOption('mode', modeMap['json']);
+        // Clear active state from output format buttons
+        document.querySelectorAll('.format-buttons .format-btn').forEach(btn => {
+            btn.classList.remove('active');
+        });
         showMessage('Cleared', 'success');
     }
 </script>
