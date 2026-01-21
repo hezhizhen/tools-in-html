@@ -192,8 +192,6 @@
             font-family: 'Consolas', 'Monaco', monospace;
             font-size: 13px;
             transition: border-color 0.3s;
-            position: relative;
-            overflow: hidden;
         }
 
         .CodeMirror-focused {
@@ -213,29 +211,14 @@
             text-align: right;
         }
 
-        /* 编辑器内容区 */
-        .CodeMirror-scroll {
-            overflow: auto !important;
-        }
-
         /* 代码编辑区 */
         .CodeMirror-lines {
             padding: 15px 0;
         }
 
-        /* 单行文本 */
-        .CodeMirror pre {
-            padding: 0 0.4em;
-        }
-
         /* 选中区域 */
         .CodeMirror-selected {
             background: rgba(0, 217, 255, 0.15) !important;
-        }
-
-        /* 当前行高亮 */
-        .CodeMirror-activeline-background {
-            background: rgba(255, 255, 255, 0.03) !important;
         }
 
         /* 光标 */
@@ -297,24 +280,6 @@
 
         .CodeMirror-foldmarker:hover {
             background: rgba(0, 217, 255, 0.25);
-        }
-
-        /* 滚动条 */
-        .CodeMirror-vscrollbar::-webkit-scrollbar,
-        .CodeMirror-hscrollbar::-webkit-scrollbar {
-            width: 8px;
-            height: 8px;
-        }
-
-        .CodeMirror-vscrollbar::-webkit-scrollbar-thumb,
-        .CodeMirror-hscrollbar::-webkit-scrollbar-thumb {
-            background: rgba(255, 255, 255, 0.2);
-            border-radius: 4px;
-        }
-
-        .CodeMirror-vscrollbar::-webkit-scrollbar-track,
-        .CodeMirror-hscrollbar::-webkit-scrollbar-track {
-            background: transparent;
         }
 
         @media (max-width: 480px) {
