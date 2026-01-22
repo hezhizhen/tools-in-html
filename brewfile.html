@@ -113,6 +113,11 @@
             border-left: 2px solid #f97316 !important;
         }
 
+        .cm-indent-guide {
+            position: relative;
+            border-left: 1px dotted #444;
+        }
+
         .CodeMirror-matchingbracket {
             color: #f97316 !important;
             background: rgba(249, 115, 22, 0.3) !important;
@@ -660,6 +665,7 @@
 <script src="https://cdn.jsdelivr.net/npm/codemirror@5.65.16/mode/ruby/ruby.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/codemirror@5.65.16/addon/edit/matchbrackets.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/codemirror@5.65.16/addon/edit/closebrackets.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/codemirror-addon-indent-guide@1.0.1/dist/indent-guide.js"></script>
 
 <script>
     const inputEl = document.getElementById('input');
@@ -686,6 +692,7 @@
         autoCloseBrackets: true,
         indentUnit: 2,
         tabSize: 2,
+        indentGuide: true,
         gutters: ["CodeMirror-linenumbers"]
     };
 
