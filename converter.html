@@ -345,13 +345,14 @@
 
     <div class="card">
         <div class="card-header">
-            <label>Output
+            <div style="display: flex; align-items: center;">
+                <label>Output</label>
                 <span class="format-buttons">
                     <button class="format-btn" data-format="json" onclick="setOutputFormat('json')">JSON</button>
                     <button class="format-btn" data-format="yaml" onclick="setOutputFormat('yaml')">YAML</button>
                     <button class="format-btn" data-format="toml" onclick="setOutputFormat('toml')">TOML</button>
                 </span>
-            </label>
+            </div>
             <button class="btn-copy-small" onclick="copyOutput()">Copy</button>
         </div>
         <div id="output-wrapper">

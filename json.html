@@ -308,13 +308,14 @@
 
     <div class="card">
         <div class="card-header">
-            <label>Output
+            <div style="display: flex; align-items: center;">
+                <label>Output</label>
                 <span class="format-buttons">
                     <button class="format-btn" onclick="formatJSON(2)">2 spaces</button>
                     <button class="format-btn" onclick="formatJSON(4)">4 spaces</button>
                     <button class="format-btn minify" onclick="minifyJSON()">Minify</button>
                 </span>
-            </label>
+            </div>
             <button class="btn-copy-small" onclick="copyResult()">Copy</button>
         </div>
         <div id="output-wrapper">
