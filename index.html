@@ -20,14 +20,14 @@
         }
 
         .container {
-            max-width: 600px;
+            max-width: 80%;
             margin: 0 auto;
         }
 
         h1 {
             text-align: center;
             margin-bottom: 10px;
-            font-size: 1.8rem;
+            font-size: 2rem;
             background: linear-gradient(90deg, #00d9ff, #a855f7);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
@@ -37,43 +37,69 @@
         .subtitle {
             text-align: center;
             color: #6b7280;
-            margin-bottom: 30px;
+            margin-bottom: 40px;
             font-size: 14px;
         }
 
-        .tools-list {
+        .tools-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 16px;
             list-style: none;
         }
 
-        .tools-list li {
+        .tool-card {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 16px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: all 0.3s;
+            overflow: hidden;
+        }
+
+        .tool-card:hover {
+            background: rgba(255, 255, 255, 0.08);
+            transform: translateY(-4px);
+            box-shadow: 0 12px 24px rgba(0, 0, 0, 0.4);
+            border-color: rgba(0, 217, 255, 0.3);
+        }
+
+        .tool-card a {
+            display: flex;
+            flex-direction: column;
+            padding: 24px;
+            text-decoration: none;
+            height: 100%;
+        }
+
+        .tool-icon {
+            font-size: 32px;
             margin-bottom: 12px;
         }
 
-        .tools-list a {
-            display: block;
-            padding: 20px 24px;
-            background: rgba(255, 255, 255, 0.05);
-            border-radius: 12px;
-            text-decoration: none;
+        .tool-name {
             color: #00d9ff;
-            font-weight: 500;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            transition: all 0.3s;
+            font-weight: 600;
+            font-size: 16px;
+            margin-bottom: 8px;
         }
 
-        .tools-list a:hover {
-            background: rgba(255, 255, 255, 0.1);
-            transform: translateY(-2px);
-            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+        .tool-desc {
+            color: #9ca3af;
+            font-size: 13px;
+            line-height: 1.5;
         }
 
-        @media (max-width: 480px) {
+        @media (max-width: 640px) {
             h1 {
-                font-size: 1.4rem;
+                font-size: 1.5rem;
             }
 
-            .tools-list a {
-                padding: 16px 20px;
+            .tools-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .tool-card a {
+                padding: 20px;
             }
         }
     </style>
@@ -82,18 +108,84 @@
 <div class="container">
     <h1>Tools in HTML</h1>
     <p class="subtitle">A collection of single-file browser-based tools</p>
-    <ul class="tools-list">
-        <li><a href="base64.html">Base64 Encoder/Decoder</a></li>
-        <li><a href="countdown.html">Countdown Timer</a></li>
-        <li><a href="diff.html">Text Diff Tool</a></li>
-        <li><a href="duration.html">Duration Calculator</a></li>
-        <li><a href="json.html">JSON Formatter</a></li>
-        <li><a href="converter.html">Format Converter (JSON/YAML/TOML)</a></li>
-        <li><a href="password.html">Password Generator</a></li>
-        <li><a href="rsa.html">RSA Private Key Parser</a></li>
-        <li><a href="certificates.html">X.509 Certificate Parser</a></li>
-        <li><a href="brewfile.html">Brewfile Analyzer</a></li>
-        <li><a href="image.html">Container Image Analyzer</a></li>
+    <ul class="tools-grid">
+        <li class="tool-card">
+            <a href="base64.html">
+                <span class="tool-icon">🔤</span>
+                <span class="tool-name">Base64 Encoder/Decoder</span>
+                <span class="tool-desc">Encode text to Base64 or decode Base64 back to text</span>
+            </a>
+        </li>
+        <li class="tool-card">
+            <a href="countdown.html">
+                <span class="tool-icon">⏱️</span>
+                <span class="tool-name">Countdown Timer</span>
+                <span class="tool-desc">Set a target date and watch the countdown in real-time</span>
+            </a>
+        </li>
+        <li class="tool-card">
+            <a href="diff.html">
+                <span class="tool-icon">📊</span>
+                <span class="tool-name">Text Diff Tool</span>
+                <span class="tool-desc">Compare two texts and highlight the differences</span>
+            </a>
+        </li>
+        <li class="tool-card">
+            <a href="duration.html">
+                <span class="tool-icon">📅</span>
+                <span class="tool-name">Duration Calculator</span>
+                <span class="tool-desc">Calculate the duration between two dates or times</span>
+            </a>
+        </li>
+        <li class="tool-card">
+            <a href="json.html">
+                <span class="tool-icon">📝</span>
+                <span class="tool-name">JSON Formatter</span>
+                <span class="tool-desc">Format, minify, and validate JSON data with syntax highlighting</span>
+            </a>
+        </li>
+        <li class="tool-card">
+            <a href="converter.html">
+                <span class="tool-icon">🔄</span>
+                <span class="tool-name">Format Converter</span>
+                <span class="tool-desc">Convert between JSON, YAML, and TOML formats</span>
+            </a>
+        </li>
+        <li class="tool-card">
+            <a href="password.html">
+                <span class="tool-icon">🔐</span>
+                <span class="tool-name">Password Generator</span>
+                <span class="tool-desc">Generate secure random passwords with custom options</span>
+            </a>
+        </li>
+        <li class="tool-card">
+            <a href="rsa.html">
+                <span class="tool-icon">🔑</span>
+                <span class="tool-name">RSA Private Key Parser</span>
+                <span class="tool-desc">Parse and inspect RSA private key details</span>
+            </a>
+        </li>
+        <li class="tool-card">
+            <a href="certificates.html">
+                <span class="tool-icon">📜</span>
+                <span class="tool-name">X.509 Certificate Parser</span>
+                <span class="tool-desc">Parse and display X.509 certificate information</span>
+            </a>
+        </li>
+        <li class="tool-card">
+            <a href="brewfile.html">
+                <span class="tool-icon">🍺</span>
+                <span class="tool-name">Brewfile Analyzer</span>
+                <span class="tool-desc">Analyze Homebrew formulas, versions, and dependencies</span>
+            </a>
+        </li>
+        <li class="tool-card">
+            <a href="image.html">
+                <span class="tool-icon">🐳</span>
+                <span class="tool-name">Container Image Analyzer</span>
+                <span class="tool-desc">Inspect Docker/OCI container image layers and metadata</span>
+            </a>
+        </li>
     </ul>
 </div>
 </body>
