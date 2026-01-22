@@ -324,15 +324,15 @@
 </div>
 <div class="message" id="message"></div>
 
-<script src="https://cdn.jsdelivr.net/npm/codemirror@5.65.16/lib/codemirror.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/codemirror@5.65.16/mode/javascript/javascript.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/codemirror@5.65.16/addon/edit/matchbrackets.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/codemirror@5.65.16/addon/edit/closebrackets.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/codemirror@5.65.16/addon/fold/foldcode.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/codemirror@5.65.16/addon/fold/foldgutter.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/codemirror@5.65.16/addon/fold/brace-fold.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/codemirror@5.65.16/lib/codemirror.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/codemirror@5.65.16/mode/javascript/javascript.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/codemirror@5.65.16/addon/edit/matchbrackets.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/codemirror@5.65.16/addon/edit/closebrackets.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/codemirror@5.65.16/addon/fold/foldcode.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/codemirror@5.65.16/addon/fold/foldgutter.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/codemirror@5.65.16/addon/fold/brace-fold.min.js"></script>
 
-<script>
+<script type="module">
     const inputEl = document.getElementById('input');
     const outputEl = document.getElementById('output');
     const messageEl = document.getElementById('message');
@@ -404,25 +404,25 @@
         }
     }
 
-    function formatJSON(indent) {
+    window.formatJSON = function(indent) {
         const text = validateInput('format');
         if (!text) return;
 
         processJSON(text, (parsed) => {
             return JSON.stringify(parsed, null, indent);
         }, 'Formatted successfully');
-    }
+    };
 
-    function minifyJSON() {
+    window.minifyJSON = function() {
         const text = validateInput('minify');
         if (!text) return;
 
         processJSON(text, (parsed) => {
             return JSON.stringify(parsed);
         }, 'Minified successfully');
-    }
+    };
 
-    function copyResult() {
+    window.copyResult = function() {
         const text = editorOutput.getValue();
         if (!text) {
             showMessage('Nothing to copy', 'error');
@@ -433,15 +433,15 @@
         }).catch(() => {
             showMessage('Failed to copy', 'error');
         });
-    }
+    };
 
-    function clearAll() {
+    window.clearAll = function() {
         editor.setValue('');
         editor.clearHistory();
         editorOutput.setValue('');
         editorOutput.clearHistory();
         showMessage('Cleared', 'success');
-    }
+    };
 </script>
 </body>
 </html>
