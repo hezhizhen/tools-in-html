@@ -1,0 +1,1188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta content="width=device-width, initial-scale=1.0" name="viewport">
+    <title>Kubernetes Resource Analyzer</title>
+    <link rel="preload" href="https://cdn.jsdelivr.net/npm/codemirror@5.65.16/lib/codemirror.min.js" as="script">
+    <link rel="preload" href="https://cdn.jsdelivr.net/npm/js-yaml@4.1.0/dist/js-yaml.min.js" as="script">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/codemirror@5.65.16/lib/codemirror.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/codemirror@5.65.16/addon/fold/foldgutter.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/codemirror@5.65.16/theme/material-darker.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            min-height: 100vh;
+            padding: 20px;
+            color: #fff;
+        }
+
+        .container {
+            max-width: 90%;
+            margin: 0 auto;
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 10px;
+            font-size: 1.8rem;
+            background: linear-gradient(90deg, #00d9ff, #a855f7);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #6b7280;
+            margin-bottom: 30px;
+            font-size: 14px;
+        }
+
+        .main-layout {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        @media (max-width: 1024px) {
+            .main-layout {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .card {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 16px;
+            padding: 24px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .card-header label {
+            margin-bottom: 0;
+            font-weight: 500;
+            color: #a0aec0;
+        }
+
+        .btn-clear-small {
+            padding: 4px 12px;
+            font-size: 12px;
+            background: rgba(239, 68, 68, 0.15);
+            color: #f87171;
+            border: 1px solid rgba(239, 68, 68, 0.25);
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-clear-small:hover {
+            background: rgba(239, 68, 68, 0.25);
+        }
+
+        .message {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 12px 16px;
+            border-radius: 8px;
+            font-size: 14px;
+            display: none;
+            z-index: 1000;
+        }
+
+        .message.success {
+            display: block;
+            background: rgba(16, 185, 129, 0.2);
+            color: #34d399;
+            border: 1px solid rgba(16, 185, 129, 0.3);
+        }
+
+        .message.error {
+            display: block;
+            background: rgba(239, 68, 68, 0.2);
+            color: #f87171;
+            border: 1px solid rgba(239, 68, 68, 0.3);
+        }
+
+        .back-link {
+            display: inline-block;
+            margin-bottom: 20px;
+            color: #a0aec0;
+            text-decoration: none;
+            font-size: 14px;
+            transition: color 0.2s;
+        }
+
+        .back-link:hover {
+            color: #00d9ff;
+        }
+
+        .CodeMirror {
+            background: rgba(0, 0, 0, 0.3) !important;
+            height: 600px;
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            font-family: 'Consolas', 'Monaco', monospace;
+            font-size: 13px;
+            transition: border-color 0.3s;
+        }
+
+        .CodeMirror-focused {
+            border-color: #00d9ff !important;
+        }
+
+        .CodeMirror-gutters {
+            background: rgba(0, 0, 0, 0.2) !important;
+            border-right: 1px solid rgba(255, 255, 255, 0.1) !important;
+        }
+
+        .CodeMirror-linenumber {
+            color: rgba(160, 174, 192, 0.5) !important;
+        }
+
+        .CodeMirror-foldgutter {
+            width: 1.2em;
+        }
+
+        .CodeMirror-foldgutter-open,
+        .CodeMirror-foldgutter-folded {
+            cursor: pointer;
+            color: #888;
+        }
+
+        .CodeMirror-foldgutter-open:after {
+            content: "\25BE";
+        }
+
+        .CodeMirror-foldgutter-folded:after {
+            content: "\25B8";
+        }
+
+        .CodeMirror-foldmarker {
+            color: #00d9ff;
+            background: rgba(0, 217, 255, 0.15);
+            border-radius: 3px;
+            padding: 1px 6px;
+            margin: 0 3px;
+            cursor: pointer;
+        }
+
+        .CodeMirror-vscrollbar::-webkit-scrollbar,
+        .CodeMirror-hscrollbar::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+
+        .CodeMirror-vscrollbar::-webkit-scrollbar-track,
+        .CodeMirror-hscrollbar::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 4px;
+        }
+
+        .CodeMirror-vscrollbar::-webkit-scrollbar-thumb,
+        .CodeMirror-hscrollbar::-webkit-scrollbar-thumb {
+            background: rgba(0, 217, 255, 0.3);
+            border-radius: 4px;
+        }
+
+        .CodeMirror-vscrollbar::-webkit-scrollbar-thumb:hover,
+        .CodeMirror-hscrollbar::-webkit-scrollbar-thumb:hover {
+            background: rgba(0, 217, 255, 0.5);
+        }
+
+        .analysis-result {
+            max-height: 600px;
+            overflow-y: auto;
+        }
+
+        .analysis-result::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .analysis-result::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 4px;
+        }
+
+        .analysis-result::-webkit-scrollbar-thumb {
+            background: rgba(0, 217, 255, 0.3);
+            border-radius: 4px;
+        }
+
+        .analysis-result::-webkit-scrollbar-thumb:hover {
+            background: rgba(0, 217, 255, 0.5);
+        }
+
+        .section {
+            margin-bottom: 24px;
+        }
+
+        .section-title {
+            font-size: 13px;
+            font-weight: 600;
+            color: #94a3b8;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 12px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid rgba(148, 163, 184, 0.15);
+        }
+
+        .info-grid {
+            display: grid;
+            grid-template-columns: 100px 1fr;
+            gap: 6px 12px;
+            font-size: 13px;
+            align-items: center;
+        }
+
+        .info-label {
+            color: #6b7280;
+            font-size: 12px;
+        }
+
+        .info-value {
+            color: #e5e7eb;
+            word-break: break-all;
+            font-size: 13px;
+        }
+
+        .info-value.mono {
+            font-family: 'Consolas', 'Monaco', monospace;
+            background: rgba(0, 0, 0, 0.2);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 12px;
+        }
+
+        .label-section {
+            margin-top: 14px;
+        }
+
+        .label-title {
+            font-size: 12px;
+            color: #6b7280;
+            margin-bottom: 8px;
+        }
+
+        .label-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+        }
+
+        .container-card {
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 10px;
+            padding: 16px;
+            margin-bottom: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            transition: border-color 0.2s;
+        }
+
+        .container-card:hover {
+            border-color: rgba(168, 85, 247, 0.3);
+        }
+
+        .container-name {
+            font-weight: 600;
+            color: #c4b5fd;
+            margin-bottom: 12px;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .container-name::before {
+            content: '';
+            width: 8px;
+            height: 8px;
+            background: #a855f7;
+            border-radius: 2px;
+        }
+
+        .tag {
+            display: inline-block;
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 500;
+        }
+
+        .tag-info {
+            background: rgba(59, 130, 246, 0.2);
+            color: #60a5fa;
+        }
+
+        .tag-warning {
+            background: rgba(245, 158, 11, 0.2);
+            color: #fbbf24;
+        }
+
+        .tag-success {
+            background: rgba(16, 185, 129, 0.2);
+            color: #34d399;
+        }
+
+        .tag-error {
+            background: rgba(239, 68, 68, 0.2);
+            color: #f87171;
+        }
+
+        .inline-warning {
+            font-size: 10px;
+            padding: 1px 5px;
+            border-radius: 3px;
+            background: rgba(245, 158, 11, 0.25);
+            color: #fbbf24;
+            margin-left: 6px;
+        }
+
+        .inline-note {
+            font-size: 10px;
+            color: #6b7280;
+            margin-left: 6px;
+        }
+
+        .env-table {
+            width: 100%;
+            font-size: 12px;
+            border-collapse: collapse;
+        }
+
+        .env-table th,
+        .env-table td {
+            padding: 6px 8px;
+            text-align: left;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .env-table th {
+            color: #6b7280;
+            font-weight: 500;
+        }
+
+        .env-table td {
+            font-family: 'Consolas', 'Monaco', monospace;
+            color: #e5e7eb;
+        }
+
+        .env-table td.secret {
+            color: #fbbf24;
+        }
+
+        .env-table td.configmap {
+            color: #60a5fa;
+        }
+
+        .volume-item {
+            padding: 10px 12px;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 8px;
+            margin-bottom: 8px;
+            font-size: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .volume-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .volume-name {
+            color: #c4b5fd;
+            font-weight: 600;
+        }
+
+        .volume-type {
+            color: #6b7280;
+            font-size: 11px;
+        }
+
+        .mount-path {
+            color: #6ee7b7;
+            font-family: 'Consolas', 'Monaco', monospace;
+            margin-top: 6px;
+            font-size: 11px;
+            padding-left: 16px;
+        }
+
+        .collapsible-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+        }
+
+        .collapsible-toggle {
+            font-size: 10px;
+            color: #6b7280;
+            transition: transform 0.2s;
+        }
+
+        .collapsible-toggle.collapsed {
+            transform: rotate(-90deg);
+        }
+
+        .collapsible-content {
+            overflow: hidden;
+            transition: max-height 0.2s ease-out;
+        }
+
+        .collapsible-content.collapsed {
+            max-height: 0 !important;
+        }
+
+        .env-item {
+            display: flex;
+            gap: 8px;
+            padding: 4px 0;
+            font-size: 12px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .env-item:last-child {
+            border-bottom: none;
+        }
+
+        .env-key {
+            color: #c4b5fd;
+            font-family: 'Consolas', 'Monaco', monospace;
+            min-width: 120px;
+        }
+
+        .env-value {
+            color: #e5e7eb;
+            font-family: 'Consolas', 'Monaco', monospace;
+            word-break: break-all;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 80px 20px;
+            color: #6b7280;
+        }
+
+        .empty-state-icon {
+            font-size: 32px;
+            font-weight: 700;
+            margin-bottom: 16px;
+            color: #4b5563;
+            letter-spacing: 2px;
+        }
+
+        .empty-state p {
+            font-size: 14px;
+        }
+
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+            transition: opacity 0.3s;
+        }
+
+        .loading-overlay.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .loading-spinner {
+            width: 40px;
+            height: 40px;
+            border: 3px solid rgba(0, 217, 255, 0.2);
+            border-top-color: #00d9ff;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+<div class="loading-overlay" id="loading"><div class="loading-spinner"></div></div>
+<div class="container">
+    <a class="back-link" href="index.html">← Back to Tools</a>
+    <h1>Kubernetes Resource Analyzer</h1>
+    <p class="subtitle">Analyze Pod, Deployment, StatefulSet, DaemonSet, ReplicaSet, Job, and CronJob specs</p>
+
+    <div class="main-layout">
+        <div class="card">
+            <div class="card-header">
+                <label>Resource YAML</label>
+                <button class="btn-clear-small" onclick="clearAll()">Clear</button>
+            </div>
+            <textarea id="input" hidden></textarea>
+        </div>
+
+        <div class="card">
+            <div class="card-header">
+                <label>Analysis Result</label>
+                <span id="kindLabel" class="tag tag-info" style="display: none;"></span>
+            </div>
+            <div id="result" class="analysis-result">
+                <div class="empty-state">
+                    <p>Paste a resource YAML to analyze</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="message" id="message"></div>
+
+<script defer src="https://cdn.jsdelivr.net/npm/codemirror@5.65.16/lib/codemirror.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/codemirror@5.65.16/mode/yaml/yaml.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/codemirror@5.65.16/addon/edit/matchbrackets.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/codemirror@5.65.16/addon/fold/foldcode.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/codemirror@5.65.16/addon/fold/foldgutter.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/codemirror@5.65.16/addon/fold/indent-fold.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/js-yaml@4.1.0/dist/js-yaml.min.js"></script>
+
+<script type="module">
+    const inputEl = document.getElementById('input');
+    const resultEl = document.getElementById('result');
+    const messageEl = document.getElementById('message');
+
+    const baseConfig = {
+        theme: "material-darker",
+        mode: "yaml",
+        lineNumbers: true,
+        lineWrapping: true,
+        viewportMargin: Infinity,
+        maxHighlightLength: Infinity,
+        matchBrackets: true,
+        indentUnit: 2,
+        tabSize: 2,
+        foldGutter: {
+            rangeFinder: CodeMirror.fold.indent
+        },
+        gutters: ["CodeMirror-linenumbers", "CodeMirror-foldgutter"]
+    };
+
+    const editor = CodeMirror.fromTextArea(inputEl, baseConfig);
+
+    requestAnimationFrame(() => {
+        editor.refresh();
+        document.getElementById('loading').classList.add('hidden');
+    });
+
+    let debounceTimeout;
+
+    editor.on('change', function(cm, change) {
+        clearTimeout(debounceTimeout);
+        const isPaste = change.origin === 'paste';
+        const delay = isPaste ? 0 : 400;
+        debounceTimeout = setTimeout(analyze, delay);
+    });
+
+    function showMessage(text, type) {
+        messageEl.textContent = text;
+        messageEl.className = 'message ' + type;
+        setTimeout(() => {
+            messageEl.className = 'message';
+        }, 3000);
+    }
+
+    function analyze() {
+        const text = editor.getValue().trim();
+        if (!text) {
+            document.getElementById('kindLabel').style.display = 'none';
+            resultEl.innerHTML = `
+                <div class="empty-state">
+                    <p>Paste a resource YAML to analyze</p>
+                </div>
+            `;
+            return;
+        }
+
+        let spec;
+        try {
+            spec = jsyaml.load(text);
+        } catch (e) {
+            showMessage('Invalid YAML: ' + e.message, 'error');
+            return;
+        }
+
+        if (!spec || typeof spec !== 'object') {
+            showMessage('Invalid YAML structure', 'error');
+            return;
+        }
+
+        const pod = normalizePodSpec(spec);
+        if (!pod) {
+            showMessage('Not a valid Pod, Deployment, StatefulSet, DaemonSet, ReplicaSet, Job, or CronJob', 'error');
+            return;
+        }
+
+        renderAnalysis(pod, spec);
+    }
+
+    function normalizePodSpec(spec) {
+        const kind = spec.kind || '';
+        
+        if (kind === 'Pod') {
+            return {
+                metadata: spec.metadata || {},
+                spec: spec.spec || {},
+                kind: 'Pod'
+            };
+        }
+        
+        if (['Deployment', 'StatefulSet', 'DaemonSet', 'ReplicaSet'].includes(kind)) {
+            return {
+                metadata: spec.spec?.template?.metadata || {},
+                spec: spec.spec?.template?.spec || {},
+                kind: kind,
+                parentMetadata: spec.metadata || {}
+            };
+        }
+        
+        if (kind === 'Job') {
+            return {
+                metadata: spec.spec?.template?.metadata || {},
+                spec: spec.spec?.template?.spec || {},
+                kind: kind,
+                parentMetadata: spec.metadata || {}
+            };
+        }
+        
+        if (kind === 'CronJob') {
+            return {
+                metadata: spec.spec?.jobTemplate?.spec?.template?.metadata || {},
+                spec: spec.spec?.jobTemplate?.spec?.template?.spec || {},
+                kind: kind,
+                parentMetadata: spec.metadata || {}
+            };
+        }
+
+        if (spec.spec?.containers) {
+            return {
+                metadata: spec.metadata || {},
+                spec: spec.spec,
+                kind: 'Pod'
+            };
+        }
+
+        return null;
+    }
+
+    function renderAnalysis(pod, originalSpec) {
+        // Update Kind label
+        const kindLabel = document.getElementById('kindLabel');
+        kindLabel.textContent = pod.kind;
+        kindLabel.style.display = 'inline-block';
+
+        const metadata = pod.metadata || {};
+        const spec = pod.spec || {};
+        const containers = spec.containers || [];
+        const initContainers = spec.initContainers || [];
+        const volumes = spec.volumes || [];
+
+        let html = '';
+
+        html += renderMetadataSection(metadata, pod, originalSpec);
+        html += renderContainersSection(containers, 'Containers', spec);
+        html += renderContainersSection(initContainers, 'Init Containers', spec);
+        html += renderVolumesSection(volumes, containers.concat(initContainers));
+        html += renderSecuritySection(spec);
+        html += renderSchedulingSection(spec);
+
+        resultEl.innerHTML = html;
+    }
+
+    function renderMetadataSection(metadata, pod, originalSpec) {
+        const labels = metadata.labels || {};
+        const annotations = metadata.annotations || {};
+        const parentMeta = pod.parentMetadata || {};
+
+        let html = `<div class="section">
+            <div class="section-title">Metadata</div>
+            <div class="info-grid">`;
+        
+        if (pod.kind !== 'Pod' && parentMeta.name) {
+            html += `<span class="info-label">${pod.kind} Name</span>
+                     <span class="info-value mono">${parentMeta.name}</span>`;
+        }
+
+        if (metadata.name) {
+            html += `<span class="info-label">Name</span>
+                     <span class="info-value mono">${metadata.name}</span>`;
+        }
+        
+        const ns = metadata.namespace || parentMeta.namespace || 'default';
+        html += `<span class="info-label">Namespace</span>
+                 <span class="info-value mono">${ns}</span>`;
+        
+        if (originalSpec.apiVersion) {
+            html += `<span class="info-label">API Version</span>
+                     <span class="info-value mono">${originalSpec.apiVersion}</span>`;
+        }
+
+        if (Object.keys(labels).length > 0) {
+            html += `<span class="info-label">Labels</span>
+                <div class="label-tags">`;
+            for (const [k, v] of Object.entries(labels)) {
+                html += `<span class="tag tag-info">${escapeHtml(k)}=${escapeHtml(v)}</span>`;
+            }
+            html += `</div>`;
+        }
+
+        if (Object.keys(annotations).length > 0) {
+            html += `<span class="info-label">Annotations</span>
+                <div class="label-tags">`;
+            for (const [k, v] of Object.entries(annotations)) {
+                html += `<span class="tag tag-success">${escapeHtml(k)}=${escapeHtml(v)}</span>`;
+            }
+            html += `</div>`;
+        }
+
+        html += `</div></div>`;
+        return html;
+    }
+
+    function renderContainersSection(containers, title, podSpec) {
+        if (containers.length === 0) return '';
+        const isMainContainer = title === 'Containers';
+
+        let html = `<div class="section">
+            <div class="section-title">${title} (${containers.length})</div>`;
+
+        containers.forEach(c => {
+            const sc = c.securityContext || {};
+            const image = c.image || '';
+            
+            html += `<div class="container-card">
+                <div class="container-name">${escapeHtml(c.name)}</div>
+                <div class="info-grid">
+                    <span class="info-label">Image</span>
+                    <span class="info-value mono">${escapeHtml(image || 'N/A')}`;
+            
+            // Image tag warning inline
+            if (image.endsWith(':latest')) {
+                html += ` <span class="inline-warning">:latest</span>`;
+            } else if (image && !image.includes(':') && !image.includes('@')) {
+                html += ` <span class="inline-warning">no tag</span>`;
+            }
+            html += `</span>`;
+            
+            if (c.command) {
+                html += `<span class="info-label">Command</span>
+                         <span class="info-value mono">${escapeHtml(JSON.stringify(c.command))}</span>`;
+            }
+            if (c.args) {
+                html += `<span class="info-label">Args</span>
+                         <span class="info-value mono">${escapeHtml(JSON.stringify(c.args))}</span>`;
+            }
+            if (c.ports && c.ports.length > 0) {
+                const ports = c.ports.map(p => `${p.containerPort}/${p.protocol || 'TCP'}`).join(', ');
+                html += `<span class="info-label">Ports</span>
+                         <span class="info-value mono">${escapeHtml(ports)}</span>`;
+            }
+
+            // Resources
+            html += renderResources(c.resources);
+
+            // Security Context
+            html += renderContainerSecurity(sc);
+
+            if (c.env && c.env.length > 0) {
+                html += renderEnvVars(c.env);
+            }
+
+            if (c.envFrom && c.envFrom.length > 0) {
+                html += renderEnvFrom(c.envFrom);
+            }
+
+            // Probes (only for main containers)
+            if (isMainContainer) {
+                html += renderProbes(c);
+            }
+
+            html += `</div>`;
+
+            html += `</div>`;
+        });
+
+        html += `</div>`;
+        return html;
+    }
+
+    function renderContainerSecurity(sc) {
+        const items = [];
+        
+        if (sc.privileged === true) {
+            items.push({ label: 'Privileged', value: 'true', type: 'error' });
+        }
+        if (sc.runAsUser !== undefined) {
+            const type = sc.runAsUser === 0 ? 'error' : 'success';
+            items.push({ label: 'runAsUser', value: sc.runAsUser, type });
+        }
+        if (sc.runAsNonRoot !== undefined) {
+            items.push({ label: 'runAsNonRoot', value: sc.runAsNonRoot, type: sc.runAsNonRoot ? 'success' : 'warning' });
+        }
+        if (sc.readOnlyRootFilesystem !== undefined) {
+            items.push({ label: 'readOnlyRootFilesystem', value: sc.readOnlyRootFilesystem, type: sc.readOnlyRootFilesystem ? 'success' : 'info' });
+        }
+        if (sc.allowPrivilegeEscalation !== undefined) {
+            items.push({ label: 'allowPrivilegeEscalation', value: sc.allowPrivilegeEscalation, type: sc.allowPrivilegeEscalation ? 'warning' : 'success' });
+        }
+        if (sc.capabilities?.drop?.length > 0) {
+            items.push({ label: 'Drop capabilities', value: sc.capabilities.drop.join(', '), type: 'success' });
+        }
+        if (sc.capabilities?.add?.length > 0) {
+            items.push({ label: 'Add capabilities', value: sc.capabilities.add.join(', '), type: 'warning' });
+        }
+
+        if (items.length === 0) return '';
+
+        let html = `<span class="info-label">Security</span>
+            <div style="display: flex; flex-wrap: wrap; gap: 6px;">`;
+
+        items.forEach(item => {
+            html += `<span class="tag tag-${item.type}">${item.label}: ${item.value}</span>`;
+        });
+
+        html += `</div>`;
+        return html;
+    }
+
+    function renderResources(resources) {
+        const req = resources?.requests || {};
+        const lim = resources?.limits || {};
+
+        const hasRequests = req.cpu || req.memory;
+        const hasLimits = lim.cpu || lim.memory;
+
+        let html = `<span class="info-label">Resources</span>
+            <div class="info-value" style="display: flex; gap: 20px; font-size: 12px;">`;
+
+        // Requests
+        html += `<div><span style="color: #6b7280;">Requests:</span> `;
+        if (hasRequests) {
+            const parts = [];
+            if (req.cpu) parts.push(`CPU: ${req.cpu}`);
+            if (req.memory) parts.push(`Mem: ${req.memory}`);
+            html += `<span class="mono" style="color: #34d399;">${parts.join(', ')}</span>`;
+        } else {
+            html += `<span class="inline-note">not set</span>`;
+        }
+        html += `</div>`;
+
+        // Limits
+        html += `<div><span style="color: #6b7280;">Limits:</span> `;
+        if (hasLimits) {
+            const parts = [];
+            if (lim.cpu) parts.push(`CPU: ${lim.cpu}`);
+            if (lim.memory) parts.push(`Mem: ${lim.memory}`);
+            html += `<span class="mono" style="color: #fbbf24;">${parts.join(', ')}</span>`;
+        } else {
+            html += `<span class="inline-note">not set</span>`;
+        }
+        html += `</div>`;
+
+        html += `</div>`;
+        return html;
+    }
+
+    let envIdCounter = 0;
+
+    function renderEnvVars(envVars) {
+        const id = `env-${envIdCounter++}`;
+        const defaultCollapsed = envVars.length > 5;
+
+        let html = `<span class="info-label collapsible-header" onclick="toggleCollapse('${id}')" style="cursor: pointer; align-self: start;">
+                <span class="collapsible-toggle ${defaultCollapsed ? 'collapsed' : ''}" id="${id}-toggle">▼</span>
+                Env (${envVars.length})
+            </span>
+            <div class="collapsible-content ${defaultCollapsed ? 'collapsed' : ''}" id="${id}" style="max-height: ${envVars.length * 30}px;">`;
+
+        envVars.forEach(e => {
+            let value = '';
+            if (e.value !== undefined) {
+                value = escapeHtml(e.value);
+            } else if (e.valueFrom?.secretKeyRef) {
+                const ref = e.valueFrom.secretKeyRef;
+                value = `<span class="secret">Secret: ${escapeHtml(ref.name)}[${escapeHtml(ref.key)}]</span>`;
+            } else if (e.valueFrom?.configMapKeyRef) {
+                const ref = e.valueFrom.configMapKeyRef;
+                value = `<span class="configmap">ConfigMap: ${escapeHtml(ref.name)}[${escapeHtml(ref.key)}]</span>`;
+            } else if (e.valueFrom?.fieldRef) {
+                value = `FieldRef: ${escapeHtml(e.valueFrom.fieldRef.fieldPath)}`;
+            } else if (e.valueFrom?.resourceFieldRef) {
+                value = `Resource: ${escapeHtml(e.valueFrom.resourceFieldRef.resource)}`;
+            }
+            html += `<div class="env-item">
+                <span class="env-key">${escapeHtml(e.name)}</span>
+                <span class="env-value">= ${value}</span>
+            </div>`;
+        });
+
+        html += `</div>`;
+        return html;
+    }
+
+    window.toggleCollapse = function(id) {
+        const content = document.getElementById(id);
+        const toggle = document.getElementById(id + '-toggle');
+        content.classList.toggle('collapsed');
+        toggle.classList.toggle('collapsed');
+    }
+
+    function renderEnvFrom(envFrom) {
+        let html = `<span class="info-label">Env From</span>
+            <div style="display: flex; flex-wrap: wrap; gap: 6px;">`;
+
+        envFrom.forEach(e => {
+            if (e.configMapRef) {
+                html += `<span class="tag tag-info">ConfigMap: ${escapeHtml(e.configMapRef.name)}</span>`;
+            }
+            if (e.secretRef) {
+                html += `<span class="tag tag-warning">Secret: ${escapeHtml(e.secretRef.name)}</span>`;
+            }
+        });
+
+        html += `</div>`;
+        return html;
+    }
+
+    function renderProbes(container) {
+        const probes = [];
+        if (container.livenessProbe) probes.push({ name: 'Liveness', probe: container.livenessProbe });
+        if (container.readinessProbe) probes.push({ name: 'Readiness', probe: container.readinessProbe });
+        if (container.startupProbe) probes.push({ name: 'Startup', probe: container.startupProbe });
+
+        if (probes.length === 0) return '';
+
+        let html = `<span class="info-label">Probes</span>
+            <div style="display: flex; gap: 10px; flex-wrap: wrap;">`;
+
+        probes.forEach(p => {
+            let probeType = '';
+            if (p.probe.httpGet) {
+                probeType = `HTTP GET ${p.probe.httpGet.path || '/'}:${p.probe.httpGet.port}`;
+            } else if (p.probe.tcpSocket) {
+                probeType = `TCP :${p.probe.tcpSocket.port}`;
+            } else if (p.probe.exec) {
+                probeType = `Exec: ${(p.probe.exec.command || []).join(' ')}`;
+            } else if (p.probe.grpc) {
+                probeType = `gRPC :${p.probe.grpc.port}`;
+            }
+            html += `<span class="tag tag-success">${p.name}: ${escapeHtml(probeType)}</span>`;
+        });
+
+        html += `</div>`;
+        return html;
+    }
+
+    function renderVolumesSection(volumes, containers) {
+        if (volumes.length === 0) return '';
+
+        const mounts = {};
+        containers.forEach(c => {
+            (c.volumeMounts || []).forEach(m => {
+                if (!mounts[m.name]) mounts[m.name] = [];
+                mounts[m.name].push({ container: c.name, path: m.mountPath, readOnly: m.readOnly });
+            });
+        });
+
+        let html = `<div class="section">
+            <div class="section-title">Volumes (${volumes.length})</div>`;
+
+        volumes.forEach(v => {
+            const volumeType = getVolumeType(v);
+            const isHostPath = !!v.hostPath;
+            html += `<div class="volume-item">
+                <div class="volume-header">
+                    <span class="volume-name">${escapeHtml(v.name)}</span>
+                    <span class="volume-type">${escapeHtml(volumeType)}</span>
+                    ${isHostPath ? '<span class="inline-warning">hostPath</span>' : ''}
+                </div>`;
+            
+            if (mounts[v.name]) {
+                mounts[v.name].forEach(m => {
+                    const ro = m.readOnly ? ' <span style="color:#6b7280">(ro)</span>' : '';
+                    html += `<div class="mount-path">↳ <span style="color:#94a3b8">${escapeHtml(m.container)}:</span> ${escapeHtml(m.path)}${ro}</div>`;
+                });
+            }
+
+            html += `</div>`;
+        });
+
+        html += `</div>`;
+        return html;
+    }
+
+    function getVolumeType(volume) {
+        if (volume.emptyDir) return 'emptyDir';
+        if (volume.hostPath) return `hostPath: ${volume.hostPath.path}`;
+        if (volume.configMap) return `ConfigMap: ${volume.configMap.name}`;
+        if (volume.secret) return `Secret: ${volume.secret.secretName}`;
+        if (volume.persistentVolumeClaim) return `PVC: ${volume.persistentVolumeClaim.claimName}`;
+        if (volume.projected) return 'projected';
+        if (volume.downwardAPI) return 'downwardAPI';
+        if (volume.csi) return `CSI: ${volume.csi.driver}`;
+        if (volume.nfs) return `NFS: ${volume.nfs.server}:${volume.nfs.path}`;
+        return 'unknown';
+    }
+
+    function renderSecuritySection(spec) {
+        const sc = spec.securityContext || {};
+        
+        let html = `<div class="section">
+            <div class="section-title">Pod Security</div>`;
+
+        // Host namespaces (security risks)
+        const hostFlags = [];
+        if (spec.hostNetwork) hostFlags.push({ label: 'hostNetwork', type: 'error' });
+        if (spec.hostPID) hostFlags.push({ label: 'hostPID', type: 'error' });
+        if (spec.hostIPC) hostFlags.push({ label: 'hostIPC', type: 'error' });
+
+        if (hostFlags.length > 0) {
+            html += `<div style="margin-bottom: 12px;">
+                <span class="info-label">Host Namespaces:</span>
+                <div style="margin-top: 6px;">`;
+            hostFlags.forEach(f => {
+                html += `<span class="tag tag-${f.type}">${f.label}: true</span>`;
+            });
+            html += `</div></div>`;
+        }
+
+        html += `<div class="info-grid">`;
+        
+        if (spec.serviceAccountName) {
+            html += `<span class="info-label">Service Account</span>
+                     <span class="info-value mono">${escapeHtml(spec.serviceAccountName)}</span>`;
+        }
+        if (spec.automountServiceAccountToken !== undefined) {
+            const type = spec.automountServiceAccountToken ? 'warning' : 'success';
+            html += `<span class="info-label">Automount Token</span>
+                     <span class="info-value"><span class="tag tag-${type}">${spec.automountServiceAccountToken}</span></span>`;
+        }
+        if (sc.runAsUser !== undefined) {
+            const type = sc.runAsUser === 0 ? 'error' : 'success';
+            html += `<span class="info-label">runAsUser</span>
+                     <span class="info-value"><span class="tag tag-${type}">${sc.runAsUser}</span></span>`;
+        }
+        if (sc.runAsGroup !== undefined) {
+            html += `<span class="info-label">runAsGroup</span>
+                     <span class="info-value mono">${sc.runAsGroup}</span>`;
+        }
+        if (sc.fsGroup !== undefined) {
+            html += `<span class="info-label">fsGroup</span>
+                     <span class="info-value mono">${sc.fsGroup}</span>`;
+        }
+        if (sc.runAsNonRoot !== undefined) {
+            const type = sc.runAsNonRoot ? 'success' : 'warning';
+            html += `<span class="info-label">runAsNonRoot</span>
+                     <span class="info-value"><span class="tag tag-${type}">${sc.runAsNonRoot}</span></span>`;
+        }
+        if (sc.seccompProfile) {
+            html += `<span class="info-label">Seccomp</span>
+                     <span class="info-value mono">${sc.seccompProfile.type}</span>`;
+        }
+
+        html += `</div></div>`;
+        return html;
+    }
+
+    function renderSchedulingSection(spec) {
+        const hasContent = spec.nodeName || spec.nodeSelector || spec.affinity || 
+                          spec.tolerations || spec.topologySpreadConstraints ||
+                          spec.priorityClassName || spec.schedulerName;
+        
+        if (!hasContent) return '';
+
+        let html = `<div class="section">
+            <div class="section-title">Scheduling</div>
+            <div class="info-grid">`;
+        
+        if (spec.nodeName) {
+            html += `<span class="info-label">Node Name</span>
+                     <span class="info-value mono">${escapeHtml(spec.nodeName)}</span>`;
+        }
+        if (spec.schedulerName) {
+            html += `<span class="info-label">Scheduler</span>
+                     <span class="info-value mono">${escapeHtml(spec.schedulerName)}</span>`;
+        }
+        if (spec.priorityClassName) {
+            html += `<span class="info-label">Priority Class</span>
+                     <span class="info-value mono">${escapeHtml(spec.priorityClassName)}</span>`;
+        }
+
+        html += `</div>`;
+
+        if (spec.nodeSelector) {
+            html += `<div style="margin-top: 10px;"><span class="info-label">Node Selector:</span><div style="margin-top: 6px;">`;
+            for (const [k, v] of Object.entries(spec.nodeSelector)) {
+                html += `<span class="tag tag-info">${escapeHtml(k)}=${escapeHtml(v)}</span>`;
+            }
+            html += `</div></div>`;
+        }
+
+        if (spec.tolerations && spec.tolerations.length > 0) {
+            html += `<div style="margin-top: 10px;"><span class="info-label">Tolerations:</span><div style="margin-top: 6px;">`;
+            spec.tolerations.forEach(t => {
+                const parts = [];
+                if (t.key) parts.push(t.key);
+                if (t.operator) parts.push(t.operator);
+                if (t.value) parts.push(t.value);
+                if (t.effect) parts.push(`effect=${t.effect}`);
+                html += `<span class="tag tag-warning">${escapeHtml(parts.join(' '))}</span>`;
+            });
+            html += `</div></div>`;
+        }
+
+        html += `</div>`;
+        return html;
+    }
+
+    function escapeHtml(text) {
+        if (text === null || text === undefined) return '';
+        const str = String(text);
+        const div = document.createElement('div');
+        div.textContent = str;
+        return div.innerHTML;
+    }
+
+    window.clearAll = function() {
+        clearTimeout(debounceTimeout);
+        document.getElementById('kindLabel').style.display = 'none';
+        editor.setValue('');
+        editor.clearHistory();
+        resultEl.innerHTML = `
+            <div class="empty-state">
+                <div class="empty-state-icon">K8s</div>
+                <p>Paste a resource YAML to analyze</p>
+            </div>
+        `;
+        showMessage('Cleared', 'success');
+    }
+</script>
+</body>
+</html>
