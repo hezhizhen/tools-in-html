@@ -376,6 +376,7 @@
 <script defer src="https://cdn.jsdelivr.net/npm/codemirror@5.65.16/addon/fold/foldcode.min.js"></script>
 <script defer src="https://cdn.jsdelivr.net/npm/codemirror@5.65.16/addon/fold/foldgutter.min.js"></script>
 <script defer src="https://cdn.jsdelivr.net/npm/codemirror@5.65.16/addon/fold/brace-fold.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/codemirror@5.65.16/addon/fold/indent-fold.min.js"></script>
 <script defer src="https://cdn.jsdelivr.net/npm/codemirror-addon-indent-guide@1.0.1/dist/indent-guide.js"></script>
 <script defer src="https://cdn.jsdelivr.net/npm/js-yaml@4.1.0/dist/js-yaml.min.js"></script>
 
@@ -413,11 +414,11 @@
         tabSize: 2,
         indentGuide: true,
         foldGutter: {
-            rangeFinder: CodeMirror.fold.brace
+            rangeFinder: CodeMirror.fold.auto
         },
         gutters: ["CodeMirror-linenumbers", "CodeMirror-foldgutter"],
         extraKeys: {
-            "Ctrl-Q": function(cm) { cm.foldCode(cm.getCursor(), CodeMirror.fold.brace); }
+            "Ctrl-Q": function(cm) { cm.foldCode(cm.getCursor()); }
         }
     };
 
