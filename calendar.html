@@ -224,7 +224,6 @@ p {
   // Parse URL parameters
   const params = new URLSearchParams(window.location.search);
   const yearParam = params.get('year');
-  const sofshavua = params.has('sofshavua');
   const layout = params.get('layout');
 
   // Determine the year
@@ -314,7 +313,6 @@ p {
   function getBaseURL() {
     const newParams = new URLSearchParams();
     newParams.set('year', year);
-    if (sofshavua) newParams.set('sofshavua', '');
     if (layout) newParams.set('layout', layout);
     return '?' + newParams.toString();
   }
@@ -335,7 +333,6 @@ p {
   function navigateYear(newYear) {
     const newParams = new URLSearchParams();
     newParams.set('year', newYear);
-    if (sofshavua) newParams.set('sofshavua', '');
     if (layout) newParams.set('layout', layout);
     let url = '?' + newParams.toString();
     if (Object.keys(events).length > 0) {
@@ -459,14 +456,8 @@ p {
   }
 
   // Weekend days (ISO weekday: 1=Mon, 7=Sun)
-  let weekendDay1, weekendDay2;
-  if (sofshavua) {
-    weekendDay1 = 5; // Friday
-    weekendDay2 = 6; // Saturday
-  } else {
-    weekendDay1 = 6; // Saturday
-    weekendDay2 = 7; // Sunday
-  }
+  const weekendDay1 = 6; // Saturday
+  const weekendDay2 = 7; // Sunday
 
   const tbody = document.getElementById('calendarBody');
 
