@@ -1,0 +1,580 @@
+<!--
+
+Calendar
+--------
+
+Based on https://neatnik.net/calendar
+
+Original by Neatnik LLC, MIT License
+
+--><!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Calendar</title>
+<meta name="title" content="Calendar">
+<meta name="og:title" content="Calendar">
+<meta name="description" content="A simple printable calendar with the full year on a single page">
+<meta name="og:description" content="A simple printable calendar with the full year on a single page">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+@import url('https://fonts.bunny.net/css?family=inter:300|oswald:300,400');
+@media print {
+  @page {
+    margin: 0;
+    padding: 1em;
+  }
+  td {
+    font-size: 8px !important;
+  }
+  .weekend {
+    background: #d8d8d8 !important;
+  }
+  .modal-overlay {
+    display: none !important;
+  }
+  .event-text {
+    font-size: 8px !important;
+  }
+}
+html {
+  font-family: 'Oswald';
+}
+html, body {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+}
+table {
+  width: 100%;
+  height: calc(100% - 2.5em);
+  border-collapse: separate;
+  border-spacing: .5em 0;
+  table-layout: fixed;
+}
+td, th {
+  font-weight: normal;
+  text-transform: uppercase;
+  border-bottom: 1px solid #888;
+  padding: .3vmin .3vmin;
+  font-size: .9vmin;
+  font-weight: 300;
+  color: #000;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+th {
+  font-size: 1.1vmin;
+  padding: 0;
+}
+td:empty {
+  border: 0;
+}
+td:not(:empty) {
+  cursor: pointer;
+}
+td:not(:empty):hover {
+  background: #e0e0ff;
+}
+.date {
+  display: inline-block;
+  width: 1.1em;
+}
+.day {
+  display: inline-block;
+  text-align: center;
+  width: 1em;
+  color: #888;
+}
+.weekend {
+  background: #eee;
+  font-weight: 400;
+}
+.weekend:hover {
+  background: #d8d8ff;
+}
+.event-text {
+  color: #e74c3c;
+  font-size: 0.9vmin;
+  text-transform: none;
+  margin-left: 0.3em;
+}
+p {
+  margin: 0 0 .5em 0;
+  text-align: center;
+}
+* {
+  color-adjust: exact;
+  -webkit-print-color-adjust: exact;
+}
+/* Modal styles */
+.modal-overlay {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 1000;
+  justify-content: center;
+  align-items: center;
+}
+.modal-overlay.show {
+  display: flex;
+}
+.modal {
+  font-family: 'Inter', sans-serif;
+  background: #fff;
+  border-radius: 8px;
+  padding: 20px;
+  width: 90%;
+  max-width: 400px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+}
+.modal-header {
+  font-size: 18px;
+  font-weight: 400;
+  margin-bottom: 15px;
+  color: #333;
+}
+.modal-input {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 14px;
+  font-family: 'Inter', sans-serif;
+  resize: vertical;
+  min-height: 80px;
+  box-sizing: border-box;
+}
+.modal-input:focus {
+  outline: none;
+  border-color: #666;
+}
+.modal-buttons {
+  display: flex;
+  gap: 10px;
+  margin-top: 15px;
+  justify-content: flex-end;
+}
+.modal-btn {
+  padding: 8px 16px;
+  border: none;
+  border-radius: 4px;
+  font-size: 14px;
+  font-family: 'Inter', sans-serif;
+  cursor: pointer;
+}
+.modal-btn-save {
+  background: #333;
+  color: #fff;
+}
+.modal-btn-save:hover {
+  background: #555;
+}
+.modal-btn-cancel {
+  background: #eee;
+  color: #333;
+}
+.modal-btn-cancel:hover {
+  background: #ddd;
+}
+.modal-btn-delete {
+  background: #e74c3c;
+  color: #fff;
+  margin-right: auto;
+}
+.modal-btn-delete:hover {
+  background: #c0392b;
+}
+</style>
+<script src="https://unpkg.com/pako@2.1.0/dist/pako.min.js"></script>
+</head>
+<body>
+<p id="yearDisplay"></p>
+<table>
+<thead>
+<tr id="monthHeaders"></tr>
+</thead>
+<tbody id="calendarBody">
+</tbody>
+</table>
+
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal">
+    <div class="modal-header" id="modalHeader"></div>
+    <textarea class="modal-input" id="eventInput" placeholder="输入事项..."></textarea>
+    <div class="modal-buttons">
+      <button class="modal-btn modal-btn-delete" id="btnDelete" style="display:none;">删除</button>
+      <button class="modal-btn modal-btn-cancel" id="btnCancel">取消</button>
+      <button class="modal-btn modal-btn-save" id="btnSave">保存</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function() {
+  const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  const monthNamesCN = ['1月', '2月', '3月', '4月', '5月', '6月', '7月', '8月', '9月', '10月', '11月', '12月'];
+  const dayNames = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+
+  // Parse URL parameters
+  const params = new URLSearchParams(window.location.search);
+  const yearParam = params.get('year');
+  const sofshavua = params.has('sofshavua');
+  const layout = params.get('layout');
+
+  // Determine the year
+  let now;
+  if (yearParam) {
+    now = new Date(yearParam + '-01-01');
+    if (isNaN(now.getTime())) {
+      now = new Date();
+    }
+  } else {
+    now = new Date();
+  }
+  const year = now.getFullYear();
+
+  // Pako compression with base64url encoding
+  function compress(str) {
+    const bytes = new TextEncoder().encode(str);
+    const compressed = pako.deflate(bytes);
+    let binary = '';
+    for (let i = 0; i < compressed.length; i++) {
+      binary += String.fromCharCode(compressed[i]);
+    }
+    return btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+  }
+
+  function decompress(str) {
+    try {
+      const base64 = str.replace(/-/g, '+').replace(/_/g, '/');
+      const binary = atob(base64);
+      const bytes = new Uint8Array(binary.length);
+      for (let i = 0; i < binary.length; i++) {
+        bytes[i] = binary.charCodeAt(i);
+      }
+      const decompressed = pako.inflate(bytes);
+      return new TextDecoder().decode(decompressed);
+    } catch (e) {
+      return null;
+    }
+  }
+
+  // Events storage (shared across all years)
+  const storageKey = 'calendar-events';
+  let events = {};
+
+  // Compact format: "0-1:事项|1-15:另一个"
+  function eventsToCompact(obj) {
+    return Object.entries(obj).map(([k, v]) => k + ':' + v.replace(/\|/g, '｜').replace(/:/g, '：')).join('|');
+  }
+
+  function compactToEvents(str) {
+    const obj = {};
+    if (!str) return obj;
+    str.split('|').forEach(item => {
+      const idx = item.indexOf(':');
+      if (idx > 0) {
+        const key = item.substring(0, idx);
+        const val = item.substring(idx + 1).replace(/｜/g, '|').replace(/：/g, ':');
+        obj[key] = val;
+      }
+    });
+    return obj;
+  }
+
+  // Load from URL hash first, then localStorage
+  const urlHash = window.location.hash.slice(1);
+  if (urlHash) {
+    try {
+      const decompressed = decompress(urlHash);
+      if (decompressed) {
+        events = compactToEvents(decompressed);
+      }
+    } catch (e) {}
+  }
+  if (Object.keys(events).length === 0) {
+    try {
+      const stored = localStorage.getItem(storageKey);
+      if (stored) {
+        events = JSON.parse(stored);
+      }
+    } catch (e) {}
+  }
+
+  function encodeEvents() {
+    return compress(eventsToCompact(events));
+  }
+
+  function getBaseURL() {
+    const newParams = new URLSearchParams();
+    newParams.set('year', year);
+    if (sofshavua) newParams.set('sofshavua', '');
+    if (layout) newParams.set('layout', layout);
+    return '?' + newParams.toString();
+  }
+
+  function updateURL() {
+    let url = getBaseURL();
+    if (Object.keys(events).length > 0) {
+      url += '#' + encodeEvents();
+    }
+    history.replaceState(null, '', url);
+  }
+
+  function saveEvents() {
+    localStorage.setItem(storageKey, JSON.stringify(events));
+    updateURL();
+  }
+
+  function navigateYear(newYear) {
+    const newParams = new URLSearchParams();
+    newParams.set('year', newYear);
+    if (sofshavua) newParams.set('sofshavua', '');
+    if (layout) newParams.set('layout', layout);
+    let url = '?' + newParams.toString();
+    if (Object.keys(events).length > 0) {
+      url += '#' + encodeEvents();
+    }
+    window.location.href = url;
+  }
+
+  function getEventKey(month, day) {
+    return month + '-' + day;
+  }
+
+  // Modal elements
+  const modalOverlay = document.getElementById('modalOverlay');
+  const modalHeader = document.getElementById('modalHeader');
+  const eventInput = document.getElementById('eventInput');
+  const btnSave = document.getElementById('btnSave');
+  const btnCancel = document.getElementById('btnCancel');
+  const btnDelete = document.getElementById('btnDelete');
+
+  let currentCell = null;
+  let currentKey = null;
+
+  function openModal(cell, month, day) {
+    currentCell = cell;
+    currentKey = getEventKey(month, day);
+    modalHeader.textContent = year + '年' + monthNamesCN[month] + day + '日';
+    eventInput.value = events[currentKey] || '';
+    btnDelete.style.display = events[currentKey] ? 'block' : 'none';
+    modalOverlay.classList.add('show');
+    eventInput.focus();
+  }
+
+  function closeModal() {
+    modalOverlay.classList.remove('show');
+    currentCell = null;
+    currentKey = null;
+  }
+
+  function updateCellEvent(cell, text) {
+    let eventSpan = cell.querySelector('.event-text');
+    if (text) {
+      if (!eventSpan) {
+        eventSpan = document.createElement('span');
+        eventSpan.className = 'event-text';
+        cell.appendChild(eventSpan);
+      }
+      eventSpan.textContent = text;
+      eventSpan.title = text;
+    } else {
+      if (eventSpan) {
+        eventSpan.remove();
+      }
+    }
+  }
+
+  function saveEvent() {
+    const text = eventInput.value.trim();
+    if (text) {
+      events[currentKey] = text;
+    } else {
+      delete events[currentKey];
+    }
+    updateCellEvent(currentCell, text);
+    saveEvents();
+    closeModal();
+  }
+
+  function deleteEvent() {
+    delete events[currentKey];
+    updateCellEvent(currentCell, '');
+    saveEvents();
+    closeModal();
+  }
+
+  btnSave.addEventListener('click', saveEvent);
+  btnCancel.addEventListener('click', closeModal);
+  btnDelete.addEventListener('click', deleteEvent);
+  modalOverlay.addEventListener('click', function(e) {
+    if (e.target === modalOverlay) {
+      closeModal();
+    }
+  });
+  document.addEventListener('keydown', function(e) {
+    if (modalOverlay.classList.contains('show')) {
+      if (e.key === 'Escape') {
+        closeModal();
+      } else if (e.key === 'Enter' && e.ctrlKey) {
+        saveEvent();
+      }
+    } else {
+      if (e.key === 'ArrowLeft') {
+        navigateYear(year - 1);
+      } else if (e.key === 'ArrowRight') {
+        navigateYear(year + 1);
+      }
+    }
+  });
+
+  // Display current year
+  document.getElementById('yearDisplay').textContent = year;
+
+  // Generate month headers
+  const headerRow = document.getElementById('monthHeaders');
+  for (let i = 0; i < 12; i++) {
+    const th = document.createElement('th');
+    th.textContent = monthNames[i];
+    headerRow.appendChild(th);
+  }
+
+  // Helper: Get days in month
+  function getDaysInMonth(year, month) {
+    return new Date(year, month + 1, 0).getDate();
+  }
+
+  // Helper: Get ISO weekday (1=Mon, 7=Sun)
+  function getISOWeekday(year, month, day) {
+    const d = new Date(year, month, day);
+    const dow = d.getDay();
+    return dow === 0 ? 7 : dow;
+  }
+
+  // Weekend days (ISO weekday: 1=Mon, 7=Sun)
+  let weekendDay1, weekendDay2;
+  if (sofshavua) {
+    weekendDay1 = 5; // Friday
+    weekendDay2 = 6; // Saturday
+  } else {
+    weekendDay1 = 6; // Saturday
+    weekendDay2 = 7; // Sunday
+  }
+
+  const tbody = document.getElementById('calendarBody');
+
+  function createCell(month, dayNum, isWeekend) {
+    const td = document.createElement('td');
+    if (isWeekend) {
+      td.className = 'weekend';
+    }
+    const key = getEventKey(month, dayNum);
+    td.addEventListener('click', function() {
+      openModal(td, month, dayNum);
+    });
+    return { td, key };
+  }
+
+  function addEventText(td, key) {
+    if (events[key]) {
+      const eventSpan = document.createElement('span');
+      eventSpan.className = 'event-text';
+      eventSpan.textContent = events[key];
+      eventSpan.title = events[key];
+      td.appendChild(eventSpan);
+    }
+  }
+
+  if (layout === 'aligned-weekdays') {
+    // Aligned weekdays layout: 42 rows (6 weeks × 7 days)
+    const dates = {};
+    for (let m = 0; m < 12; m++) {
+      dates[m] = {};
+      const firstWeekday = getISOWeekday(year, m, 1);
+      const daysInMonth = getDaysInMonth(year, m);
+      let day = 1;
+      let started = false;
+      for (let x = 1; x <= 42; x++) {
+        if (!started) {
+          if (firstWeekday === x) {
+            dates[m][x] = day;
+            day++;
+            started = true;
+          } else {
+            dates[m][x] = 0;
+          }
+        } else {
+          if (day > daysInMonth) {
+            dates[m][x] = 0;
+          } else {
+            dates[m][x] = day;
+          }
+          day++;
+        }
+      }
+    }
+
+    for (let row = 1; row <= 42; row++) {
+      const tr = document.createElement('tr');
+      for (let m = 0; m < 12; m++) {
+        const dayNum = dates[m][row];
+        if (dayNum === 0) {
+          const td = document.createElement('td');
+          tr.appendChild(td);
+        } else {
+          const weekday = getISOWeekday(year, m, dayNum);
+          const isWeekend = weekday === weekendDay1 || weekday === weekendDay2;
+          const { td, key } = createCell(m, dayNum, isWeekend);
+          td.appendChild(document.createTextNode(dayNum));
+          addEventText(td, key);
+          tr.appendChild(td);
+        }
+      }
+      tbody.appendChild(tr);
+    }
+  } else {
+    // Default layout: 31 rows (by day of month)
+    for (let day = 1; day <= 31; day++) {
+      const tr = document.createElement('tr');
+      for (let m = 0; m < 12; m++) {
+        const daysInMonth = getDaysInMonth(year, m);
+        if (day > daysInMonth) {
+          const td = document.createElement('td');
+          tr.appendChild(td);
+        } else {
+          const weekday = getISOWeekday(year, m, day);
+          const isWeekend = weekday === weekendDay1 || weekday === weekendDay2;
+          const { td, key } = createCell(m, day, isWeekend);
+          // Day number
+          const dateSpan = document.createElement('span');
+          dateSpan.className = 'date';
+          dateSpan.textContent = day;
+          td.appendChild(dateSpan);
+          // Day letter
+          td.appendChild(document.createTextNode(' '));
+          const daySpan = document.createElement('span');
+          daySpan.className = 'day';
+          daySpan.textContent = dayNames[weekday - 1].charAt(0);
+          td.appendChild(daySpan);
+          // Event text
+          addEventText(td, key);
+          tr.appendChild(td);
+        }
+      }
+      tbody.appendChild(tr);
+    }
+  }
+
+  // Update URL with data on initial load
+  updateURL();
+})();
+</script>
+</body>
+</html>
