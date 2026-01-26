@@ -36,6 +36,15 @@ Original by Neatnik LLC, MIT License
   .event-text {
     font-size: 8px !important;
   }
+  .back-link {
+    display: none !important;
+  }
+  .print-btn {
+    display: none !important;
+  }
+  .year-btn {
+    display: none !important;
+  }
 }
 html {
   font-family: 'Oswald';
@@ -190,11 +199,62 @@ p {
 .modal-btn-delete:hover {
   background: #c0392b;
 }
+.back-link {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  font-family: 'Inter', sans-serif;
+  font-size: 14px;
+  color: #888;
+  text-decoration: none;
+}
+.back-link:hover {
+  color: #333;
+}
+.print-btn {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  font-family: 'Inter', sans-serif;
+  font-size: 14px;
+  color: #888;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+}
+.print-btn:hover {
+  color: #333;
+}
+.year-nav {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 1em;
+}
+.year-btn {
+  font-family: 'Oswald', sans-serif;
+  font-size: 1.2em;
+  color: #888;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0 0.5em;
+}
+.year-btn:hover {
+  color: #333;
+}
 </style>
 <script src="https://unpkg.com/pako@2.1.0/dist/pako.min.js"></script>
 </head>
 <body>
-<p id="yearDisplay"></p>
+<a class="back-link" href="index.html">← Back to Tools</a>
+<button class="print-btn" onclick="window.print()">Print</button>
+<p class="year-nav">
+  <button class="year-btn" id="prevYear">←</button>
+  <span id="yearDisplay"></span>
+  <button class="year-btn" id="nextYear">→</button>
+</p>
 <table>
 <thead>
 <tr id="monthHeaders"></tr>
@@ -434,6 +494,8 @@ p {
 
   // Display current year
   document.getElementById('yearDisplay').textContent = year;
+  document.getElementById('prevYear').addEventListener('click', function() { navigateYear(year - 1); });
+  document.getElementById('nextYear').addEventListener('click', function() { navigateYear(year + 1); });
 
   // Generate month headers
   const headerRow = document.getElementById('monthHeaders');
