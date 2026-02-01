@@ -19,6 +19,8 @@ Inspired by [Simon Willison's Tools](https://tools.simonwillison.net).
 | [certificates](certificates.html) | X.509 certificate parser |
 | [brewfile](brewfile.html) | Homebrew Brewfile analyzer with dependency graph |
 | [image](image.html) | Docker/OCI container image analyzer |
+| [kubernetes](kubernetes.html) | Kubernetes resource analyzer (Pod, Deployment, etc.) |
+| [calendar](calendar.html) | Printable yearly calendar with event support |
 
 ## Tech Stack
 
