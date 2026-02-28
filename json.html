@@ -398,9 +398,18 @@
     }
 
     function tryParseJSON(text) {
+        function unwrapDoubleEncoded(parsed) {
+            if (typeof parsed !== 'string') return parsed;
+            try {
+                const inner = JSON.parse(parsed);
+                if (typeof inner === 'object' && inner !== null) return inner;
+            } catch (_) {}
+            return parsed;
+        }
+
         let firstError;
         try {
-            return JSON.parse(text);
+            return unwrapDoubleEncoded(JSON.parse(text));
         } catch (e) {
             firstError = e;
         }
@@ -417,7 +426,7 @@
         }
 
         try {
-            return JSON.parse(unescaped);
+            return unwrapDoubleEncoded(JSON.parse(unescaped));
         } catch (_) {
             throw firstError;
         }
