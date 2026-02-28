@@ -397,9 +397,35 @@
         return text;
     }
 
+    function tryParseJSON(text) {
+        let firstError;
+        try {
+            return JSON.parse(text);
+        } catch (e) {
+            firstError = e;
+        }
+
+        // Try unescaping key/value quotes only (common when copying from logs/code).
+        // Avoid touching \\\" inside string content.
+        if (!text.includes('\\"')) {
+            throw firstError;
+        }
+
+        const unescaped = text.replace(/(?<!\\)\\"/g, '"');
+        if (unescaped === text) {
+            throw firstError;
+        }
+
+        try {
+            return JSON.parse(unescaped);
+        } catch (_) {
+            throw firstError;
+        }
+    }
+
     function processJSON(text, processor, successMessage) {
         try {
-            const parsed = JSON.parse(text);
+            const parsed = tryParseJSON(text);
             const result = processor(parsed);
             editorOutput.setValue(result);
             editorOutput.clearHistory();
