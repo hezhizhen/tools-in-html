@@ -13,7 +13,7 @@
 
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: linear-gradient(135deg, #0f0f23 0%, #1a1a3e 100%);
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
             min-height: 100vh;
             padding: 20px;
             color: #fff;
@@ -76,11 +76,12 @@
             margin-bottom: 12px;
         }
 
-        .tool-name {
+        h2.tool-name {
             color: #00d9ff;
             font-weight: 600;
             font-size: 16px;
             margin-bottom: 8px;
+            margin-top: 0;
         }
 
         .tool-desc {
@@ -105,102 +106,102 @@
     </style>
 </head>
 <body>
-<div class="container">
+<main><div class="container">
     <h1>Tools in HTML</h1>
     <p class="subtitle">A collection of single-file browser-based tools</p>
     <ul class="tools-grid">
         <li class="tool-card">
             <a href="base64.html">
-                <span class="tool-icon">🔤</span>
-                <span class="tool-name">Base64 Encoder/Decoder</span>
-                <span class="tool-desc">Encode text to Base64 or decode Base64 back to text</span>
+                <span aria-hidden="true" class="tool-icon">🔤</span>
+                <h2 class="tool-name">Base64 Encoder/Decoder</h2>
+                <p class="tool-desc">Encode text to Base64 or decode Base64 back to text</p>
             </a>
         </li>
         <li class="tool-card">
             <a href="countdown.html">
-                <span class="tool-icon">⏱️</span>
-                <span class="tool-name">Countdown Timer</span>
-                <span class="tool-desc">Set a target date and watch the countdown in real-time</span>
+                <span aria-hidden="true" class="tool-icon">⏱️</span>
+                <h2 class="tool-name">Countdown Timer</h2>
+                <p class="tool-desc">Set a target date and watch the countdown in real-time</p>
             </a>
         </li>
         <li class="tool-card">
             <a href="diff.html">
-                <span class="tool-icon">📊</span>
-                <span class="tool-name">Text Diff Tool</span>
-                <span class="tool-desc">Compare two texts and highlight the differences</span>
+                <span aria-hidden="true" class="tool-icon">📊</span>
+                <h2 class="tool-name">Text Diff Tool</h2>
+                <p class="tool-desc">Compare two texts and highlight the differences</p>
             </a>
         </li>
         <li class="tool-card">
             <a href="duration.html">
-                <span class="tool-icon">📅</span>
-                <span class="tool-name">Duration Calculator</span>
-                <span class="tool-desc">Calculate the duration between two dates or times</span>
+                <span aria-hidden="true" class="tool-icon">📅</span>
+                <h2 class="tool-name">Duration Calculator</h2>
+                <p class="tool-desc">Calculate the duration between two dates or times</p>
             </a>
         </li>
         <li class="tool-card">
             <a href="json.html">
-                <span class="tool-icon">📝</span>
-                <span class="tool-name">JSON Formatter</span>
-                <span class="tool-desc">Format, minify, and validate JSON data with syntax highlighting</span>
+                <span aria-hidden="true" class="tool-icon">📝</span>
+                <h2 class="tool-name">JSON Formatter</h2>
+                <p class="tool-desc">Format, minify, and validate JSON data with syntax highlighting</p>
             </a>
         </li>
         <li class="tool-card">
             <a href="converter.html">
-                <span class="tool-icon">🔄</span>
-                <span class="tool-name">Format Converter</span>
-                <span class="tool-desc">Convert between JSON, YAML, and TOML formats</span>
+                <span aria-hidden="true" class="tool-icon">🔄</span>
+                <h2 class="tool-name">Format Converter</h2>
+                <p class="tool-desc">Convert between JSON, YAML, and TOML formats</p>
             </a>
         </li>
         <li class="tool-card">
             <a href="password.html">
-                <span class="tool-icon">🔐</span>
-                <span class="tool-name">Password Generator</span>
-                <span class="tool-desc">Generate secure random passwords with custom options</span>
+                <span aria-hidden="true" class="tool-icon">🔐</span>
+                <h2 class="tool-name">Password Generator</h2>
+                <p class="tool-desc">Generate secure random passwords with custom options</p>
             </a>
         </li>
         <li class="tool-card">
             <a href="rsa.html">
-                <span class="tool-icon">🔑</span>
-                <span class="tool-name">RSA Private Key Parser</span>
-                <span class="tool-desc">Parse and inspect RSA private key details</span>
+                <span aria-hidden="true" class="tool-icon">🔑</span>
+                <h2 class="tool-name">RSA Private Key Parser</h2>
+                <p class="tool-desc">Parse and inspect RSA private key details</p>
             </a>
         </li>
         <li class="tool-card">
             <a href="certificates.html">
-                <span class="tool-icon">📜</span>
-                <span class="tool-name">X.509 Certificate Parser</span>
-                <span class="tool-desc">Parse and display X.509 certificate information</span>
+                <span aria-hidden="true" class="tool-icon">📜</span>
+                <h2 class="tool-name">X.509 Certificate Parser</h2>
+                <p class="tool-desc">Parse and display X.509 certificate information</p>
             </a>
         </li>
         <li class="tool-card">
             <a href="brewfile.html">
-                <span class="tool-icon">🍺</span>
-                <span class="tool-name">Brewfile Analyzer</span>
-                <span class="tool-desc">Analyze Homebrew formulas, versions, and dependencies</span>
+                <span aria-hidden="true" class="tool-icon">🍺</span>
+                <h2 class="tool-name">Brewfile Analyzer</h2>
+                <p class="tool-desc">Analyze Homebrew formulas, versions, and dependencies</p>
             </a>
         </li>
         <li class="tool-card">
             <a href="image.html">
-                <span class="tool-icon">🐳</span>
-                <span class="tool-name">Container Image Analyzer</span>
-                <span class="tool-desc">Inspect Docker/OCI container image layers and metadata</span>
+                <span aria-hidden="true" class="tool-icon">🐳</span>
+                <h2 class="tool-name">Container Image Analyzer</h2>
+                <p class="tool-desc">Inspect Docker/OCI container image layers and metadata</p>
             </a>
         </li>
         <li class="tool-card">
             <a href="kubernetes.html">
-                <span class="tool-icon">☸️</span>
-                <span class="tool-name">Kubernetes Resource Analyzer</span>
-                <span class="tool-desc">Analyze Pod, Deployment, StatefulSet, Job specs and best practices</span>
+                <span aria-hidden="true" class="tool-icon">☸️</span>
+                <h2 class="tool-name">Kubernetes Resource Analyzer</h2>
+                <p class="tool-desc">Analyze Pod, Deployment, StatefulSet, Job specs and best practices</p>
             </a>
         </li>
         <li class="tool-card">
             <a href="calendar.html">
-                <span class="tool-icon">📆</span>
-                <span class="tool-name">Calendar</span>
-                <span class="tool-desc">A printable calendar with the full year on a single page</span>
+                <span aria-hidden="true" class="tool-icon">📆</span>
+                <h2 class="tool-name">Calendar</h2>
+                <p class="tool-desc">A printable calendar with the full year on a single page</p>
             </a>
         </li>
     </ul>
-</div>
+</div></main>
 </body>
 </html>
