@@ -1,0 +1,50 @@
+Implement the following plan:
+
+# Refactor: index.html
+
+## Context
+
+The index.html is the landing page for the "Tools in HTML" project. It displays a grid of tool cards, each linking to a single-file HTML tool. The current file works correctly but has semantic and accessibility issues compared to best practices observed in the rest of the codebase.
+
+## Goal
+
+Improve semantic HTML and accessibility without changing the visual design.
+
+## Changes
+
+### 1. Semantic HTML
+- Replace `<span class="tool-name">` → `<h2 class="tool-name">` (proper heading hierarchy: h1 page title, h2 tool names)
+- Replace `<span class="tool-desc">` → `<p class="tool-desc">` (descriptions are paragraphs, not inline text)
+
+### 2. Accessibility
+- Add `aria-hidden="true"` to emoji icon spans (decorative, not meaningful to screen readers)
+- Add `<main>` wrapper around the container div (landmarks for screen readers)
+
+### 3. CSS alignment
+- Align the body background gradient with the rest of the tool pages:
+  - Current: `linear-gradient(135deg, #0f0f23 0%, #1a1a3e 100%)`
+  - Other tools: `linear-gradient(135deg, #1a1a2e 0%, #16213e 100%)`
+- Update `h2.tool-name` style to reset heading defaults (margin, font-size) to match current `span.tool-name` appearance
+
+## File
+
+`/Users/hezhizhen/ghq/github.com/hezhizhen/tools-in-html/index.html`
+
+## What does NOT change
+
+- Visual design (colors, layout, hover effects)
+- The list of tools and their links
+- No JavaScript added
+- No external dependencies added
+
+## Verification
+
+Open `index.html` in a browser and confirm:
+- Grid layout renders identically to before
+- Tool names appear as before (h2 styled to match the previous span)
+- Hover effects still work
+- Inspect DOM to confirm `<h2>`, `<p>`, and `<main>` elements are present
+- Screen reader (or browser accessibility tree) shows icons as hidden and headings properly nested
+
+
+If you need specific details from before exiting plan mode (like exact code snippets, error messages, or content you generated), read the full transcript at: /Users/hezhizhen/.claude/projects/-Users-hezhizhen-ghq-github-com-hezhizhen-tools-in-html/b43dcc79-be4b-465b-9c21-6cac2f3c1147.jsonl
