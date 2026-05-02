@@ -1063,31 +1063,21 @@ MIIDXTCCAkWgAwIBAgIJAJC1HiIAZAiU...
         document.getElementById('timelineStart').textContent = notBefore.toLocaleDateString();
         document.getElementById('timelineEnd').textContent = notAfter.toLocaleDateString();
 
-        // Subject
-        const subjectGrid = document.getElementById('subjectGrid');
-        subjectGrid.innerHTML = '';
-        for (const [key, value] of Object.entries(cert.subject)) {
+        const renderInfoGrid = (entries) => Object.entries(entries).map(([key, value]) => {
             const label = OID_NAMES[key] || key;
-            subjectGrid.innerHTML += `
+            return `
                     <div class="info-item">
                         <div class="info-label">${escapeHtml(label)}</div>
                         <div class="info-value">${escapeHtml(value)}</div>
                     </div>
                 `;
-        }
+        }).join('');
+
+        // Subject
+        document.getElementById('subjectGrid').innerHTML = renderInfoGrid(cert.subject);
 
         // Issuer
-        const issuerGrid = document.getElementById('issuerGrid');
-        issuerGrid.innerHTML = '';
-        for (const [key, value] of Object.entries(cert.issuer)) {
-            const label = OID_NAMES[key] || key;
-            issuerGrid.innerHTML += `
-                    <div class="info-item">
-                        <div class="info-label">${escapeHtml(label)}</div>
-                        <div class="info-value">${escapeHtml(value)}</div>
-                    </div>
-                `;
-        }
+        document.getElementById('issuerGrid').innerHTML = renderInfoGrid(cert.issuer);
 
         document.getElementById('selfSigned').textContent = cert.selfSigned ? 'Yes (Self-Signed Certificate)' : 'No';
         document.getElementById('selfSignedItem').className = 'info-item' + (cert.selfSigned ? ' warning' : '');
