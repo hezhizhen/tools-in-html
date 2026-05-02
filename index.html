@@ -6,203 +6,438 @@
     <meta content="width=device-width, initial-scale=1.0" name="viewport">
     <title>Tools in HTML</title>
     <style>
+        :root {
+            --bg: #1C1916;
+            --surface: #25211C;
+            --surface-hover: #2E2924;
+            --rule: #3A332B;
+            --rule-hover: #5A4D3D;
+            --text: #EFE6D5;
+            --text-muted: #A39A8C;
+            --text-dim: #6E6358;
+            --clay: #D4844C;
+            --clay-soft: #E5A77A;
+            --clay-deep: #8B4A28;
+            --burgundy: #A85B3C;
+            --serif: 'Iowan Old Style', 'Charter', 'Bookerly', Georgia, serif;
+            --sans: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            --mono: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, monospace;
+            --radius: 8px;
+            --transition: 150ms ease-out;
+        }
+
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
         }
 
+        html { color-scheme: dark; }
+
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            font-family: var(--sans);
+            font-size: 14px;
+            line-height: 1.55;
+            background: var(--bg);
             min-height: 100vh;
-            padding: 20px;
-            color: #fff;
+            padding: 56px 24px 64px;
+            color: var(--text);
+            -webkit-font-smoothing: antialiased;
         }
 
         .container {
-            max-width: 80%;
+            max-width: 1080px;
             margin: 0 auto;
         }
 
+        header {
+            display: flex;
+            align-items: baseline;
+            gap: 16px;
+            margin-bottom: 36px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid var(--rule);
+        }
+
         h1 {
-            text-align: center;
-            margin-bottom: 10px;
-            font-size: 2rem;
-            background: linear-gradient(90deg, #00d9ff, #a855f7);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
+            font-family: var(--serif);
+            font-weight: 400;
+            font-size: 32px;
+            line-height: 1;
+            color: var(--text);
+            letter-spacing: -0.015em;
+            margin: 0;
+            flex-shrink: 0;
+        }
+
+        /* Risograph print-shift on the accented word */
+        h1 em {
+            color: var(--clay);
+            font-style: italic;
+            text-shadow: 1px 1px 0 var(--burgundy);
         }
 
         .subtitle {
-            text-align: center;
-            color: #6b7280;
-            margin-bottom: 40px;
-            font-size: 14px;
+            color: var(--text-muted);
+            line-height: 1.5;
+            margin-left: auto;
+            text-align: right;
+            font-family: var(--mono);
+            text-transform: uppercase;
+            letter-spacing: 0.14em;
+            font-size: 11px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
         }
+
+        /* Pastel-style dot palette, single-hue tonal */
+        .dots {
+            display: inline-flex;
+            gap: 3px;
+        }
+
+        .dots .dot {
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+            display: inline-block;
+        }
+
+        .dots .dot:nth-child(1) { background: var(--clay-deep); }
+        .dots .dot:nth-child(2) { background: var(--clay); }
+        .dots .dot:nth-child(3) { background: var(--clay-soft); }
+
+        .subtitle .clay { color: var(--clay); }
 
         .tools-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: 16px;
+            grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+            gap: 8px;
             list-style: none;
+            counter-reset: tool;
         }
 
         .tool-card {
-            background: rgba(255, 255, 255, 0.05);
-            border-radius: 16px;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            transition: all 0.3s;
+            counter-increment: tool;
+            background: var(--surface);
+            border: 1px solid var(--rule);
+            border-radius: var(--radius);
+            transition: background var(--transition), border-color var(--transition);
+            position: relative;
             overflow: hidden;
         }
 
+        /* Riso-inspired left accent rail (replaces hard offset shadow on dark bg) */
+        .tool-card::after {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 3px;
+            height: 0;
+            background: var(--clay);
+            transition: height 200ms cubic-bezier(.34,1.56,.64,1);
+            border-radius: 0 2px 2px 0;
+        }
+
         .tool-card:hover {
-            background: rgba(255, 255, 255, 0.08);
-            transform: translateY(-4px);
-            box-shadow: 0 12px 24px rgba(0, 0, 0, 0.4);
-            border-color: rgba(0, 217, 255, 0.3);
+            background: var(--surface-hover);
+            border-color: var(--rule-hover);
+        }
+
+        .tool-card:hover::after {
+            height: 64%;
         }
 
         .tool-card a {
             display: flex;
             flex-direction: column;
-            padding: 24px;
+            padding: 18px 18px 16px;
             text-decoration: none;
             height: 100%;
+            color: inherit;
+            position: relative;
         }
 
+        .tool-card::before {
+            content: counter(tool, decimal-leading-zero);
+            position: absolute;
+            top: 14px;
+            right: 16px;
+            font-family: var(--mono);
+            font-size: 10px;
+            color: var(--text-dim);
+            letter-spacing: 0.14em;
+            font-variant-numeric: tabular-nums;
+            transition: color var(--transition);
+            z-index: 1;
+        }
+
+        .tool-card:hover::before {
+            color: var(--clay);
+        }
+
+        /* Pastel-inspired badge ring, single-hue */
         .tool-icon {
-            font-size: 32px;
-            margin-bottom: 12px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            border: 1px solid var(--clay-deep);
+            color: var(--clay);
+            margin-bottom: 14px;
+            transition: background var(--transition), color var(--transition), transform var(--transition);
+        }
+
+        .tool-card:hover .tool-icon {
+            background: var(--clay);
+            color: var(--bg);
+            border-color: var(--clay);
+            transform: translateX(2px);
+        }
+
+        .tool-icon svg {
+            width: 16px;
+            height: 16px;
+            display: block;
         }
 
         h2.tool-name {
-            color: #00d9ff;
-            font-weight: 600;
-            font-size: 16px;
-            margin-bottom: 8px;
-            margin-top: 0;
+            font-family: var(--serif);
+            font-weight: 400;
+            font-size: 17px;
+            line-height: 1.2;
+            color: var(--text);
+            margin: 0 0 4px;
+            letter-spacing: -0.005em;
         }
 
         .tool-desc {
-            color: #9ca3af;
+            color: var(--text-muted);
             font-size: 13px;
             line-height: 1.5;
         }
 
+        .colophon {
+            margin-top: 36px;
+            padding-top: 18px;
+            border-top: 1px solid var(--rule);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-family: var(--mono);
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.14em;
+            color: var(--text-dim);
+        }
+
+        .colophon .clay { color: var(--clay); }
+
+        /* Riso-style swatches for the colophon (single-hue ramp) */
+        .colophon .swatches {
+            display: inline-flex;
+            gap: 3px;
+            vertical-align: middle;
+            margin-right: 6px;
+        }
+
+        .colophon .swatches span {
+            width: 8px;
+            height: 8px;
+            display: inline-block;
+            border-radius: 1px;
+        }
+
+        .colophon .swatches span:nth-child(1) { background: var(--clay-deep); }
+        .colophon .swatches span:nth-child(2) { background: var(--clay); }
+        .colophon .swatches span:nth-child(3) { background: var(--clay-soft); }
+
         @media (max-width: 640px) {
+            body {
+                padding: 32px 16px 48px;
+            }
+
+            header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 8px;
+            }
+
+            .subtitle {
+                margin-left: 0;
+                text-align: left;
+            }
+
             h1 {
-                font-size: 1.5rem;
+                font-size: 26px;
             }
 
             .tools-grid {
                 grid-template-columns: 1fr;
             }
 
-            .tool-card a {
-                padding: 20px;
+            .colophon {
+                flex-direction: column;
+                gap: 6px;
+                align-items: flex-start;
             }
+        }
+
+        /* Editorial system-level: text selection, scrollbar, keyboard focus */
+        ::selection {
+            background: rgba(213, 132, 76, 0.35);
+            color: var(--text);
+        }
+
+        ::-webkit-scrollbar {
+            width: 10px;
+            height: 10px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--border);
+            border-radius: 5px;
+            border: 2px solid var(--bg);
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--border-hover);
+        }
+
+        :focus-visible {
+            outline: 2px solid var(--clay);
+            outline-offset: 2px;
+            border-radius: 3px;
+        }
+
+        button:focus-visible,
+        a:focus-visible {
+            outline-offset: 3px;
         }
     </style>
 </head>
 <body>
 <main><div class="container">
-    <h1>Tools in HTML</h1>
-    <p class="subtitle">A collection of single-file browser-based tools</p>
+    <header>
+        <h1>Tools <em>in</em> HTML</h1>
+        <p class="subtitle">
+            <span class="dots" aria-hidden="true">
+                <span class="dot"></span><span class="dot"></span><span class="dot"></span>
+            </span>
+            13 utilities · single-file · self-contained
+        </p>
+    </header>
     <ul class="tools-grid">
         <li class="tool-card">
             <a href="base64.html">
-                <span aria-hidden="true" class="tool-icon">🔤</span>
+                <span aria-hidden="true" class="tool-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="14" y="14" width="4" height="6" rx="2"/><rect x="6" y="4" width="4" height="6" rx="2"/><path d="M6 20h4"/><path d="M14 10h4"/><path d="M6 14h2v6"/><path d="M14 4h2v6"/></svg></span>
                 <h2 class="tool-name">Base64 Encoder/Decoder</h2>
                 <p class="tool-desc">Encode text to Base64 or decode Base64 back to text</p>
             </a>
         </li>
         <li class="tool-card">
             <a href="countdown.html">
-                <span aria-hidden="true" class="tool-icon">⏱️</span>
+                <span aria-hidden="true" class="tool-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="10" x2="14" y1="2" y2="2"/><line x1="12" x2="15" y1="14" y2="11"/><circle cx="12" cy="14" r="8"/></svg></span>
                 <h2 class="tool-name">Countdown Timer</h2>
                 <p class="tool-desc">Set a target date and watch the countdown in real-time</p>
             </a>
         </li>
         <li class="tool-card">
             <a href="diff.html">
-                <span aria-hidden="true" class="tool-icon">📊</span>
+                <span aria-hidden="true" class="tool-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M12 3v18"/></svg></span>
                 <h2 class="tool-name">Text Diff Tool</h2>
                 <p class="tool-desc">Compare two texts and highlight the differences</p>
             </a>
         </li>
         <li class="tool-card">
             <a href="duration.html">
-                <span aria-hidden="true" class="tool-icon">📅</span>
+                <span aria-hidden="true" class="tool-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg></span>
                 <h2 class="tool-name">Duration Calculator</h2>
                 <p class="tool-desc">Calculate the duration between two dates or times</p>
             </a>
         </li>
         <li class="tool-card">
             <a href="json.html">
-                <span aria-hidden="true" class="tool-icon">📝</span>
+                <span aria-hidden="true" class="tool-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3H7a2 2 0 0 0-2 2v5a2 2 0 0 1-2 2 2 2 0 0 1 2 2v5c0 1.1.9 2 2 2h1"/><path d="M16 21h1a2 2 0 0 0 2-2v-5c0-1.1.9-2 2-2a2 2 0 0 1-2-2V5a2 2 0 0 0-2-2h-1"/></svg></span>
                 <h2 class="tool-name">JSON Formatter</h2>
                 <p class="tool-desc">Format, minify, and validate JSON data with syntax highlighting</p>
             </a>
         </li>
         <li class="tool-card">
             <a href="converter.html">
-                <span aria-hidden="true" class="tool-icon">🔄</span>
+                <span aria-hidden="true" class="tool-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m16 3 4 4-4 4"/><path d="M20 7H4"/><path d="m8 21-4-4 4-4"/><path d="M4 17h16"/></svg></span>
                 <h2 class="tool-name">Format Converter</h2>
                 <p class="tool-desc">Convert between JSON, YAML, and TOML formats</p>
             </a>
         </li>
         <li class="tool-card">
             <a href="password.html">
-                <span aria-hidden="true" class="tool-icon">🔐</span>
+                <span aria-hidden="true" class="tool-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15.5 7.5 2.3 2.3a1 1 0 0 0 1.4 0l2.1-2.1a1 1 0 0 0 0-1.4L19 4"/><path d="m21 2-9.6 9.6"/><circle cx="7.5" cy="15.5" r="5.5"/></svg></span>
                 <h2 class="tool-name">Password Generator</h2>
                 <p class="tool-desc">Generate secure random passwords with custom options</p>
             </a>
         </li>
         <li class="tool-card">
             <a href="rsa.html">
-                <span aria-hidden="true" class="tool-icon">🔑</span>
+                <span aria-hidden="true" class="tool-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12.4 2.7a2.5 2.5 0 0 1 3.4 0l5.5 5.5a2.5 2.5 0 0 1 0 3.4l-3.7 3.7a2.5 2.5 0 0 1-3.4 0L8.7 9.8a2.5 2.5 0 0 1 0-3.4z"/><path d="m14 7 3 3"/><path d="m9.4 10.6-6.814 6.814A2 2 0 0 0 2 18.828V21a1 1 0 0 0 1 1h3a1 1 0 0 0 1-1v-1a1 1 0 0 1 1-1h1a1 1 0 0 0 1-1v-1a1 1 0 0 1 1-1h.172a2 2 0 0 0 1.414-.586l.814-.814"/></svg></span>
                 <h2 class="tool-name">RSA Private Key Parser</h2>
                 <p class="tool-desc">Parse and inspect RSA private key details</p>
             </a>
         </li>
         <li class="tool-card">
             <a href="certificates.html">
-                <span aria-hidden="true" class="tool-icon">📜</span>
+                <span aria-hidden="true" class="tool-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/><path d="m9 12 2 2 4-4"/></svg></span>
                 <h2 class="tool-name">X.509 Certificate Parser</h2>
                 <p class="tool-desc">Parse and display X.509 certificate information</p>
             </a>
         </li>
         <li class="tool-card">
             <a href="brewfile.html">
-                <span aria-hidden="true" class="tool-icon">🍺</span>
+                <span aria-hidden="true" class="tool-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 21.73a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73z"/><path d="M12 22V12"/><polyline points="3.29 7 12 12 20.71 7"/><path d="m7.5 4.27 9 5.15"/></svg></span>
                 <h2 class="tool-name">Brewfile Analyzer</h2>
                 <p class="tool-desc">Analyze Homebrew formulas, versions, and dependencies</p>
             </a>
         </li>
         <li class="tool-card">
             <a href="image.html">
-                <span aria-hidden="true" class="tool-icon">🐳</span>
+                <span aria-hidden="true" class="tool-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 7.7c0-.6-.4-1.2-.8-1.5l-6.3-3.9a1.72 1.72 0 0 0-1.7 0l-10.3 6c-.5.2-.9.8-.9 1.4v6.6c0 .5.4 1.2.8 1.5l6.3 3.9a1.72 1.72 0 0 0 1.7 0l10.3-6c.5-.3.9-1 .9-1.5Z"/><path d="M10 21.9V14L2.1 9.1"/><path d="m10 14 11.9-6.9"/><path d="M14 19.8v-8.1"/><path d="M18 17.5V9.4"/></svg></span>
                 <h2 class="tool-name">Container Image Analyzer</h2>
                 <p class="tool-desc">Inspect Docker/OCI container image layers and metadata</p>
             </a>
         </li>
         <li class="tool-card">
             <a href="kubernetes.html">
-                <span aria-hidden="true" class="tool-icon">☸️</span>
+                <span aria-hidden="true" class="tool-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2.97 12.92A2 2 0 0 0 2 14.63v3.24a2 2 0 0 0 .97 1.71l3 1.8a2 2 0 0 0 2.06 0L12 19v-5.5l-5-3-4.03 2.42Z"/><path d="m7 16.5-4.74-2.85"/><path d="m7 16.5 5-3"/><path d="M7 16.5v5.17"/><path d="M12 13.5V19l3.97 2.38a2 2 0 0 0 2.06 0l3-1.8a2 2 0 0 0 .97-1.71v-3.24a2 2 0 0 0-.97-1.71L17 10.5l-5 3Z"/><path d="m17 16.5-5-3"/><path d="m17 16.5 4.74-2.85"/><path d="M17 16.5v5.17"/><path d="M7.97 4.42A2 2 0 0 0 7 6.13v4.37l5 3 5-3V6.13a2 2 0 0 0-.97-1.71l-3-1.8a2 2 0 0 0-2.06 0l-3 1.8Z"/><path d="M12 8 7.26 5.15"/><path d="m12 8 4.74-2.85"/><path d="M12 13.5V8"/></svg></span>
                 <h2 class="tool-name">Kubernetes Resource Analyzer</h2>
                 <p class="tool-desc">Analyze Pod, Deployment, StatefulSet, Job specs and best practices</p>
             </a>
         </li>
         <li class="tool-card">
             <a href="calendar.html">
-                <span aria-hidden="true" class="tool-icon">📆</span>
+                <span aria-hidden="true" class="tool-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 2v4"/><path d="M16 2v4"/><rect width="18" height="18" x="3" y="4" rx="2"/><path d="M3 10h18"/></svg></span>
                 <h2 class="tool-name">Calendar</h2>
                 <p class="tool-desc">A printable calendar with the full year on a single page</p>
             </a>
         </li>
     </ul>
+    <footer class="colophon">
+        <span>view source · fork freely</span>
+        <span>
+            <span class="swatches" aria-hidden="true">
+                <span></span><span></span><span></span>
+            </span>
+            set in iowan old style · printed in clay
+        </span>
+    </footer>
 </div></main>
 </body>
 </html>

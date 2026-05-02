@@ -122,128 +122,154 @@ p {
 .modal-overlay {
   display: none;
   position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: rgba(0, 0, 0, 0.5);
+  inset: 0;
+  background: rgba(0, 0, 0, 0.4);
   z-index: 1000;
   justify-content: center;
   align-items: center;
+  font-family: 'Inter', system-ui, sans-serif;
 }
 .modal-overlay.show {
   display: flex;
 }
 .modal {
-  font-family: 'Inter', sans-serif;
   background: #fff;
-  border-radius: 8px;
-  padding: 20px;
+  border: 1px solid #E5E5E5;
+  border-radius: 6px;
+  padding: 18px;
   width: 90%;
-  max-width: 400px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+  max-width: 380px;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.18);
 }
 .modal-header {
-  font-size: 18px;
-  font-weight: 400;
-  margin-bottom: 15px;
-  color: #333;
+  font-size: 14px;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  margin-bottom: 12px;
+  color: #18181B;
 }
 .modal-input {
   width: 100%;
-  padding: 10px;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  font-size: 14px;
-  font-family: 'Inter', sans-serif;
+  padding: 9px 12px;
+  border: 1px solid #E5E5E5;
+  border-radius: 6px;
+  font-size: 13px;
+  font-family: inherit;
+  color: #18181B;
   resize: vertical;
-  min-height: 80px;
+  min-height: 72px;
   box-sizing: border-box;
+  transition: border-color 150ms ease-out;
 }
 .modal-input:focus {
   outline: none;
-  border-color: #666;
+  border-color: #71717A;
 }
 .modal-buttons {
   display: flex;
-  gap: 10px;
-  margin-top: 15px;
+  gap: 8px;
+  margin-top: 14px;
   justify-content: flex-end;
 }
 .modal-btn {
-  padding: 8px 16px;
-  border: none;
-  border-radius: 4px;
-  font-size: 14px;
-  font-family: 'Inter', sans-serif;
+  padding: 6px 12px;
+  border: 1px solid #E5E5E5;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  font-family: inherit;
+  background: #fff;
+  color: #18181B;
   cursor: pointer;
+  transition: background 150ms ease-out, border-color 150ms ease-out, color 150ms ease-out;
+}
+.modal-btn:hover {
+  background: #FAFAFA;
+  border-color: #D4D4D8;
 }
 .modal-btn-save {
-  background: #333;
+  background: #D4844C;
   color: #fff;
+  border-color: #D4844C;
 }
 .modal-btn-save:hover {
-  background: #555;
-}
-.modal-btn-cancel {
-  background: #eee;
-  color: #333;
-}
-.modal-btn-cancel:hover {
-  background: #ddd;
+  background: #C2410C;
+  border-color: #C2410C;
 }
 .modal-btn-delete {
-  background: #e74c3c;
-  color: #fff;
   margin-right: auto;
 }
 .modal-btn-delete:hover {
-  background: #c0392b;
+  color: #DC2626;
+  border-color: rgba(220, 38, 38, 0.3);
+  background: #fff;
 }
 .back-link {
   position: absolute;
-  top: 10px;
-  left: 10px;
-  font-family: 'Inter', sans-serif;
-  font-size: 14px;
-  color: #888;
+  top: 12px;
+  left: 12px;
+  font-family: 'Inter', system-ui, sans-serif;
+  font-size: 13px;
+  color: #71717A;
   text-decoration: none;
+  transition: color 150ms ease-out;
 }
 .back-link:hover {
-  color: #333;
+  color: #18181B;
 }
 .print-btn {
   position: absolute;
-  top: 10px;
-  right: 10px;
-  font-family: 'Inter', sans-serif;
-  font-size: 14px;
-  color: #888;
+  top: 12px;
+  right: 12px;
+  font-family: 'Inter', system-ui, sans-serif;
+  font-size: 13px;
+  color: #71717A;
   background: none;
   border: none;
   cursor: pointer;
   padding: 0;
+  transition: color 150ms ease-out;
 }
 .print-btn:hover {
-  color: #333;
+  color: #18181B;
 }
 .year-nav {
   display: flex;
   justify-content: center;
   align-items: center;
-  gap: 1em;
+  gap: 0.75em;
 }
 .year-btn {
   font-family: 'Oswald', sans-serif;
-  font-size: 1.2em;
-  color: #888;
+  font-size: 1.1em;
+  color: #A1A1AA;
   background: none;
   border: none;
   cursor: pointer;
-  padding: 0 0.5em;
+  padding: 0 0.4em;
+  transition: color 150ms ease-out;
 }
 .year-btn:hover {
-  color: #333;
+  color: #18181B;
+}
+
+/* Editorial system-level (light theme) */
+::selection {
+  background: rgba(212, 132, 76, 0.30);
+  color: #1A1614;
+}
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb {
+  background: #D4D4D8;
+  border-radius: 5px;
+  border: 2px solid #FAF7F0;
+}
+::-webkit-scrollbar-thumb:hover { background: #A1A1AA; }
+:focus-visible {
+  outline: 2px solid #D4844C;
+  outline-offset: 2px;
+  border-radius: 3px;
 }
 </style>
 <script src="https://unpkg.com/pako@2.1.0/dist/pako.min.js" integrity="sha384-rNlaE5fs9dGIjmxWDALQh/RBAaGRYT5ChrzHo6tRfgrZ36iRFAiquP5g41Jsv+0j" crossorigin="anonymous"></script>

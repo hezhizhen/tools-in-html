@@ -10,57 +10,105 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/codemirror@5.65.16/addon/fold/foldgutter.min.css" integrity="sha384-pqEriXSciNL11YIQNgLsDuYg+mjVeF5j+my59ox8KiqRyjCrLa0zDP522jXU9Syp" crossorigin="anonymous">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/codemirror@5.65.16/theme/material-darker.css" integrity="sha384-8Q4oVdkXS0g8qSdedXknw9E+LAgELnjtGG0XlqLny8xVH61TblZLEd1gc0ka8xQs" crossorigin="anonymous">
     <style>
+        :root {
+            --bg: #1C1916;
+            --surface: #25211C;
+            --surface-strong: #2E2924;
+            --border: #3A332B;
+            --border-hover: #5A4D3D;
+            --text: #EFE6D5;
+            --text-muted: #A39A8C;
+            --text-dim: #6E6358;
+            --clay: #D4844C;
+            --clay-soft: #E5A77A;
+            --clay-deep: #8B4A28;
+            --burgundy: #A85B3C;
+            --danger: #F87171;
+            --warn: #F59E0B;
+            --success: #4ADE80;
+            --info: #93C5FD;
+            --radius: 8px;
+            --transition: 150ms ease-out;
+            --serif: 'Iowan Old Style', 'Charter', 'Bookerly', Georgia, serif;
+            --sans: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            --mono: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, monospace;
+        }
+
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
         }
 
+        html {
+            color-scheme: dark;
+        }
+
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            font-size: 14px;
+            line-height: 1.5;
+            background: var(--bg);
             min-height: 100vh;
-            padding: 20px;
-            color: #fff;
+            padding: 48px 24px;
+            color: var(--text);
+            -webkit-font-smoothing: antialiased;
         }
 
         .container {
-            max-width: 80%;
+            max-width: 1200px;
             margin: 0 auto;
         }
 
         h1 {
+            font-family: var(--serif);
+            font-size: 26px;
+            font-weight: 400;
+            letter-spacing: -0.02em;
+            color: var(--text);
+            margin-bottom: 4px;
             text-align: center;
-            margin-bottom: 10px;
-            font-size: 1.8rem;
-            background: linear-gradient(90deg, #00d9ff, #a855f7);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
         }
 
         .subtitle {
             text-align: center;
-            color: #6b7280;
-            margin-bottom: 30px;
+            color: var(--text-muted);
+            font-family: var(--serif);
+            font-style: italic;
+            margin-bottom: 32px;
             font-size: 14px;
         }
 
+        .back-link {
+            display: inline-block;
+            margin-bottom: 24px;
+            color: var(--text-muted);
+            text-decoration: none;
+            font-size: 13px;
+            transition: color var(--transition);
+        }
+
+        .back-link:hover {
+            color: var(--text);
+        }
+
         .card {
-            background: rgba(255, 255, 255, 0.05);
-            border-radius: 16px;
-            padding: 24px;
-            margin-bottom: 20px;
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 18px;
+            margin-bottom: 12px;
         }
 
         label {
             display: flex;
             align-items: center;
-            margin-bottom: 10px;
-            font-weight: 500;
-            color: #a0aec0;
+            margin-bottom: 0;
+            font-family: var(--serif);
+            font-style: italic;
+            font-weight: 400;
+            color: var(--text);
+            font-size: 14px;
         }
 
         .card-header {
@@ -70,174 +118,133 @@
             margin-bottom: 10px;
         }
 
-        .card-header label {
-            margin-bottom: 0;
+        .btn-clear-small,
+        .btn-copy-small,
+        .format-btn {
+            padding: 4px 10px;
+            font-size: 12px;
+            font-weight: 500;
+            background: var(--surface);
+            color: var(--text-muted);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            cursor: pointer;
+            transition: background var(--transition), border-color var(--transition), color var(--transition);
+            font-family: inherit;
+            flex: none;
         }
 
-        .btn-clear-small {
-            padding: 4px 12px;
-            font-size: 12px;
-            background: rgba(239, 68, 68, 0.15);
-            color: #f87171;
-            border: 1px solid rgba(239, 68, 68, 0.25);
-            border-radius: 6px;
-            cursor: pointer;
-            transition: all 0.2s;
-            flex: none;
+        .btn-clear-small:hover,
+        .btn-copy-small:hover,
+        .format-btn:hover {
+            background: var(--surface-strong);
+            color: var(--text);
+            border-color: var(--border-hover);
         }
 
         .btn-clear-small:hover {
-            background: rgba(239, 68, 68, 0.25);
-        }
-
-        .btn-copy-small {
-            padding: 4px 12px;
-            font-size: 12px;
-            background: rgba(16, 185, 129, 0.15);
-            color: #34d399;
-            border: 1px solid rgba(16, 185, 129, 0.25);
-            border-radius: 6px;
-            cursor: pointer;
-            transition: all 0.2s;
-            flex: none;
-        }
-
-        .btn-copy-small:hover {
-            background: rgba(16, 185, 129, 0.25);
+            color: var(--danger);
+            border-color: rgba(248, 113, 113, 0.3);
         }
 
         .format-buttons {
             display: inline-flex;
-            gap: 8px;
-            margin-left: 8px;
-        }
-
-        .format-btn {
-            padding: 4px 12px;
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            border-radius: 6px;
-            background: rgba(255, 255, 255, 0.05);
-            color: #a0aec0;
-            font-size: 11px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.2s;
-            flex: none;
-        }
-
-        .format-btn:hover {
-            background: rgba(255, 255, 255, 0.1);
+            gap: 6px;
+            margin-left: 10px;
         }
 
         .format-btn.minify {
-            background: rgba(168, 85, 247, 0.15);
-            color: #c084fc;
-            border-color: rgba(168, 85, 247, 0.25);
+            background: var(--clay);
+            color: var(--bg);
+            border-color: var(--clay);
         }
 
         .format-btn.minify:hover {
-            background: rgba(168, 85, 247, 0.25);
+            background: var(--clay-soft);
+            color: var(--bg);
+            border-color: var(--clay-soft);
         }
 
         .message {
             position: fixed;
-            top: 20px;
-            right: 20px;
-            padding: 12px 16px;
-            border-radius: 8px;
-            font-size: 14px;
+            top: 16px;
+            right: 16px;
+            padding: 8px 12px;
+            border-radius: var(--radius);
+            border: 1px solid var(--border);
+            background: var(--bg);
+            font-size: 13px;
             display: none;
             z-index: 1000;
         }
 
         .message.success {
             display: block;
-            background: rgba(16, 185, 129, 0.2);
-            color: #34d399;
-            border: 1px solid rgba(16, 185, 129, 0.3);
+            color: var(--success);
+            border-color: rgba(74, 222, 128, 0.3);
         }
 
         .message.error {
             display: block;
-            background: rgba(239, 68, 68, 0.2);
-            color: #f87171;
-            border: 1px solid rgba(239, 68, 68, 0.3);
+            color: var(--danger);
+            border-color: rgba(248, 113, 113, 0.3);
         }
 
-        .back-link {
-            display: inline-block;
-            margin-bottom: 20px;
-            color: #a0aec0;
-            text-decoration: none;
-            font-size: 14px;
-            transition: color 0.2s;
-        }
-
-        .back-link:hover {
-            color: #00d9ff;
-        }
-
-        /* CodeMirror 主容器 */
+        /* CodeMirror */
         .CodeMirror {
             background: rgba(0, 0, 0, 0.3) !important;
             height: auto;
-            border: 2px solid rgba(255, 255, 255, 0.1);
-            border-radius: 12px;
-            font-family: 'Consolas', 'Monaco', monospace;
-            font-size: 13px;
-            transition: border-color 0.3s;
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            font-family: var(--mono);
+            font-size: 12px;
+            line-height: 1.55;
+            transition: border-color var(--transition);
         }
 
         .CodeMirror-focused {
-            border-color: #00d9ff !important;
+            border-color: var(--border-hover) !important;
         }
 
-        /* 行号区 */
         .CodeMirror-gutters {
             background: rgba(0, 0, 0, 0.2) !important;
-            border-right: 1px solid rgba(255, 255, 255, 0.1) !important;
+            border-right: 1px solid var(--border) !important;
         }
 
         .CodeMirror-linenumber {
-            color: rgba(160, 174, 192, 0.5) !important;
+            color: var(--text-dim) !important;
             padding: 0 8px 0 3px !important;
             min-width: 2em;
             text-align: right;
         }
 
-        /* 代码编辑区 */
         .CodeMirror-lines {
-            padding: 15px 0;
+            padding: 12px 0;
         }
 
-        /* 选中区域 */
         .CodeMirror-selected {
-            background: rgba(0, 217, 255, 0.15) !important;
+            background: rgba(255, 255, 255, 0.08) !important;
         }
 
-        /* 光标 */
         .CodeMirror-cursor {
-            border-left: 2px solid #00d9ff !important;
+            border-left: 1px solid var(--clay) !important;
         }
 
-        /* 匹配的括号 */
         .CodeMirror-matchingbracket {
-            color: #00d9ff !important;
-            background: rgba(0, 217, 255, 0.3) !important;
-            font-weight: bold;
+            color: var(--text) !important;
+            background: rgba(255, 255, 255, 0.12) !important;
+            font-weight: 600;
             border-radius: 2px;
             padding: 0 2px;
             margin: 0 -2px;
         }
 
-        /* 非匹配括号 */
         .CodeMirror-nonmatchingbracket {
-            color: #f87171 !important;
-            background: rgba(248, 113, 113, 0.2) !important;
+            color: var(--danger) !important;
+            background: rgba(248, 113, 113, 0.15) !important;
             border-radius: 2px;
         }
 
-        /* 折叠功能样式 */
         .CodeMirror-foldgutter {
             width: 1.2em;
         }
@@ -245,7 +252,7 @@
         .CodeMirror-foldgutter-open,
         .CodeMirror-foldgutter-folded {
             cursor: pointer;
-            color: #888;
+            color: var(--text-dim);
         }
 
         .CodeMirror-foldgutter-open:after {
@@ -258,41 +265,118 @@
 
         .CodeMirror-foldgutter-open:hover,
         .CodeMirror-foldgutter-folded:hover {
-            color: #00d9ff;
+            color: var(--text);
         }
 
         .CodeMirror-foldmarker {
-            color: #00d9ff;
-            background: rgba(0, 217, 255, 0.15);
+            color: var(--text-muted);
+            background: var(--surface-strong);
+            border: 1px solid var(--border);
             border-radius: 3px;
-            padding: 1px 6px;
+            padding: 0 5px;
             margin: 0 3px;
             cursor: pointer;
-            font-family: sans-serif;
-            font-size: 12px;
+            font-family: inherit;
+            font-size: 11px;
         }
 
         .CodeMirror-foldmarker:hover {
-            background: rgba(0, 217, 255, 0.25);
+            background: rgba(255, 255, 255, 0.08);
+            color: var(--text);
         }
 
         .cm-indent-guide {
             position: relative;
-            border-left: 1px dotted #444;
+            border-left: 1px dotted rgba(255, 255, 255, 0.08);
         }
 
         @media (max-width: 480px) {
+            body {
+                padding: 24px 16px;
+            }
+
             h1 {
-                font-size: 1.4rem;
+                font-size: 20px;
             }
 
             .card {
-                padding: 16px;
+                padding: 14px;
             }
+        }
 
-            .CodeMirror {
-                font-size: 11px;
-            }
+        /* Editorial syntax palette — overrides material-darker for warm coherence */
+        .CodeMirror.cm-s-material-darker .cm-keyword,
+        .CodeMirror.cm-s-material-darker .cm-tag,
+        .CodeMirror.cm-s-material-darker .cm-attribute { color: var(--clay) !important; }
+
+        .CodeMirror.cm-s-material-darker .cm-property,
+        .CodeMirror.cm-s-material-darker .cm-qualifier { color: var(--clay-soft) !important; }
+
+        .CodeMirror.cm-s-material-darker .cm-atom,
+        .CodeMirror.cm-s-material-darker .cm-builtin { color: var(--burgundy) !important; }
+
+        .CodeMirror.cm-s-material-darker .cm-number { color: var(--warn) !important; }
+
+        .CodeMirror.cm-s-material-darker .cm-string,
+        .CodeMirror.cm-s-material-darker .cm-string-2 { color: var(--success) !important; }
+
+        .CodeMirror.cm-s-material-darker .cm-comment {
+            color: var(--text-dim) !important;
+            font-style: italic;
+        }
+
+        .CodeMirror.cm-s-material-darker .cm-variable,
+        .CodeMirror.cm-s-material-darker .cm-variable-2,
+        .CodeMirror.cm-s-material-darker .cm-variable-3,
+        .CodeMirror.cm-s-material-darker .cm-def { color: var(--text) !important; }
+
+        .CodeMirror.cm-s-material-darker .cm-operator,
+        .CodeMirror.cm-s-material-darker .cm-meta,
+        .CodeMirror.cm-s-material-darker .cm-bracket,
+        .CodeMirror.cm-s-material-darker .cm-punctuation { color: var(--text-muted) !important; }
+
+        .CodeMirror.cm-s-material-darker .cm-header { color: var(--clay) !important; }
+        .CodeMirror.cm-s-material-darker .cm-link { color: var(--info) !important; }
+
+        .CodeMirror.cm-s-material-darker .cm-error {
+            color: var(--danger) !important;
+            background: rgba(248, 113, 113, 0.1);
+        }
+
+        /* Editorial system-level: text selection, scrollbar, keyboard focus */
+        ::selection {
+            background: rgba(213, 132, 76, 0.35);
+            color: var(--text);
+        }
+
+        ::-webkit-scrollbar {
+            width: 10px;
+            height: 10px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--border);
+            border-radius: 5px;
+            border: 2px solid var(--bg);
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--border-hover);
+        }
+
+        :focus-visible {
+            outline: 2px solid var(--clay);
+            outline-offset: 2px;
+            border-radius: 3px;
+        }
+
+        button:focus-visible,
+        a:focus-visible {
+            outline-offset: 3px;
         }
     </style>
 </head>
