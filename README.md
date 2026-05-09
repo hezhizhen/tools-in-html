@@ -13,6 +13,7 @@ Inspired by [Simon Willison's Tools](https://tools.simonwillison.net).
 | [converter](converter.html) | JSON/YAML/TOML format converter |
 | [diff](diff.html) | Side-by-side text comparison |
 | [duration](duration.html) | Calculate duration between two timestamps |
+| [timestamp](timestamp.html) | Convert Unix timestamps to local, UTC, ISO 8601, and relative time |
 | [json](json.html) | JSON formatter/minifier with folding |
 | [password](password.html) | Configurable password generator |
 | [rsa](rsa.html) | RSA private key parser |

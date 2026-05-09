@@ -1,0 +1,545 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self' data:; connect-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'">
+    <meta content="width=device-width, initial-scale=1.0" name="viewport">
+    <title>Timestamp Converter</title>
+    <style>
+        :root {
+            --bg: #1C1916;
+            --surface: #25211C;
+            --surface-strong: #2E2924;
+            --border: #3A332B;
+            --border-hover: #5A4D3D;
+            --text: #EFE6D5;
+            --text-muted: #A39A8C;
+            --text-dim: #6E6358;
+            --clay: #D4844C;
+            --clay-soft: #E5A77A;
+            --clay-deep: #8B4A28;
+            --burgundy: #A85B3C;
+            --danger: #F87171;
+            --warn: #F59E0B;
+            --success: #4ADE80;
+            --info: #93C5FD;
+            --radius: 8px;
+            --transition: 150ms ease-out;
+            --serif: 'Iowan Old Style', 'Charter', 'Bookerly', Georgia, serif;
+            --sans: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            --mono: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, monospace;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html { color-scheme: dark; }
+
+        body {
+            font-family: var(--sans);
+            font-size: 14px;
+            line-height: 1.5;
+            background: var(--bg);
+            min-height: 100vh;
+            padding: 48px 24px;
+            color: var(--text);
+            -webkit-font-smoothing: antialiased;
+        }
+
+        .container { max-width: 560px; margin: 0 auto; }
+
+        h1 {
+            font-family: var(--serif);
+            font-size: 26px;
+            font-weight: 400;
+            letter-spacing: -0.02em;
+            color: var(--text);
+            margin-bottom: 4px;
+            text-align: center;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: var(--text-muted);
+            font-family: var(--serif);
+            font-style: italic;
+            margin-bottom: 32px;
+            font-size: 14px;
+        }
+
+        .back-link {
+            display: inline-block;
+            margin-bottom: 24px;
+            color: var(--text-muted);
+            text-decoration: none;
+            font-size: 13px;
+            transition: color var(--transition);
+        }
+
+        .back-link:hover { color: var(--text); }
+
+        .card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 18px;
+            margin-bottom: 12px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-family: var(--serif);
+            font-style: italic;
+            font-weight: 400;
+            color: var(--text);
+            font-size: 14px;
+        }
+
+        .input-row {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        input[type="text"] {
+            flex: 1;
+            padding: 9px 12px;
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            background: rgba(0, 0, 0, 0.3);
+            color: var(--text);
+            font-size: 14px;
+            font-family: var(--mono);
+            font-variant-numeric: tabular-nums;
+            transition: border-color var(--transition);
+        }
+
+        input[type="text"]:focus {
+            outline: none;
+            border-color: var(--border-hover);
+        }
+
+        input[type="text"]::placeholder {
+            color: var(--text-dim);
+            font-family: var(--sans);
+        }
+
+        button {
+            padding: 9px 16px;
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            background: var(--surface);
+            color: var(--text);
+            font-size: 13px;
+            font-weight: 500;
+            font-family: inherit;
+            cursor: pointer;
+            transition: background var(--transition), border-color var(--transition), color var(--transition);
+        }
+
+        button:hover {
+            background: var(--surface-strong);
+            border-color: var(--border-hover);
+        }
+
+        .btn-now {
+            background: var(--clay);
+            color: var(--bg);
+            border-color: var(--clay);
+        }
+
+        .btn-now:hover {
+            background: var(--clay-soft);
+            border-color: var(--clay-soft);
+            color: var(--bg);
+        }
+
+        .detected {
+            margin-top: 10px;
+            font-family: var(--mono);
+            font-size: 11px;
+            color: var(--text-dim);
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            min-height: 14px;
+        }
+
+        .detected .clay {
+            color: var(--clay);
+        }
+
+        .detected .danger {
+            color: var(--danger);
+        }
+
+        .result-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+            padding: 10px 0;
+            border-top: 1px solid var(--border);
+        }
+
+        .result-row:first-child {
+            border-top: none;
+        }
+
+        .result-label {
+            font-family: var(--serif);
+            font-style: italic;
+            color: var(--text-muted);
+            font-size: 13px;
+            flex-shrink: 0;
+            min-width: 88px;
+        }
+
+        .result-value {
+            font-family: var(--mono);
+            font-variant-numeric: tabular-nums;
+            color: var(--text);
+            font-size: 13px;
+            text-align: right;
+            word-break: break-all;
+            cursor: pointer;
+            transition: color var(--transition);
+            padding: 2px 6px;
+            margin: -2px -6px;
+            border-radius: 4px;
+        }
+
+        .result-value:hover {
+            color: var(--clay);
+            background: var(--surface-strong);
+        }
+
+        .result-value.empty {
+            color: var(--text-dim);
+            cursor: default;
+        }
+
+        .result-value.empty:hover {
+            color: var(--text-dim);
+            background: transparent;
+        }
+
+        .result-value.error {
+            color: var(--danger);
+            cursor: default;
+        }
+
+        .result-value.error:hover {
+            color: var(--danger);
+            background: transparent;
+        }
+
+        .relative {
+            color: var(--clay);
+        }
+
+        .message {
+            position: fixed;
+            top: 16px;
+            right: 16px;
+            padding: 8px 12px;
+            border-radius: var(--radius);
+            border: 1px solid var(--border);
+            background: var(--bg);
+            font-size: 13px;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 180ms ease-out;
+            z-index: 1000;
+        }
+
+        .message.show {
+            opacity: 1;
+        }
+
+        .message.success {
+            color: var(--success);
+            border-color: rgba(74, 222, 128, 0.3);
+        }
+
+        .message.error {
+            color: var(--danger);
+            border-color: rgba(248, 113, 113, 0.3);
+        }
+
+        @media (max-width: 480px) {
+            body { padding: 24px 16px; }
+            h1 { font-size: 20px; }
+            .card { padding: 14px; }
+
+            .result-row {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 2px;
+            }
+
+            .result-value {
+                text-align: left;
+                font-size: 12px;
+            }
+        }
+
+        ::selection {
+            background: rgba(213, 132, 76, 0.35);
+            color: var(--text);
+        }
+
+        ::-webkit-scrollbar { width: 10px; height: 10px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb {
+            background: var(--border);
+            border-radius: 5px;
+            border: 2px solid var(--bg);
+        }
+        ::-webkit-scrollbar-thumb:hover { background: var(--border-hover); }
+
+        :focus-visible {
+            outline: 2px solid var(--clay);
+            outline-offset: 2px;
+            border-radius: 3px;
+        }
+
+        button:focus-visible,
+        a:focus-visible {
+            outline-offset: 3px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <a class="back-link" href="index.html">← Back to Tools</a>
+        <h1>Timestamp Converter</h1>
+        <p class="subtitle">Unix timestamps in, readable time out</p>
+
+        <div class="card">
+            <label for="timestamp">Timestamp</label>
+            <div class="input-row">
+                <input id="timestamp" placeholder="e.g. 1760556959473" type="text" autocomplete="off" spellcheck="false" inputmode="numeric">
+                <button class="btn-now" onclick="useNow()" type="button">Now</button>
+            </div>
+            <div class="detected" id="detected">&nbsp;</div>
+        </div>
+
+        <div class="card">
+            <div class="result-row">
+                <span class="result-label">Local</span>
+                <span class="result-value empty" id="local" data-copy="">—</span>
+            </div>
+            <div class="result-row">
+                <span class="result-label">UTC</span>
+                <span class="result-value empty" id="utc" data-copy="">—</span>
+            </div>
+            <div class="result-row">
+                <span class="result-label">ISO 8601</span>
+                <span class="result-value empty" id="iso" data-copy="">—</span>
+            </div>
+            <div class="result-row">
+                <span class="result-label">Relative</span>
+                <span class="result-value empty relative" id="relative" data-copy="">—</span>
+            </div>
+            <div class="result-row">
+                <span class="result-label">Seconds</span>
+                <span class="result-value empty" id="seconds" data-copy="">—</span>
+            </div>
+            <div class="result-row">
+                <span class="result-label">Milliseconds</span>
+                <span class="result-value empty" id="millis" data-copy="">—</span>
+            </div>
+        </div>
+
+        <div class="message" id="message"></div>
+    </div>
+    <script>
+        const inputEl = document.getElementById('timestamp');
+        const detectedEl = document.getElementById('detected');
+        const messageEl = document.getElementById('message');
+
+        const fields = {
+            local: document.getElementById('local'),
+            utc: document.getElementById('utc'),
+            iso: document.getElementById('iso'),
+            relative: document.getElementById('relative'),
+            seconds: document.getElementById('seconds'),
+            millis: document.getElementById('millis'),
+        };
+
+        const EMPTY = '—';
+
+        function detectUnit(raw) {
+            const s = raw.trim();
+            if (!/^-?\d+(\.\d+)?$/.test(s)) return null;
+            const intPart = s.replace(/^-/, '').split('.')[0];
+            const len = intPart.length;
+            if (len <= 10) return { unit: 's', label: 'seconds' };
+            if (len <= 13) return { unit: 'ms', label: 'milliseconds' };
+            if (len <= 16) return { unit: 'us', label: 'microseconds' };
+            return { unit: 'ns', label: 'nanoseconds' };
+        }
+
+        function toMillis(raw, unit) {
+            const n = Number(raw);
+            switch (unit) {
+                case 's': return n * 1000;
+                case 'ms': return n;
+                case 'us': return n / 1000;
+                case 'ns': return n / 1e6;
+            }
+        }
+
+        function formatLocal(date) {
+            const pad = (n, w = 2) => String(n).padStart(w, '0');
+            const y = date.getFullYear();
+            const mo = pad(date.getMonth() + 1);
+            const d = pad(date.getDate());
+            const h = pad(date.getHours());
+            const mi = pad(date.getMinutes());
+            const se = pad(date.getSeconds());
+            const weekday = date.toLocaleDateString(undefined, { weekday: 'short' });
+            const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+            return `${y}-${mo}-${d} ${h}:${mi}:${se} ${weekday} (${tz})`;
+        }
+
+        function formatUTC(date) {
+            const pad = (n, w = 2) => String(n).padStart(w, '0');
+            const y = date.getUTCFullYear();
+            const mo = pad(date.getUTCMonth() + 1);
+            const d = pad(date.getUTCDate());
+            const h = pad(date.getUTCHours());
+            const mi = pad(date.getUTCMinutes());
+            const se = pad(date.getUTCSeconds());
+            const weekdays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+            const weekday = weekdays[date.getUTCDay()];
+            return `${y}-${mo}-${d} ${h}:${mi}:${se} ${weekday} UTC`;
+        }
+
+        function formatRelative(date) {
+            const rtf = new Intl.RelativeTimeFormat(undefined, { numeric: 'auto' });
+            const diffMs = date.getTime() - Date.now();
+            const abs = Math.abs(diffMs);
+            const units = [
+                ['year', 365.25 * 24 * 60 * 60 * 1000],
+                ['month', 30.4375 * 24 * 60 * 60 * 1000],
+                ['week', 7 * 24 * 60 * 60 * 1000],
+                ['day', 24 * 60 * 60 * 1000],
+                ['hour', 60 * 60 * 1000],
+                ['minute', 60 * 1000],
+                ['second', 1000],
+            ];
+            for (const [unit, ms] of units) {
+                if (abs >= ms || unit === 'second') {
+                    const value = Math.round(diffMs / ms);
+                    return rtf.format(value, unit);
+                }
+            }
+            return rtf.format(0, 'second');
+        }
+
+        function setEmpty() {
+            detectedEl.innerHTML = '&nbsp;';
+            for (const key of Object.keys(fields)) {
+                const el = fields[key];
+                el.textContent = EMPTY;
+                el.dataset.copy = '';
+                el.className = 'result-value empty' + (key === 'relative' ? ' relative' : '');
+            }
+        }
+
+        function setError(msg) {
+            detectedEl.innerHTML = `<span class="danger">${msg}</span>`;
+            for (const key of Object.keys(fields)) {
+                const el = fields[key];
+                el.textContent = EMPTY;
+                el.dataset.copy = '';
+                el.className = 'result-value error' + (key === 'relative' ? ' relative' : '');
+            }
+        }
+
+        function render() {
+            const raw = inputEl.value;
+            if (!raw.trim()) {
+                setEmpty();
+                return;
+            }
+
+            const detection = detectUnit(raw);
+            if (!detection) {
+                setError('Not a numeric timestamp');
+                return;
+            }
+
+            const ms = toMillis(raw, detection.unit);
+            const date = new Date(ms);
+
+            if (!Number.isFinite(ms) || isNaN(date.getTime())) {
+                setError('Out of range');
+                return;
+            }
+
+            detectedEl.innerHTML = `Detected <span class="clay">${detection.label}</span>`;
+
+            const secondsVal = (ms / 1000);
+            const secondsStr = Number.isInteger(secondsVal)
+                ? String(secondsVal)
+                : secondsVal.toFixed(3).replace(/\.?0+$/, '');
+
+            const values = {
+                local: formatLocal(date),
+                utc: formatUTC(date),
+                iso: date.toISOString(),
+                relative: formatRelative(date),
+                seconds: secondsStr,
+                millis: String(Math.round(ms)),
+            };
+
+            for (const [key, val] of Object.entries(values)) {
+                const el = fields[key];
+                el.textContent = val;
+                el.dataset.copy = val;
+                el.className = 'result-value' + (key === 'relative' ? ' relative' : '');
+            }
+        }
+
+        function showMessage(text, type) {
+            messageEl.textContent = text;
+            messageEl.className = 'message show ' + type;
+            clearTimeout(showMessage._t);
+            showMessage._t = setTimeout(() => {
+                messageEl.className = 'message';
+            }, 1600);
+        }
+
+        function useNow() {
+            inputEl.value = String(Date.now());
+            render();
+            inputEl.focus();
+            inputEl.select();
+        }
+
+        inputEl.addEventListener('input', render);
+
+        for (const el of Object.values(fields)) {
+            el.addEventListener('click', () => {
+                const text = el.dataset.copy;
+                if (!text) return;
+                navigator.clipboard.writeText(text).then(() => {
+                    showMessage('Copied', 'success');
+                }).catch(() => {
+                    showMessage('Copy failed', 'error');
+                });
+            });
+        }
+
+        inputEl.value = '1760556959473';
+        render();
+        inputEl.focus();
+        inputEl.select();
+    </script>
+</body>
+
+</html>
+
