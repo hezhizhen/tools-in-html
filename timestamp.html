@@ -3,9 +3,11 @@
 
 <head>
     <meta charset="UTF-8">
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self' data:; connect-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; img-src 'self' data:; font-src 'self' data:; connect-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'">
     <meta content="width=device-width, initial-scale=1.0" name="viewport">
     <title>Timestamp Converter</title>
+    <link href="https://cdn.jsdelivr.net/npm/flatpickr@4.6.13/dist/flatpickr.min.css" rel="stylesheet" integrity="sha384-RkASv+6KfBMW9eknReJIJ6b3UnjKOKC5bOUaNgIY778NFbQ8MtWq9Lr/khUgqtTt" crossorigin="anonymous">
+    <link href="https://cdn.jsdelivr.net/npm/flatpickr@4.6.13/dist/themes/dark.css" rel="stylesheet" integrity="sha384-heUUtXw0Djj2DElfLOVPlASSWFKNL3JDY6s3FEqQD03GYyWOeophY5DsfEG40sYX" crossorigin="anonymous">
     <style>
         :root {
             --bg: #1C1916;
@@ -45,7 +47,7 @@
             -webkit-font-smoothing: antialiased;
         }
 
-        .container { max-width: 560px; margin: 0 auto; }
+        .container { max-width: 600px; margin: 0 auto; }
 
         h1 {
             font-family: var(--serif);
@@ -101,8 +103,11 @@
             align-items: center;
         }
 
-        input[type="text"] {
+        .input-row input[type="text"] {
             flex: 1;
+        }
+
+        input[type="text"] {
             padding: 9px 12px;
             border: 1px solid var(--border);
             border-radius: var(--radius);
@@ -164,6 +169,188 @@
             min-height: 14px;
         }
 
+        .edit-row {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            margin-top: 12px;
+        }
+
+        .edit-row input[type="text"] {
+            flex: 1;
+        }
+
+        .picker-wrap {
+            position: relative;
+            flex: 1;
+            display: flex;
+        }
+
+        .picker-wrap input[type="text"] {
+            flex: 1;
+            padding-right: 34px;
+        }
+
+        .picker-icon {
+            position: absolute;
+            right: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-dim);
+            pointer-events: none;
+            display: flex;
+            align-items: center;
+            transition: color var(--transition);
+        }
+
+        .picker-wrap input[type="text"]:focus ~ .picker-icon {
+            color: var(--clay);
+        }
+
+        .split {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0;
+        }
+
+        .split > .col-left {
+            border-right: 1px dashed var(--border);
+            padding-right: 20px;
+        }
+
+        .split > .col-right {
+            padding-left: 20px;
+        }
+
+        .offset-row {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 6px;
+            margin-top: 10px;
+        }
+
+        .offset-btn {
+            padding: 6px 10px;
+            font-size: 12px;
+            font-family: var(--mono);
+            font-variant-numeric: tabular-nums;
+            background: rgba(0, 0, 0, 0.2);
+            color: var(--text-muted);
+        }
+
+        .offset-btn:hover {
+            color: var(--clay);
+        }
+
+        /* Flatpickr — dark theme token overrides */
+        .flatpickr-calendar {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            box-shadow: 0 12px 32px rgba(0, 0, 0, 0.5);
+        }
+
+        .flatpickr-calendar.arrowTop:before,
+        .flatpickr-calendar.arrowTop:after {
+            border-bottom-color: var(--surface);
+        }
+
+        .flatpickr-months .flatpickr-month {
+            background: transparent;
+            color: var(--text);
+        }
+
+        .flatpickr-current-month .flatpickr-monthDropdown-months,
+        .flatpickr-current-month input.cur-year {
+            color: var(--text);
+            font-weight: 500;
+        }
+
+        .flatpickr-monthDropdown-months:hover { background: var(--surface-strong); }
+
+        .flatpickr-months .flatpickr-prev-month,
+        .flatpickr-months .flatpickr-next-month {
+            color: var(--text);
+            fill: var(--text);
+        }
+
+        .flatpickr-months .flatpickr-prev-month:hover svg,
+        .flatpickr-months .flatpickr-next-month:hover svg { fill: var(--text); }
+
+        .flatpickr-weekdays { background: transparent; }
+        span.flatpickr-weekday { color: var(--text-dim); font-weight: 500; }
+        .flatpickr-days { background: transparent; }
+
+        .flatpickr-day {
+            color: var(--text-muted);
+            border-radius: 4px;
+        }
+
+        .flatpickr-day:hover {
+            background: var(--surface-strong);
+            border-color: transparent;
+        }
+
+        .flatpickr-day.selected {
+            background: var(--clay);
+            border-color: var(--clay);
+            color: var(--bg);
+        }
+
+        .flatpickr-day.today { border-color: var(--border-hover); }
+        .flatpickr-day.today:hover { background: var(--surface-strong); }
+
+        .flatpickr-day.prevMonthDay,
+        .flatpickr-day.nextMonthDay {
+            color: var(--text-dim);
+            opacity: 0.5;
+        }
+
+        .flatpickr-time {
+            background: transparent;
+            border-top: 1px solid var(--border);
+        }
+
+        .flatpickr-time input {
+            color: var(--text);
+            font-size: 14px;
+        }
+
+        .flatpickr-time input:hover,
+        .flatpickr-time input:focus { background: var(--surface-strong); }
+
+        .flatpickr-time .flatpickr-time-separator,
+        .flatpickr-time .flatpickr-am-pm { color: var(--text); }
+
+        .flatpickr-time .flatpickr-am-pm:hover { background: var(--surface-strong); }
+
+        .numInputWrapper:hover { background: var(--surface-strong); }
+        .numInputWrapper span { border-color: var(--border); }
+        .numInputWrapper span:hover { background: rgba(213, 132, 76, 0.18); }
+        .numInputWrapper span:after {
+            border-color: var(--text) transparent transparent transparent;
+        }
+        .numInputWrapper span.arrowUp:after { border-bottom-color: var(--text); }
+        .numInputWrapper span.arrowDown:after { border-top-color: var(--text); }
+        .numInputWrapper span:hover:after {
+            border-bottom-color: var(--clay) !important;
+            border-top-color: var(--clay) !important;
+        }
+
+        .flatpickr-day:focus {
+            background: var(--surface-strong);
+            border-color: transparent;
+            outline: none;
+        }
+
+        .flatpickr-day.flatpickr-disabled,
+        .flatpickr-day.flatpickr-disabled:hover {
+            color: var(--text-dim);
+            opacity: 0.35;
+            background: transparent;
+            cursor: not-allowed;
+        }
+
         .detected .clay {
             color: var(--clay);
         }
@@ -183,6 +370,12 @@
 
         .result-row:first-child {
             border-top: none;
+        }
+
+        .result-row:nth-child(5) {
+            border-top-color: var(--border-hover);
+            margin-top: 4px;
+            padding-top: 14px;
         }
 
         .result-label {
@@ -233,8 +426,23 @@
             background: transparent;
         }
 
+        @keyframes flash-copy {
+            0%   { background: rgba(213, 132, 76, 0.35); color: var(--clay); }
+            100% { background: transparent; }
+        }
+
+        .result-value.copied {
+            animation: flash-copy 450ms ease-out;
+        }
+
         .relative {
             color: var(--clay);
+            cursor: default;
+        }
+
+        .result-value.relative:hover {
+            color: var(--clay);
+            background: transparent;
         }
 
         .message {
@@ -266,10 +474,26 @@
             border-color: rgba(248, 113, 113, 0.3);
         }
 
-        @media (max-width: 480px) {
+        @media (max-width: 640px) {
             body { padding: 24px 16px; }
             h1 { font-size: 20px; }
             .card { padding: 14px; }
+
+            .split {
+                grid-template-columns: 1fr;
+                gap: 16px;
+            }
+
+            .split > .col-left {
+                border-right: none;
+                padding-right: 0;
+                padding-bottom: 16px;
+                border-bottom: 1px dashed var(--border);
+            }
+
+            .split > .col-right {
+                padding-left: 0;
+            }
 
             .result-row {
                 flex-direction: column;
@@ -317,12 +541,42 @@
         <p class="subtitle">Unix timestamps in, readable time out</p>
 
         <div class="card">
-            <label for="timestamp">Timestamp</label>
-            <div class="input-row">
-                <input id="timestamp" placeholder="e.g. 1760556959473" type="text" autocomplete="off" spellcheck="false" inputmode="numeric">
-                <button class="btn-now" onclick="useNow()" type="button">Now</button>
+            <div class="split">
+                <div class="col col-left">
+                    <label for="timestamp">Timestamp</label>
+                    <div class="input-row">
+                        <input id="timestamp" placeholder="e.g. 1760556959473" type="text" autocomplete="off" spellcheck="false" inputmode="numeric">
+                        <button class="btn-now" onclick="useNow()" type="button">Now</button>
+                    </div>
+                    <div class="detected" id="detected">&nbsp;</div>
+                </div>
+                <div class="col col-right">
+                    <label for="picker">Edit (local time)</label>
+                    <div class="edit-row">
+                        <div class="picker-wrap">
+                            <input id="picker" placeholder="Pick a date & time" type="text" autocomplete="off" spellcheck="false">
+                            <span class="picker-icon" aria-hidden="true">
+                                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <rect x="3" y="4" width="18" height="18" rx="2"/>
+                                    <path d="M8 2v4"/>
+                                    <path d="M16 2v4"/>
+                                    <path d="M3 10h18"/>
+                                </svg>
+                            </span>
+                        </div>
+                    </div>
+                    <div class="offset-row">
+                        <button class="offset-btn" data-offset="1000" type="button" aria-label="Add 1 second" title="Add 1 second">+1s</button>
+                        <button class="offset-btn" data-offset="60000" type="button" aria-label="Add 1 minute" title="Add 1 minute">+1m</button>
+                        <button class="offset-btn" data-offset="3600000" type="button" aria-label="Add 1 hour" title="Add 1 hour">+1h</button>
+                        <button class="offset-btn" data-offset="86400000" type="button" aria-label="Add 1 day" title="Add 1 day">+1d</button>
+                        <button class="offset-btn" data-offset="-1000" type="button" aria-label="Subtract 1 second" title="Subtract 1 second">−1s</button>
+                        <button class="offset-btn" data-offset="-60000" type="button" aria-label="Subtract 1 minute" title="Subtract 1 minute">−1m</button>
+                        <button class="offset-btn" data-offset="-3600000" type="button" aria-label="Subtract 1 hour" title="Subtract 1 hour">−1h</button>
+                        <button class="offset-btn" data-offset="-86400000" type="button" aria-label="Subtract 1 day" title="Subtract 1 day">−1d</button>
+                    </div>
+                </div>
             </div>
-            <div class="detected" id="detected">&nbsp;</div>
         </div>
 
         <div class="card">
@@ -352,11 +606,13 @@
             </div>
         </div>
 
-        <div class="message" id="message"></div>
+        <div class="message" id="message" aria-live="polite"></div>
     </div>
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr@4.6.13/dist/flatpickr.js" integrity="sha384-sWZVghjWvu7FLPv6FOuk8kWJYnlZApKfPfxhdPgM1gcwvD0ys/iFrhE3Xr76HJV3" crossorigin="anonymous"></script>
     <script>
         const inputEl = document.getElementById('timestamp');
         const detectedEl = document.getElementById('detected');
+        const pickerEl = document.getElementById('picker');
         const messageEl = document.getElementById('message');
 
         const fields = {
@@ -369,6 +625,21 @@
         };
 
         const EMPTY = '—';
+
+        // Single source of truth.
+        // `ms` is a Number (may be fractional when input is µs/ns).
+        // `unit` is what the user's input is denominated in — we echo it back in the
+        // timestamp field when the picker/offset buttons mutate state.
+        // `subMs` holds the sub-millisecond remainder (in ms) so we don't lose µs/ns
+        // precision when the user edits via the picker, which is only second-accurate.
+        const state = {
+            ms: null,
+            unit: 'ms',
+            subMs: 0,
+        };
+
+        // Guards against onChange → setMs → setDate → onChange feedback loops.
+        let suppressSync = false;
 
         function detectUnit(raw) {
             const s = raw.trim();
@@ -388,6 +659,18 @@
                 case 'ms': return n;
                 case 'us': return n / 1000;
                 case 'ns': return n / 1e6;
+            }
+        }
+
+        function msToUnitString(ms, unit) {
+            switch (unit) {
+                case 's': {
+                    const v = ms / 1000;
+                    return Number.isInteger(v) ? String(v) : v.toFixed(3).replace(/\.?0+$/, '');
+                }
+                case 'ms': return String(Math.round(ms));
+                case 'us': return String(Math.round(ms * 1000));
+                case 'ns': return String(Math.round(ms * 1e6));
             }
         }
 
@@ -447,6 +730,9 @@
                 el.dataset.copy = '';
                 el.className = 'result-value empty' + (key === 'relative' ? ' relative' : '');
             }
+            suppressSync = true;
+            picker.clear();
+            suppressSync = false;
         }
 
         function setError(msg) {
@@ -459,43 +745,50 @@
             }
         }
 
-        function render() {
-            const raw = inputEl.value;
-            if (!raw.trim()) {
-                setEmpty();
+        // The single channel through which every UI updates flow.
+        // source: 'input' | 'picker' | 'offset' | 'now' — determines which UI piece
+        // we can skip writing back to (the one the change came from).
+        function setMs(ms, unit, source) {
+            if (!Number.isFinite(ms)) {
+                setError('Out of range');
                 return;
             }
-
-            const detection = detectUnit(raw);
-            if (!detection) {
-                setError('Not a numeric timestamp');
-                return;
-            }
-
-            const ms = toMillis(raw, detection.unit);
             const date = new Date(ms);
-
-            if (!Number.isFinite(ms) || isNaN(date.getTime())) {
+            if (isNaN(date.getTime())) {
                 setError('Out of range');
                 return;
             }
 
-            detectedEl.innerHTML = `Detected <span class="clay">${detection.label}</span>`;
+            state.ms = ms;
+            state.unit = unit;
+            // Preserve the fractional ms part so picker round-trips don't lose µs/ns.
+            state.subMs = ms - Math.floor(ms / 1000) * 1000;
 
-            const secondsVal = (ms / 1000);
-            const secondsStr = Number.isInteger(secondsVal)
-                ? String(secondsVal)
-                : secondsVal.toFixed(3).replace(/\.?0+$/, '');
+            // Detected-unit label (always visible while state is valid).
+            const label = { s: 'seconds', ms: 'milliseconds', us: 'microseconds', ns: 'nanoseconds' }[unit];
+            detectedEl.innerHTML = `Detected <span class="clay">${label}</span>`;
 
+            // Write to timestamp input (skip if the change originated there).
+            if (source !== 'input') {
+                inputEl.value = msToUnitString(ms, unit);
+            }
+
+            // Write to picker (skip if the change originated there).
+            if (source !== 'picker') {
+                suppressSync = true;
+                picker.setDate(new Date(Math.floor(ms / 1000) * 1000), false);
+                suppressSync = false;
+            }
+
+            // Result card.
             const values = {
                 local: formatLocal(date),
                 utc: formatUTC(date),
                 iso: date.toISOString(),
                 relative: formatRelative(date),
-                seconds: secondsStr,
-                millis: String(Math.round(ms)),
+                seconds: msToUnitString(ms, 's'),
+                millis: msToUnitString(ms, 'ms'),
             };
-
             for (const [key, val] of Object.entries(values)) {
                 const el = fields[key];
                 el.textContent = val;
@@ -514,19 +807,70 @@
         }
 
         function useNow() {
-            inputEl.value = String(Date.now());
-            render();
+            setMs(Date.now(), state.unit || 'ms', 'now');
             inputEl.focus();
             inputEl.select();
         }
 
-        inputEl.addEventListener('input', render);
+        // --- Flatpickr init ---
+        const picker = flatpickr(pickerEl, {
+            enableTime: true,
+            enableSeconds: true,
+            dateFormat: 'Y-m-d H:i:S',
+            time_24hr: true,
+            allowInput: true,
+            disableMobile: true,
+            onChange: (selectedDates) => {
+                if (suppressSync) return;
+                if (selectedDates.length === 0) return;
+                const pickerMs = selectedDates[0].getTime();
+                // Re-attach preserved sub-second remainder.
+                const merged = pickerMs + state.subMs;
+                setMs(merged, state.unit || 'ms', 'picker');
+            },
+        });
 
-        for (const el of Object.values(fields)) {
+        // --- Event wiring ---
+        inputEl.addEventListener('input', () => {
+            const raw = inputEl.value;
+            if (!raw.trim()) {
+                setEmpty();
+                state.ms = null;
+                state.subMs = 0;
+                return;
+            }
+            const detection = detectUnit(raw);
+            if (!detection) {
+                setError('Not a numeric timestamp');
+                return;
+            }
+            const ms = toMillis(raw, detection.unit);
+            setMs(ms, detection.unit, 'input');
+        });
+
+        // Offset buttons — shift current state by a ms delta.
+        document.querySelectorAll('.offset-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                if (state.ms === null) return;
+                const delta = Number(btn.dataset.offset);
+                setMs(state.ms + delta, state.unit, 'offset');
+            });
+        });
+
+        // Click-to-copy on result fields (except relative — it drifts with "now").
+        for (const [key, el] of Object.entries(fields)) {
+            if (key === 'relative') continue;
+            el.addEventListener('animationend', () => {
+                el.classList.remove('copied');
+            });
             el.addEventListener('click', () => {
                 const text = el.dataset.copy;
                 if (!text) return;
                 navigator.clipboard.writeText(text).then(() => {
+                    // Re-trigger animation even on rapid repeat clicks.
+                    el.classList.remove('copied');
+                    void el.offsetWidth;
+                    el.classList.add('copied');
                     showMessage('Copied', 'success');
                 }).catch(() => {
                     showMessage('Copy failed', 'error');
@@ -534,8 +878,10 @@
             });
         }
 
+        // Initial seed — use the example timestamp.
         inputEl.value = '1760556959473';
-        render();
+        const seedDetect = detectUnit(inputEl.value);
+        setMs(toMillis(inputEl.value, seedDetect.unit), seedDetect.unit, 'input');
         inputEl.focus();
         inputEl.select();
     </script>
