@@ -561,15 +561,13 @@
 
     initEditor(text1El, lineNumbers1);
     initEditor(text2El, lineNumbers2);
-    let lastText1 = '';
-    let lastText2 = '';
 
     function setMode(mode) {
         currentMode = mode;
         document.getElementById('modeLineBtn').classList.toggle('active', mode === 'line');
         document.getElementById('modeCharBtn').classList.toggle('active', mode === 'char');
-        if (lastText1 || lastText2) {
-            displayDiff(lastText1, lastText2);
+        if (resultEl.classList.contains('show')) {
+            displayDiff(text1El.value, text2El.value);
         }
     }
 
@@ -630,9 +628,6 @@
                 return;
             }
         }
-
-        lastText1 = t1;
-        lastText2 = t2;
 
         resultEl.classList.add('show');
         displayDiff(t1, t2);
@@ -815,8 +810,6 @@
         text1El.value = '';
         text2El.value = '';
         resultEl.classList.remove('show');
-        lastText1 = '';
-        lastText2 = '';
         updateLineNumbers(text1El, lineNumbers1);
         updateLineNumbers(text2El, lineNumbers2);
         autoResize(text1El);
