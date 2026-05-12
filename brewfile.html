@@ -872,11 +872,13 @@
     let brewfileFormulas = [];
     let currentTab = 'all';
     let cy = null;
+    let analyzeToken = null;
 
     function showMessage(text, type) {
         messageEl.textContent = text;
         messageEl.className = 'message ' + type;
-        setTimeout(() => {
+        clearTimeout(showMessage._t);
+        showMessage._t = setTimeout(() => {
             messageEl.className = 'message';
         }, 3000);
     }
@@ -931,6 +933,11 @@
             return;
         }
 
+        // Cancel any previous analyze, start fresh token.
+        if (analyzeToken) analyzeToken.cancelled = true;
+        const token = { cancelled: false };
+        analyzeToken = token;
+
         loadingEl.style.display = 'block';
         resultEl.classList.remove('show');
 
@@ -944,6 +951,8 @@
 
             // Recursively fetch all dependencies
             while (queue.length > 0) {
+                if (token.cancelled) return;
+
                 const name = queue.shift();
                 queued.delete(name);
 
@@ -954,6 +963,8 @@
                 loadingTextEl.textContent = `Fetching ${fetchCount}: ${name}...`;
 
                 const info = await fetchFormulaInfo(name);
+                if (token.cancelled) return;
+
                 fetched.set(name, info);
 
                 // If successful, add dependencies to queue
@@ -973,6 +984,7 @@
                 // Small delay to avoid overwhelming the API
                 if (queue.length > 0) {
                     await new Promise(r => setTimeout(r, 50));
+                    if (token.cancelled) return;
                 }
             }
 
@@ -996,9 +1008,12 @@
             showMessage(`Analyzed ${allFormulas.length} formulas`, 'success');
 
         } catch (e) {
+            if (token.cancelled) return;
             showMessage('Error: ' + e.message, 'error');
         } finally {
-            loadingEl.style.display = 'none';
+            if (!token.cancelled) {
+                loadingEl.style.display = 'none';
+            }
         }
     }
 
@@ -1228,6 +1243,11 @@
     }
 
     function clearAll() {
+        if (analyzeToken) {
+            analyzeToken.cancelled = true;
+            analyzeToken = null;
+        }
+        loadingEl.style.display = 'none';
         editor.setValue('');
         editor.clearHistory();
         editor.refresh();
