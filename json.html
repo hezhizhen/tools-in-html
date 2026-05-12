@@ -514,10 +514,8 @@
             editorOutput.clearHistory();
             editorOutput.refresh();
             showMessage(successMessage, 'success');
-            return true;
         } catch (e) {
             showMessage('Invalid JSON: ' + e.message, 'error');
-            return false;
         }
     }
 
