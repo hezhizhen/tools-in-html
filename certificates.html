@@ -668,7 +668,8 @@ MIIDXTCCAkWgAwIBAgIJAJC1HiIAZAiU...
     function showMessage(text) {
         messageEl.textContent = text;
         messageEl.className = 'message error';
-        setTimeout(() => {
+        clearTimeout(showMessage._t);
+        showMessage._t = setTimeout(() => {
             messageEl.className = 'message';
         }, 5000);
     }
