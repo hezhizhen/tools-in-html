@@ -473,7 +473,8 @@ MIIEvgIBADANBgkqhkiG9w0BAQEFAASC...
     function showMessage(text, type) {
         messageEl.textContent = text;
         messageEl.className = 'message ' + type;
-        setTimeout(() => {
+        clearTimeout(showMessage._t);
+        showMessage._t = setTimeout(() => {
             messageEl.className = 'message';
         }, 5000);
     }
