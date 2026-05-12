@@ -519,15 +519,6 @@
             color: var(--text-dim);
         }
 
-        .empty-state-icon {
-            font-size: 24px;
-            font-weight: 500;
-            margin-bottom: 12px;
-            color: var(--text-dim);
-            letter-spacing: 0.1em;
-            font-family: var(--mono);
-        }
-
         .empty-state p {
             font-size: 13px;
         }
@@ -722,7 +713,8 @@
     function showMessage(text, type) {
         messageEl.textContent = text;
         messageEl.className = 'message ' + type;
-        setTimeout(() => {
+        clearTimeout(showMessage._t);
+        showMessage._t = setTimeout(() => {
             messageEl.className = 'message';
         }, 3000);
     }
@@ -1295,7 +1287,6 @@
         editor.clearHistory();
         resultEl.innerHTML = `
             <div class="empty-state">
-                <div class="empty-state-icon">K8s</div>
                 <p>Paste a resource YAML to analyze</p>
             </div>
         `;
