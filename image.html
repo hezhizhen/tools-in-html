@@ -771,7 +771,7 @@
     <div class="result-section" id="result">
         <!-- Status Banner -->
         <div class="status-banner success" id="statusBanner">
-            <div class="status-icon">📦</div>
+            <div class="status-icon" aria-hidden="true">📦</div>
             <div class="status-text">
                 <h3 id="statusTitle">Image Analyzed</h3>
                 <p id="statusDesc">Successfully parsed manifest</p>
@@ -870,7 +870,8 @@
     function showMessage(text, type = 'error') {
         messageEl.textContent = text;
         messageEl.className = 'message ' + type;
-        setTimeout(() => {
+        clearTimeout(showMessage._t);
+        showMessage._t = setTimeout(() => {
             messageEl.className = 'message';
         }, 3000);
     }
@@ -972,6 +973,8 @@
         const cmd = document.getElementById('skopeoCommand').textContent;
         navigator.clipboard.writeText(cmd).then(() => {
             showMessage('Copied to clipboard', 'success');
+        }).catch(() => {
+            showMessage('Failed to copy');
         });
     };
 
