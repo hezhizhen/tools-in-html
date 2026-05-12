@@ -153,18 +153,6 @@
             margin-left: 10px;
         }
 
-        .format-btn.minify {
-            background: var(--clay);
-            color: var(--bg);
-            border-color: var(--clay);
-        }
-
-        .format-btn.minify:hover {
-            background: var(--clay-soft);
-            color: var(--bg);
-            border-color: var(--clay-soft);
-        }
-
         .message {
             position: fixed;
             top: 16px;
@@ -468,7 +456,8 @@
     function showMessage(text, type) {
         messageEl.textContent = text;
         messageEl.className = 'message ' + type;
-        setTimeout(() => {
+        clearTimeout(showMessage._t);
+        showMessage._t = setTimeout(() => {
             messageEl.className = 'message';
         }, 3000);
     }
