@@ -419,6 +419,7 @@
         .btn-share:disabled {
             color: var(--text-dim);
             cursor: not-allowed;
+            opacity: 0.5;
         }
 
         .message {
@@ -714,7 +715,8 @@
         function showMessage(text, type) {
             messageEl.textContent = text;
             messageEl.className = 'message ' + type;
-            setTimeout(() => {
+            clearTimeout(showMessage._t);
+            showMessage._t = setTimeout(() => {
                 messageEl.className = 'message';
             }, 3000);
         }
