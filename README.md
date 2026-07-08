@@ -22,6 +22,7 @@ Inspired by [Simon Willison's Tools](https://tools.simonwillison.net).
 | [image](image.html) | Docker/OCI container image analyzer |
 | [kubernetes](kubernetes.html) | Kubernetes resource analyzer (Pod, Deployment, etc.) |
 | [calendar](calendar.html) | Printable yearly calendar with event support |
+| [text2img](text2img.html) | Paste text and export a beautiful card image as PNG |
 
 ## Tech Stack
 
