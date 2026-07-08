@@ -134,6 +134,23 @@
             background: #25211C;
             text-align: left;
         }
+        /* 行号列与文本列并排；fit 模式一逻辑行=一视觉行，故行号平行排布天然对齐 */
+        .code-body { display: flex; align-items: flex-start; }
+        #gutter {
+            font-family: var(--mono);
+            font-size: 14px;
+            line-height: 1.6;
+            color: var(--text-dim);
+            margin: 0;
+            padding-right: 16px;
+            margin-right: 16px;
+            border-right: 1px solid rgba(255,255,255,0.12);
+            text-align: right;
+            white-space: pre;
+            user-select: none;
+            -webkit-user-select: none;
+            min-height: 1.6em;
+        }
         #preview-text {
             font-family: var(--mono);
             font-size: 14px;
@@ -145,6 +162,8 @@
             min-width: 1ch;
             min-height: 1.6em;
         }
+        /* wrap 模式：一逻辑行占多视觉行会导致行号漂移，故整列隐藏 */
+        #preview-card.wrap #gutter { display: none; }
         /* 空态占位提示（仅当无内容时显示 data-placeholder） */
         #preview-text:empty::before {
             content: attr(data-placeholder);
@@ -228,7 +247,7 @@
             <div class="control-group">
                 <label>Line wrapping</label>
                 <div class="radio-group">
-                    <label><input type="radio" name="wrap-mode" value="fit" checked> Fit to longest line</label>
+                    <label><input type="radio" name="wrap-mode" value="fit" checked> Fit</label>
                     <label><input type="radio" name="wrap-mode" value="wrap"> Wrap</label>
                 </div>
             </div>
@@ -236,8 +255,14 @@
     </div>
 
     <div class="preview-wrap">
+        <!-- #preview-card 管卡片外观(padding/圆角/阴影/背景)；.code-body 是内层 flex
+             容器，专门负责把行号列与文本列横向并排。两层职责分离：外观 vs 内部排布，
+             不要合并成一个 flex 卡片，否则盒模型与 flex 语义会纠缠。 -->
         <div id="preview-card">
-            <pre id="preview-text" contenteditable="plaintext-only" spellcheck="false" data-placeholder="Type or paste your text here..."></pre>
+            <div class="code-body">
+                <pre id="gutter" aria-hidden="true"></pre>
+                <pre id="preview-text" contenteditable="plaintext-only" spellcheck="false" data-placeholder="Type or paste your text here..."></pre>
+            </div>
         </div>
     </div>
 
@@ -252,6 +277,7 @@
 <script>
 const previewCard = document.getElementById('preview-card');
 const previewText = document.getElementById('preview-text');
+const gutterEl = document.getElementById('gutter');
 const bgColorEl = document.getElementById('bg-color');
 const swatchesEl = document.getElementById('swatches');
 const messageEl = document.getElementById('message');
@@ -301,7 +327,19 @@ previewText.addEventListener('input', () => {
     if (previewText.textContent === '' && previewText.innerHTML !== '') {
         previewText.innerHTML = '';
     }
+    updateGutter();
 });
+
+// 根据逻辑行数刷新行号列。空态时清空，让 :empty placeholder 生效
+function updateGutter() {
+    const text = getEditorText();
+    if (text === '') { gutterEl.textContent = ''; return; }
+    // 末尾换行不额外产生一行（与编辑器惯例一致）
+    const lineCount = text.replace(/\n$/, '').split('\n').length;
+    let out = '';
+    for (let i = 1; i <= lineCount; i++) out += (i > 1 ? '\n' : '') + i;
+    gutterEl.textContent = out;
+}
 
 function getOptions() {
     const wrapMode = document.querySelector('input[name="wrap-mode"]:checked').value;
@@ -310,10 +348,14 @@ function getOptions() {
 
 function renderPreview() {
     const opts = getOptions();
+    const light = isLight(opts.bgColor);
     previewCard.style.background = opts.bgColor;
     previewCard.classList.toggle('wrap', opts.wrapMode === 'wrap');
     // 浅色背景时文字自动转深色，保证可读
-    previewText.style.color = isLight(opts.bgColor) ? '#1a1a1a' : '#e6e6e6';
+    previewText.style.color = light ? '#1a1a1a' : '#e6e6e6';
+    // 行号列颜色/分隔线同步（与 buildCardHTML 导出逻辑保持一致）
+    gutterEl.style.color = light ? 'rgba(0,0,0,0.4)' : '#6E6358';
+    gutterEl.style.borderRightColor = light ? 'rgba(0,0,0,0.15)' : 'rgba(255,255,255,0.12)';
 }
 
 // 判断颜色明暗（相对亮度阈值）
@@ -347,6 +389,7 @@ document.querySelectorAll('input[name="wrap-mode"]').forEach(r => r.addEventList
 
 // 初始化
 updateActiveSwatch(bgColorEl.value);
+updateGutter();
 renderPreview();
 
 // 剥离 XML 1.0 非法控制字符（保留 Tab/LF/CR）；否则 SVG 解析失败导致导出报错
@@ -358,19 +401,39 @@ function stripInvalidXmlChars(text) {
 function buildCardHTML(text, opts) {
     text = stripInvalidXmlChars(text);
     const color = isLight(opts.bgColor) ? '#1a1a1a' : '#e6e6e6';
-    const wrapStyle = opts.wrapMode === 'wrap'
+    const isWrap = opts.wrapMode === 'wrap';
+    const wrapStyle = isWrap
         ? 'white-space:pre-wrap;word-break:break-word;max-width:640px;'
         : 'white-space:pre;';
     const mono = "ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, monospace";
+    const preBase = 'margin:0;font-family:' + mono + ';font-size:14px;line-height:1.6;';
+    // fit 模式加行号列，样式与预览的 #gutter 逐像素一致；wrap 模式不加（与预览一致）
+    let gutterHtml = '';
+    if (!isWrap && text !== '') {
+        const lineCount = text.replace(/\n$/, '').split('\n').length;
+        let nums = '';
+        for (let i = 1; i <= lineCount; i++) nums += (i > 1 ? '\n' : '') + i;
+        const gutterColor = isLight(opts.bgColor) ? 'rgba(0,0,0,0.4)' : '#6E6358';
+        const gutterBorder = isLight(opts.bgColor) ? 'rgba(0,0,0,0.15)' : 'rgba(255,255,255,0.12)';
+        gutterHtml =
+            '<pre style="' + preBase + 'color:' + gutterColor + ';' +
+            'padding-right:16px;margin-right:16px;' +
+            'border-right:1px solid ' + gutterBorder + ';' +
+            'text-align:right;white-space:pre;">' +
+            escapeHtml(nums) +
+            '</pre>';
+    }
     return (
         '<div xmlns="http://www.w3.org/1999/xhtml" style="' +
             'display:inline-block;padding:32px;border-radius:12px;' +
             'box-shadow:0 20px 50px rgba(0,0,0,0.35);' +
             'background:' + opts.bgColor + ';">' +
-            '<pre style="margin:0;font-family:' + mono + ';font-size:14px;' +
-            'line-height:1.6;color:' + color + ';' + wrapStyle + '">' +
-            escapeHtml(text) +
-            '</pre>' +
+            '<div style="display:flex;align-items:flex-start;">' +
+                gutterHtml +
+                '<pre style="' + preBase + 'color:' + color + ';' + wrapStyle + '">' +
+                escapeHtml(text) +
+                '</pre>' +
+            '</div>' +
         '</div>'
     );
 }
@@ -400,7 +463,9 @@ function renderToCanvas(scale) {
         const opts = getOptions();
         const text = getEditorText() || '';
         const { width, height } = measureCard();
-        // 卡片外包一层透明 padding 容器，让 box-shadow 在 SVG/canvas 边界内有展开空间
+        // 外层透明 padding 框（EXPORT_MARGIN）套在卡片外，专为 box-shadow 留出伸展空间：
+        // box-shadow 画在盒子外面，而 SVG 画布尺寸固定，卡片若紧贴边缘阴影会被裁掉。
+        // 这层框本身无任何视觉样式，纯粹是给阴影让位；下方 svgWidth/Height 也要相应 +MARGIN*2。
         const exportHtml = (
             '<div xmlns="http://www.w3.org/1999/xhtml" style="display:inline-block;padding:' + EXPORT_MARGIN + 'px;">' +
                 buildCardHTML(text, opts) +
@@ -483,6 +548,7 @@ async function copyImage() {
 
 function clearAll() {
     previewText.textContent = '';
+    updateGutter();
     renderPreview();
     showMessage('Cleared', 'success');
 }
