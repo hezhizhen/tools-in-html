@@ -23,6 +23,7 @@ Inspired by [Simon Willison's Tools](https://tools.simonwillison.net).
 | [kubernetes](kubernetes.html) | Kubernetes resource analyzer (Pod, Deployment, etc.) |
 | [calendar](calendar.html) | Printable yearly calendar with event support |
 | [text2img](text2img.html) | Paste text and export a beautiful card image as PNG |
+| [reversegeocoder](reversegeocoder.html) | Reverse geocoding — find the place name for a latitude & longitude |
 
 ## Tech Stack
 

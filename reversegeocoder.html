@@ -1,0 +1,680 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self' data:; connect-src 'self' https://photon.komoot.io; frame-src https://www.openstreetmap.org; frame-ancestors 'none'; base-uri 'self'; form-action 'self'">
+    <meta content="width=device-width, initial-scale=1.0" name="viewport">
+    <title>Reverse Geocoder</title>
+    <style>
+        :root {
+            --bg: #1C1916;
+            --surface: #25211C;
+            --surface-strong: #2E2924;
+            --border: #3A332B;
+            --border-hover: #5A4D3D;
+            --text: #EFE6D5;
+            --text-muted: #A39A8C;
+            --text-dim: #6E6358;
+            --clay: #D4844C;
+            --clay-soft: #E5A77A;
+            --danger: #F87171;
+            --success: #4ADE80;
+            --radius: 8px;
+            --transition: 150ms ease-out;
+            --serif: 'Iowan Old Style', 'Charter', 'Bookerly', Georgia, serif;
+            --sans: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            --mono: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, monospace;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html { color-scheme: dark; }
+
+        body {
+            font-family: var(--sans);
+            font-size: 14px;
+            line-height: 1.5;
+            background: var(--bg);
+            min-height: 100vh;
+            padding: 48px 24px;
+            color: var(--text);
+            -webkit-font-smoothing: antialiased;
+        }
+
+        .container { max-width: 640px; margin: 0 auto; }
+
+        h1 {
+            font-family: var(--serif);
+            font-size: 26px;
+            font-weight: 400;
+            letter-spacing: -0.02em;
+            color: var(--text);
+            margin-bottom: 4px;
+            text-align: center;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: var(--text-muted);
+            font-family: var(--serif);
+            font-style: italic;
+            margin-bottom: 32px;
+            font-size: 14px;
+        }
+
+        .back-link {
+            display: inline-block;
+            margin-bottom: 24px;
+            color: var(--text-muted);
+            text-decoration: none;
+            font-size: 13px;
+            transition: color var(--transition);
+        }
+
+        .back-link:hover { color: var(--text); }
+
+        .card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 18px;
+            margin-bottom: 12px;
+        }
+
+        label,
+        .map-title {
+            display: block;
+            margin-bottom: 8px;
+            font-family: var(--serif);
+            font-style: italic;
+            font-weight: 400;
+            color: var(--text);
+            font-size: 14px;
+        }
+
+        .coord-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+
+        input[type="text"] {
+            width: 100%;
+            padding: 9px 12px;
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            background: rgba(0, 0, 0, 0.3);
+            color: var(--text);
+            font-size: 14px;
+            font-family: var(--mono);
+            font-variant-numeric: tabular-nums;
+            transition: border-color var(--transition);
+        }
+
+        input[type="text"]:focus {
+            outline: none;
+            border-color: var(--border-hover);
+        }
+
+        input[type="text"]::placeholder {
+            color: var(--text-dim);
+            font-family: var(--sans);
+        }
+
+        .actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 12px;
+            flex-wrap: wrap;
+        }
+
+        button {
+            padding: 9px 16px;
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            background: var(--surface);
+            color: var(--text);
+            font-size: 13px;
+            font-weight: 500;
+            font-family: inherit;
+            cursor: pointer;
+            transition: background var(--transition), border-color var(--transition), color var(--transition);
+        }
+
+        button:hover {
+            background: var(--surface-strong);
+            border-color: var(--border-hover);
+        }
+
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .btn-primary {
+            background: var(--clay);
+            color: var(--bg);
+            border-color: var(--clay);
+        }
+
+        .btn-primary:hover {
+            background: var(--clay-soft);
+            border-color: var(--clay-soft);
+            color: var(--bg);
+        }
+
+        .status {
+            margin-top: 10px;
+            font-family: var(--mono);
+            font-size: 11px;
+            color: var(--text-dim);
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            min-height: 14px;
+        }
+
+        .status .clay { color: var(--clay); }
+        .status .danger { color: var(--danger); }
+        .status .success { color: var(--success); }
+
+        .result-name {
+            font-family: var(--serif);
+            font-size: 22px;
+            font-weight: 400;
+            letter-spacing: -0.01em;
+            color: var(--text);
+            margin-bottom: 2px;
+            line-height: 1.25;
+            word-break: break-word;
+        }
+
+        .result-full {
+            color: var(--text-muted);
+            font-size: 14px;
+            margin-bottom: 14px;
+            line-height: 1.6;
+        }
+
+        .result-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+            padding: 10px 0;
+            border-top: 1px solid var(--border);
+        }
+
+        .result-row:first-of-type {
+            border-top: none;
+        }
+
+        .result-label {
+            font-family: var(--serif);
+            font-style: italic;
+            color: var(--text-muted);
+            font-size: 13px;
+            flex-shrink: 0;
+            min-width: 88px;
+        }
+
+        .result-value {
+            font-family: var(--mono);
+            font-variant-numeric: tabular-nums;
+            color: var(--text);
+            font-size: 13px;
+            text-align: right;
+            word-break: break-all;
+            cursor: pointer;
+            transition: color var(--transition);
+            padding: 2px 6px;
+            margin: -2px -6px;
+            border-radius: 4px;
+        }
+
+        .result-value:hover {
+            color: var(--clay);
+            background: var(--surface-strong);
+        }
+
+        .result-value.empty {
+            color: var(--text-dim);
+            cursor: default;
+        }
+
+        .result-value.empty:hover {
+            color: var(--text-dim);
+            background: transparent;
+        }
+
+        .hidden { display: none; }
+
+        .map-frame {
+            width: 100%;
+            height: 340px;
+            display: block;
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            background: var(--surface-strong);
+        }
+
+        .map-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 10px;
+            margin-top: 10px;
+            flex-wrap: wrap;
+        }
+
+        .map-credit {
+            font-size: 11px;
+            color: var(--text-dim);
+        }
+
+        .map-credit a {
+            color: var(--text-muted);
+            text-decoration: none;
+        }
+
+        .map-credit a:hover {
+            color: var(--clay);
+        }
+
+        .map-actions {
+            display: inline-flex;
+            gap: 14px;
+        }
+
+        .map-actions a {
+            font-size: 12px;
+            color: var(--text-muted);
+            text-decoration: none;
+            transition: color var(--transition);
+        }
+
+        .map-actions a:hover {
+            color: var(--clay);
+        }
+
+        @keyframes flash-copy {
+            0%   { background: rgba(213, 132, 76, 0.35); color: var(--clay); }
+            100% { background: transparent; }
+        }
+
+        .result-value.copied {
+            animation: flash-copy 450ms ease-out;
+        }
+
+        .message {
+            position: fixed;
+            top: 16px;
+            right: 16px;
+            padding: 8px 12px;
+            border-radius: var(--radius);
+            border: 1px solid var(--border);
+            background: var(--bg);
+            font-size: 13px;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 180ms ease-out;
+            z-index: 1000;
+        }
+
+        .message.show { opacity: 1; }
+
+        .message.success {
+            color: var(--success);
+            border-color: rgba(74, 222, 128, 0.3);
+        }
+
+        .message.error {
+            color: var(--danger);
+            border-color: rgba(248, 113, 113, 0.3);
+        }
+
+        @media (max-width: 640px) {
+            body { padding: 24px 16px; }
+            h1 { font-size: 20px; }
+            .card { padding: 14px; }
+
+            .coord-grid {
+                grid-template-columns: 1fr;
+                gap: 10px;
+            }
+
+            .result-row {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 2px;
+            }
+
+            .result-value {
+                text-align: left;
+                font-size: 12px;
+            }
+        }
+
+        ::selection {
+            background: rgba(213, 132, 76, 0.35);
+            color: var(--text);
+        }
+
+        ::-webkit-scrollbar { width: 10px; height: 10px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb {
+            background: var(--border);
+            border-radius: 5px;
+            border: 2px solid var(--bg);
+        }
+        ::-webkit-scrollbar-thumb:hover { background: var(--border-hover); }
+
+        :focus-visible {
+            outline: 2px solid var(--clay);
+            outline-offset: 2px;
+            border-radius: 3px;
+        }
+
+        button:focus-visible,
+        a:focus-visible {
+            outline-offset: 3px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <a class="back-link" href="index.html">← Back to Tools</a>
+        <h1>Reverse Geocoder</h1>
+        <p class="subtitle">Latitude and longitude in, place name out</p>
+
+        <div class="card">
+            <div class="coord-grid">
+                <div>
+                    <label for="lat">Latitude</label>
+                    <input id="lat" placeholder="e.g. 52.52" type="text" autocomplete="off" spellcheck="false" inputmode="decimal">
+                </div>
+                <div>
+                    <label for="lon">Longitude</label>
+                    <input id="lon" placeholder="e.g. 13.405" type="text" autocomplete="off" spellcheck="false" inputmode="decimal">
+                </div>
+            </div>
+            <div class="actions">
+                <button class="btn-primary" id="btnHere" onclick="useHere()" type="button">Use my location</button>
+                <button class="btn-primary" id="btnLookup" onclick="lookup()" type="button">Look up</button>
+            </div>
+            <div class="status" id="status">&nbsp;</div>
+        </div>
+
+        <div class="card hidden" id="result">
+            <div class="result-name" id="resultName"></div>
+            <div class="result-full" id="resultFull"></div>
+            <div class="result-row">
+                <span class="result-label">Latitude</span>
+                <span class="result-value" id="resLat" data-copy="">—</span>
+            </div>
+            <div class="result-row">
+                <span class="result-label">Longitude</span>
+                <span class="result-value" id="resLon" data-copy="">—</span>
+            </div>
+            <div class="result-row">
+                <span class="result-label">OSM Link</span>
+                <span class="result-value" id="osmLink" data-copy="">—</span>
+            </div>
+            <div class="result-row">
+                <span class="result-label">State</span>
+                <span class="result-value" id="state" data-copy="">—</span>
+            </div>
+            <div class="result-row">
+                <span class="result-label">Country</span>
+                <span class="result-value" id="country" data-copy="">—</span>
+            </div>
+            <div class="result-row">
+                <span class="result-label">Country code</span>
+                <span class="result-value" id="countryCode" data-copy="">—</span>
+            </div>
+            <div class="result-row">
+                <span class="result-label">Type</span>
+                <span class="result-value" id="type" data-copy="">—</span>
+            </div>
+        </div>
+
+        <div class="card hidden" id="mapCard">
+            <span class="map-title">Map</span>
+            <iframe aria-label="Map of the location" class="map-frame" id="mapFrame" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
+            <div class="map-footer">
+                <span class="map-credit">Reverse geocoding by <a href="https://photon.komoot.io" target="_blank" rel="noopener">Photon</a> (Komoot) · Map © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> contributors</span>
+                <span class="map-actions">
+                    <a href="https://www.openstreetmap.org/" id="mapOsm" target="_blank" rel="noopener">OpenStreetMap</a>
+                    <a href="https://www.google.com/maps" id="mapGoogle" target="_blank" rel="noopener">Google Maps</a>
+                </span>
+            </div>
+        </div>
+
+        <div class="message" id="message" aria-live="polite"></div>
+    </div>
+    <script>
+        const latEl = document.getElementById('lat');
+        const lonEl = document.getElementById('lon');
+        const statusEl = document.getElementById('status');
+        const resultCard = document.getElementById('result');
+        const mapCard = document.getElementById('mapCard');
+        const mapFrame = document.getElementById('mapFrame');
+        const mapOsm = document.getElementById('mapOsm');
+        const mapGoogle = document.getElementById('mapGoogle');
+        const btnLookup = document.getElementById('btnLookup');
+        const btnHere = document.getElementById('btnHere');
+        // Guards against re-entry while a lookup is pending (e.g. Enter during flight).
+        let lookupInflight = false;
+        const messageEl = document.getElementById('message');
+
+        const outputFields = ['resLat', 'resLon', 'osmLink', 'state', 'country', 'countryCode', 'type'];
+
+        function showMessage(text, type) {
+            messageEl.textContent = text;
+            messageEl.className = 'message show ' + type;
+            clearTimeout(showMessage._t);
+            showMessage._t = setTimeout(() => {
+                messageEl.className = 'message';
+            }, 1600);
+        }
+
+        function setStatus(html) {
+            statusEl.innerHTML = html;
+        }
+
+        function parseCoord(raw, label) {
+            const s = raw.trim();
+            if (!s) {
+                setStatus(`<span class="danger">Enter ${label}</span>`);
+                return null;
+            }
+            const v = Number(s);
+            if (!Number.isFinite(v)) {
+                setStatus(`<span class="danger">Invalid ${label}</span>`);
+                return null;
+            }
+            return v;
+        }
+
+        function setEmpty(id) {
+            const el = document.getElementById(id);
+            el.textContent = '—';
+            el.dataset.copy = '';
+            el.className = 'result-value empty';
+        }
+
+        function resetResult() {
+            resultCard.classList.add('hidden');
+            mapCard.classList.add('hidden');
+            mapFrame.removeAttribute('src');
+            for (const id of outputFields) setEmpty(id);
+        }
+
+        async function lookup() {
+            const lat = parseCoord(latEl.value, 'latitude');
+            if (lat === null) return;
+            const lon = parseCoord(lonEl.value, 'longitude');
+            if (lon === null) return;
+
+            if (Math.abs(lat) > 90) {
+                setStatus('<span class="danger">Latitude must be between -90 and 90</span>');
+                return;
+            }
+            if (Math.abs(lon) > 180) {
+                setStatus('<span class="danger">Longitude must be between -180 and 180</span>');
+                return;
+            }
+            if (lookupInflight) return;
+
+            resetResult();
+            setStatus('Looking up<span class="clay">…</span>');
+            lookupInflight = true;
+            btnLookup.disabled = true;
+
+            const url = `https://photon.komoot.io/reverse?lat=${encodeURIComponent(lat)}&lon=${encodeURIComponent(lon)}&limit=1`;
+            try {
+                const res = await fetch(url);
+                if (!res.ok) throw new Error(`API responded ${res.status}`);
+                const data = await res.json();
+                const feature = data.features && data.features[0];
+                if (!feature) {
+                    setStatus('<span class="danger">No place found for these coordinates</span>');
+                    return;
+                }
+                render(feature, lat, lon);
+                setStatus('<span class="success">Resolved</span>');
+            } catch {
+                setStatus('<span class="danger">Lookup failed — check connection</span>');
+                showMessage('Lookup failed', 'error');
+            } finally {
+                lookupInflight = false;
+                btnLookup.disabled = false;
+            }
+        }
+
+        function render(feature, lat, lon) {
+            const p = feature.properties || {};
+            const name = p.name || p.city || p.village || p.town || p.localadmin || p.county || p.state || p.country || 'Unnamed place';
+
+            const parts = [];
+            const order = ['street', 'housenumber', 'suburb', 'locality', 'district', 'city', 'village', 'town', 'county', 'state', 'country', 'postcode'];
+            for (const key of order) {
+                const val = p[key];
+                if (val) parts.push(val);
+            }
+
+            // Short stable parts, deduped, for the human-readable line beneath the name.
+            const full = [...new Set(parts)].join(', ');
+
+            document.getElementById('resultName').textContent = name;
+            document.getElementById('resultFull').textContent = full || p.county || p.state || p.country || '';
+
+            const values = {
+                resLat: formatCoord(lat),
+                resLon: formatCoord(lon),
+                osmLink: osmUrl(feature),
+                state: p.state || '—',
+                country: p.country || '—',
+                countryCode: p.countrycode || '—',
+                type: p.osm_value ? p.osm_value.replace(/_/g, ' ') : (p.type || '—'),
+            };
+
+            // ~0.6 km viewport around the point, expanded in longitude at high
+            // latitudes so the map keeps a sane aspect ratio.
+            const cosLat = Math.max(Math.cos(lat * Math.PI / 180), 0.2);
+            const dLat = 0.6 / 111;
+            const dLon = dLat / cosLat;
+            const bbox = [lon - dLon, lat - dLat, lon + dLon, lat + dLat].join(',');
+            mapFrame.src = `https://www.openstreetmap.org/export/embed.html?bbox=${encodeURIComponent(bbox)}&layer=mapnik&marker=${encodeURIComponent(lat)},${encodeURIComponent(lon)}`;
+            mapOsm.href = `https://www.openstreetmap.org/?mlat=${encodeURIComponent(lat)}&mlon=${encodeURIComponent(lon)}#map=17/${encodeURIComponent(lat)}/${encodeURIComponent(lon)}`;
+            mapGoogle.href = `https://www.google.com/maps?q=${encodeURIComponent(lat)},${encodeURIComponent(lon)}`;
+
+            for (const [id, val] of Object.entries(values)) {
+                const el = document.getElementById(id);
+                el.textContent = val;
+                el.dataset.copy = val;
+                el.className = 'result-value';
+            }
+
+            resultCard.classList.remove('hidden');
+            mapCard.classList.remove('hidden');
+        }
+
+        // Drop trailing digits beyond practical precision (6 decimals ≈ 0.1 m).
+        function formatCoord(v) {
+            if (!Number.isFinite(v)) return '—';
+            let out = v.toFixed(6);
+            out = out.replace(/\.?0+$/, '');
+            return out === '' || out === '-' ? '0' : out;
+        }
+
+        // Photon reports OpenStreetMap element types as single letters (N/W/R);
+        // the OSM website only routes the full words node/way/relation.
+        const OSM_TYPE = { N: 'node', W: 'way', R: 'relation' };
+
+        function osmUrl(feature) {
+            const p = (feature && feature.properties) || {};
+            const id = p.osm_id;
+            if (!id) return '—';
+            const type = OSM_TYPE[p.osm_type];
+            // Conservative: only emit a link we know routes, never a guess.
+            if (!type) return '—';
+            return `https://www.openstreetmap.org/${type}/${id}`;
+        }
+
+        function useHere() {
+            if (!navigator.geolocation) {
+                setStatus('<span class="danger">Geolocation not supported by this browser</span>');
+                return;
+            }
+            setStatus('Requesting location<span class="clay">…</span>');
+            btnHere.disabled = true;
+            navigator.geolocation.getCurrentPosition((pos) => {
+                btnHere.disabled = false;
+                const lat = pos.coords.latitude;
+                const lon = pos.coords.longitude;
+                latEl.value = lat.toFixed(6);
+                lonEl.value = lon.toFixed(6);
+                setStatus('<span class="clay">Got coordinates — now look up</span>');
+                lookup();
+            }, (err) => {
+                btnHere.disabled = false;
+                setStatus('<span class="danger">Could not get location</span>');
+                showMessage('Location unavailable', 'error');
+            });
+        }
+
+        function copyOnClick(el) {
+            el.addEventListener('animationend', () => el.classList.remove('copied'));
+            el.addEventListener('click', () => {
+                const text = el.dataset.copy;
+                if (!text || text === '—') return;
+                navigator.clipboard.writeText(text).then(() => {
+                    el.classList.remove('copied');
+                    void el.offsetWidth;
+                    el.classList.add('copied');
+                    showMessage('Copied', 'success');
+                }).catch(() => showMessage('Copy failed', 'error'));
+            });
+        }
+
+        for (const id of outputFields) copyOnClick(document.getElementById(id));
+
+        // Look up on Enter in either coordinate field.
+        [latEl, lonEl].forEach(el => {
+            el.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') lookup();
+            });
+        });
+
+        // Seed the form with a sample coordinate. Lookup only runs on explicit
+        // user action (Look up / Enter / Use my location) — an automatic call
+        // on every page load would hit Photon's free shared service for free.
+        latEl.value = '30.2741';
+        lonEl.value = '120.1551';
+        setStatus('Ready — press <span class="clay">Look up</span> or Enter');
+        latEl.focus();
+    </script>
+</body>
+
+</html>
