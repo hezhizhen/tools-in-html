@@ -534,6 +534,14 @@
         return normalized;
     }
 
+    // Keep the original number text so big integers, high-precision decimals and notation (1.0, 1E5, -0, 1e400)
+    // survive the round-trip. Older browsers pass no context and fall back to plain JSON.parse behavior.
+    function losslessNumbers(key, value, context) {
+        return typeof value === 'number' && context && String(value) !== context.source
+            ? JSON.rawJSON(context.source)
+            : value;
+    }
+
     function tryParseJSON(text, unwrap = true) {
         function unwrapDoubleEncoded(parsed) {
             if (!unwrap || typeof parsed !== 'string') return parsed;
@@ -546,14 +554,14 @@
 
         let firstError;
         try {
-            return unwrapDoubleEncoded(JSON.parse(text));
+            return unwrapDoubleEncoded(JSON.parse(text, losslessNumbers));
         } catch (e) {
             firstError = e;
         }
 
         // Keep string contents intact and let JSON.parse validate the normalized structure.
         try {
-            return unwrapDoubleEncoded(JSON.parse(normalizePythonLiteral(text)));
+            return unwrapDoubleEncoded(JSON.parse(normalizePythonLiteral(text), losslessNumbers));
         } catch (_) {}
 
         // Try unescaping key/value quotes only (common when copying from logs/code).
@@ -568,7 +576,7 @@
         }
 
         try {
-            return unwrapDoubleEncoded(JSON.parse(unescaped));
+            return unwrapDoubleEncoded(JSON.parse(unescaped, losslessNumbers));
         } catch (_) {
             throw firstError;
         }
