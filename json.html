@@ -471,11 +471,74 @@
         return text;
     }
 
-    function tryParseJSON(text) {
+    function normalizePythonLiteral(text) {
+        const escapes = { "'": "'", '"': '"', '\\': '\\', a: '\x07', b: '\b', f: '\f', n: '\n', r: '\r', t: '\t', v: '\v' };
+        const literals = { True: 'true', False: 'false', None: 'null' };
+        let index = 0;
+
+        function readString() {
+            const quote = text[index++];
+            let value = '';
+            while (index < text.length) {
+                const char = text[index++];
+                if (char === quote) return JSON.stringify(value);
+                if (char === '\n' || char === '\r' || char === '\0') throw new SyntaxError('Invalid character in string');
+                if (char !== '\\') {
+                    value += char;
+                    continue;
+                }
+
+                if (index === text.length) throw new SyntaxError('Unterminated escape sequence');
+                const escaped = text[index++];
+                if (Object.hasOwn(escapes, escaped)) {
+                    value += escapes[escaped];
+                } else if (escaped === '/' && quote === '"') {
+                    // Mixed JSON/Python input keeps JSON escapes in double-quoted strings.
+                    value += '/';
+                } else if (escaped === '\n' || escaped === '\r') {
+                    if (escaped === '\r' && text[index] === '\n') index++;
+                } else if (/[0-7]/.test(escaped)) {
+                    let octal = escaped;
+                    while (octal.length < 3 && index < text.length && /[0-7]/.test(text[index])) octal += text[index++];
+                    value += String.fromCodePoint(parseInt(octal, 8));
+                } else if (escaped === 'x' || escaped === 'u' || escaped === 'U') {
+                    const length = escaped === 'x' ? 2 : escaped === 'u' ? 4 : 8;
+                    const hex = text.slice(index, index + length);
+                    if (hex.length !== length || !/^[0-9a-f]+$/i.test(hex)) throw new SyntaxError('Invalid hexadecimal escape');
+                    value += String.fromCodePoint(parseInt(hex, 16));
+                    index += length;
+                } else if (escaped === 'N') {
+                    throw new SyntaxError('Named Unicode escapes are not supported');
+                } else {
+                    // Python preserves the backslash in unrecognized escape sequences.
+                    value += '\\' + escaped;
+                }
+            }
+            throw new SyntaxError('Unterminated string');
+        }
+
+        let normalized = '';
+        while (index < text.length) {
+            const char = text[index];
+            if (char === "'" || char === '"') {
+                normalized += readString();
+            } else if (/[a-z_]/i.test(char)) {
+                const start = index++;
+                while (index < text.length && /[a-z0-9_]/i.test(text[index])) index++;
+                const token = text.slice(start, index);
+                normalized += Object.hasOwn(literals, token) ? literals[token] : token;
+            } else {
+                normalized += text[index++];
+            }
+        }
+        return normalized;
+    }
+
+    function tryParseJSON(text, unwrap = true) {
         function unwrapDoubleEncoded(parsed) {
-            if (typeof parsed !== 'string') return parsed;
+            if (!unwrap || typeof parsed !== 'string') return parsed;
             try {
-                const inner = JSON.parse(parsed);
+                const inner = tryParseJSON(parsed, false);
                 if (typeof inner === 'object' && inner !== null) return inner;
             } catch (_) {}
             return parsed;
@@ -487,6 +550,11 @@
         } catch (e) {
             firstError = e;
         }
+
+        // Keep string contents intact and let JSON.parse validate the normalized structure.
+        try {
+            return unwrapDoubleEncoded(JSON.parse(normalizePythonLiteral(text)));
+        } catch (_) {}
 
         // Try unescaping key/value quotes only (common when copying from logs/code).
         // Avoid touching \\\" inside string content.
