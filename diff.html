@@ -2,11 +2,12 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self' data:; connect-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self' data:; connect-src 'none'; worker-src blob:; base-uri 'self'; form-action 'none'">
     <meta content="width=device-width, initial-scale=1.0" name="viewport">
     <title>Text Diff Tool</title>
     <style>
         :root {
+            color-scheme: dark;
             --bg: #1C1916;
             --surface: #25211C;
             --surface-strong: #2E2924;
@@ -14,807 +15,822 @@
             --border-hover: #5A4D3D;
             --text: #EFE6D5;
             --text-muted: #A39A8C;
-            --text-dim: #6E6358;
+            --text-dim: #86796B;
             --clay: #D4844C;
             --clay-soft: #E5A77A;
-            --clay-deep: #8B4A28;
-            --burgundy: #A85B3C;
-            --danger: #F87171;
-            --warn: #F59E0B;
-            --success: #4ADE80;
-            --info: #93C5FD;
-            --added-bg: rgba(74, 222, 128, 0.15);
-            --added-fg: #4ADE80;
-            --removed-bg: rgba(248, 113, 113, 0.15);
-            --removed-fg: #F87171;
+            --added: #9DE3B4;
+            --removed: #F5ADA8;
+            --added-bg: #1E2C23;
+            --removed-bg: #352321;
             --radius: 8px;
-            --transition: 150ms ease-out;
-            --serif: 'Iowan Old Style', 'Charter', 'Bookerly', Georgia, serif;
-            --sans: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            --serif: 'Iowan Old Style', 'Charter', Georgia, serif;
+            --sans: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
             --mono: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, monospace;
         }
 
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        html {
-            color-scheme: dark;
-        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        [hidden] { display: none !important; }
 
         body {
-            font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            font-size: 14px;
-            line-height: 1.5;
             background: var(--bg);
-            min-height: 100vh;
-            padding: 48px 24px;
             color: var(--text);
+            font: 14px/1.5 var(--sans);
+            min-height: 100vh;
+            padding: 32px 24px 48px;
             -webkit-font-smoothing: antialiased;
         }
 
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-        }
-
-        h1 {
-            font-family: var(--serif);
-            font-size: 26px;
-            font-weight: 400;
-            letter-spacing: -0.02em;
-            color: var(--text);
-            margin-bottom: 4px;
-            text-align: center;
-        }
-
-        .subtitle {
-            text-align: center;
-            color: var(--text-muted);
-            font-family: var(--serif);
-            font-style: italic;
-            margin-bottom: 32px;
-            font-size: 14px;
-        }
-
-        .back-link {
-            display: inline-block;
-            margin-bottom: 24px;
-            color: var(--text-muted);
-            text-decoration: none;
-            font-size: 13px;
-            transition: color var(--transition);
-        }
-
-        .back-link:hover {
-            color: var(--text);
-        }
+        .container { max-width: 1440px; margin: 0 auto; }
+        .back-link { color: var(--text-muted); font-size: 13px; text-decoration: none; }
+        .back-link:hover { color: var(--text); }
+        h1 { font: 400 30px/1.2 var(--serif); letter-spacing: -0.03em; margin-top: 24px; }
+        .subtitle { color: var(--text-muted); margin: 8px 0 28px; }
 
         .card {
             background: var(--surface);
             border: 1px solid var(--border);
             border-radius: var(--radius);
             padding: 20px;
-            margin-bottom: 12px;
+            margin-bottom: 20px;
         }
 
-        .card-title {
-            font-family: var(--serif);
-            font-style: italic;
-            font-size: 16px;
-            font-weight: 400;
-            line-height: 1.2;
-            margin-bottom: 14px;
-            color: var(--text);
-            padding-left: 10px;
-            border-left: 2px solid var(--clay);
-        }
-
-        .input-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 12px;
-        }
-
-        .input-section label {
-            display: block;
-            margin-bottom: 8px;
-            font-family: var(--serif);
-            font-style: italic;
-            font-weight: 400;
-            color: var(--text);
-            font-size: 14px;
-        }
+        .input-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 16px; }
+        .input-section { min-width: 0; }
+        .input-heading { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+        .input-heading label { font-weight: 500; }
+        .input-heading span { color: var(--text-dim); font-size: 12px; font-variant-numeric: tabular-nums; }
+        .input-heading label::before { content: ''; display: inline-block; width: 6px; height: 6px; border-radius: 50%; margin-right: 8px; background: var(--removed); vertical-align: middle; }
+        .input-section:last-child label::before { background: var(--added); }
 
         .editor-container {
-            display: flex;
+            --gutter-width: 5ch;
+            display: grid;
+            grid-template-columns: var(--gutter-width) minmax(0, 1fr);
+            font: 13px/22px var(--mono);
             border: 1px solid var(--border);
-            border-radius: var(--radius);
-            background: rgba(0, 0, 0, 0.3);
+            border-radius: 6px;
+            background: rgba(0, 0, 0, 0.18);
             overflow: hidden;
-            transition: border-color var(--transition);
         }
 
-        .editor-container:focus-within {
-            border-color: var(--border-hover);
-        }
-
-        .line-numbers {
-            padding: 12px 0;
-            background: rgba(0, 0, 0, 0.2);
-            color: var(--text-dim);
-            font-size: 12px;
-            font-family: var(--mono);
-            line-height: 1.55;
-            text-align: right;
-            user-select: none;
-            min-width: 40px;
-            border-right: 1px solid var(--border);
-        }
-
-        .line-numbers div {
-            padding: 0 8px;
-        }
+        .editor-container:focus-within { border-color: var(--clay); }
+        .line-numbers { position: relative; overflow: hidden; color: var(--text-dim); background: rgba(0, 0, 0, 0.12); border-right: 1px solid var(--border); user-select: none; }
+        .line-number-track { position: absolute; top: 12px; right: 8px; text-align: right; }
 
         textarea {
-            flex: 1;
-            min-height: 60px;
+            width: 100%;
+            min-width: 0;
+            height: 220px;
+            min-height: 120px;
+            max-height: 480px;
             padding: 12px;
             border: none;
-            background: transparent;
-            color: var(--text);
-            font-size: 12px;
-            font-family: var(--mono);
-            line-height: 1.55;
-            resize: none;
-            overflow: hidden;
-        }
-
-        textarea:focus {
             outline: none;
-        }
-
-        textarea::placeholder {
-            color: var(--text-dim);
-        }
-
-        .button-group {
-            display: flex;
-            gap: 8px;
-            margin: 16px 0 0;
-            flex-wrap: wrap;
-            justify-content: center;
-        }
-
-        button {
-            padding: 8px 14px;
-            border: 1px solid var(--border);
-            border-radius: var(--radius);
-            background: var(--surface);
-            color: var(--text);
-            font-size: 13px;
-            font-weight: 500;
-            font-family: inherit;
-            cursor: pointer;
-            transition: background var(--transition), border-color var(--transition), color var(--transition);
-        }
-
-        button:hover {
-            background: var(--surface-strong);
-            border-color: var(--border-hover);
-        }
-
-        .btn-compare {
-            background: var(--clay);
-            color: var(--bg);
-            border-color: var(--clay);
-            min-width: 120px;
-        }
-
-        .btn-compare:hover {
-            background: var(--clay-soft);
-            border-color: var(--clay-soft);
-        }
-
-        .btn-clear:hover {
-            color: var(--danger);
-            border-color: rgba(248, 113, 113, 0.3);
-        }
-
-        .result-section {
-            display: none;
-        }
-
-        .result-section.show {
-            display: block;
-        }
-
-        .stats {
-            display: flex;
-            gap: 8px;
-            margin-bottom: 16px;
-            flex-wrap: wrap;
-        }
-
-        .stat-item {
-            background: rgba(0, 0, 0, 0.2);
-            padding: 10px 14px;
-            border: 1px solid var(--border);
-            border-radius: var(--radius);
-            display: flex;
-            align-items: baseline;
-            gap: 8px;
-        }
-
-        .stat-item.added {
-            border-color: rgba(74, 222, 128, 0.25);
-        }
-
-        .stat-item.removed {
-            border-color: rgba(248, 113, 113, 0.25);
-        }
-
-        .stat-value {
-            font-size: 16px;
-            font-weight: 500;
-            color: var(--text);
-            font-family: var(--mono);
-            font-variant-numeric: tabular-nums;
-        }
-
-        .stat-label {
-            font-size: 12px;
-            color: var(--text-dim);
-            text-transform: uppercase;
-            letter-spacing: 0.06em;
-        }
-
-        .diff-output {
-            background: rgba(0, 0, 0, 0.3);
-            border: 1px solid var(--border);
-            border-radius: var(--radius);
-            padding: 12px;
-            font-family: var(--mono);
-            font-size: 12px;
-            line-height: 1.6;
-            max-height: 540px;
-            overflow-y: auto;
-        }
-
-        .diff-line {
-            padding: 1px 6px;
-            border-radius: 3px;
-            white-space: pre-wrap;
-            word-break: break-all;
-            display: flex;
-            gap: 12px;
-        }
-
-        .line-num {
-            min-width: 36px;
-            color: var(--text-dim);
-            text-align: right;
-            user-select: none;
-            flex-shrink: 0;
-        }
-
-        .diff-line.added {
-            background: var(--added-bg);
-            color: var(--added-fg);
-        }
-
-        .diff-line.removed {
-            background: var(--removed-bg);
-            color: var(--removed-fg);
-        }
-
-        .diff-line.unchanged {
-            color: var(--text-muted);
-        }
-
-        .diff-line.header {
-            background: rgba(165, 180, 252, 0.08);
-            color: var(--info);
-            font-weight: 500;
-            margin-top: 10px;
-        }
-
-        .inline-diff {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 2px;
-        }
-
-        .char-diff-container {
-            line-height: 1.8;
-        }
-
-        .char-line-num {
-            display: inline-block;
-            min-width: 36px;
-            padding-right: 12px;
-            color: var(--text-dim);
-            text-align: right;
-            user-select: none;
-            font-size: 12px;
-        }
-
-        .char-added {
-            background: rgba(74, 222, 128, 0.18);
-            color: var(--added-fg);
-            padding: 0 2px;
-            border-radius: 2px;
-        }
-
-        .char-removed {
-            background: rgba(248, 113, 113, 0.18);
-            color: var(--removed-fg);
-            padding: 0 2px;
-            border-radius: 2px;
-            text-decoration: line-through;
-        }
-
-        .char-newline {
-            font-size: 11px;
-            opacity: 0.8;
-            text-decoration: none;
-        }
-
-        .char-space, .char-tab {
-            opacity: 0.6;
-            font-size: 11px;
-        }
-
-        .mode-toggle {
-            display: inline-flex;
-            gap: 0;
-            margin-bottom: 14px;
-            padding: 2px;
-            background: rgba(0, 0, 0, 0.2);
-            border: 1px solid var(--border);
-            border-radius: var(--radius);
-        }
-
-        .mode-btn {
-            padding: 5px 12px;
             background: transparent;
-            border: none;
-            border-radius: 4px;
-            color: var(--text-dim);
-            font-size: 12px;
-            font-weight: 500;
-            cursor: pointer;
-            transition: background var(--transition), color var(--transition);
-        }
-
-        .mode-btn.active {
-            background: var(--surface-strong);
-            color: var(--clay-soft);
-        }
-
-        .mode-btn:hover:not(.active) {
-            color: var(--text-muted);
-        }
-
-        .identical-message {
-            text-align: center;
-            padding: 32px;
-            color: var(--success);
-            font-size: 14px;
-        }
-
-        @media (max-width: 768px) {
-            body {
-                padding: 24px 16px;
-            }
-
-            .input-grid {
-                grid-template-columns: 1fr;
-            }
-
-            h1 {
-                font-size: 20px;
-            }
-
-            .card {
-                padding: 16px;
-            }
-
-            .stats {
-                flex-direction: column;
-            }
-        }
-
-        /* Editorial system-level: text selection, scrollbar, keyboard focus */
-        ::selection {
-            background: rgba(213, 132, 76, 0.35);
             color: var(--text);
+            font: inherit;
+            white-space: pre;
+            tab-size: 4;
+            overflow: auto;
+            resize: vertical;
         }
 
-        ::-webkit-scrollbar {
-            width: 10px;
-            height: 10px;
-        }
+        textarea::placeholder { color: var(--text-dim); }
+        .action-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 16px; }
+        button, select { font: inherit; color: var(--text); background: var(--surface-strong); border: 1px solid var(--border); border-radius: 5px; }
+        button { padding: 7px 12px; font-size: 12px; cursor: pointer; }
+        button:hover:not(:disabled) { background: #3A322A; border-color: var(--border-hover); }
+        button:disabled { opacity: 0.4; cursor: default; }
+        .btn-compare { min-width: 106px; background: var(--clay); border-color: var(--clay); color: var(--bg); font-weight: 600; }
+        .btn-compare:hover:not(:disabled) { background: var(--clay-soft); border-color: var(--clay-soft); }
+        .keyboard-hint { color: var(--text-dim); font-size: 11px; margin-left: 6px; }
+        .status { color: var(--text-muted); font-size: 12px; margin-left: auto; }
+        .status:empty { display: none; }
 
-        ::-webkit-scrollbar-track {
-            background: transparent;
-        }
+        .result-card { padding: 0; overflow: hidden; }
+        .result-heading { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; padding: 16px 20px; border-bottom: 1px solid var(--border); }
+        h2 { font: 400 20px var(--serif); margin-right: 8px; }
+        .stats { display: flex; flex-wrap: wrap; gap: 12px; font-size: 12px; font-variant-numeric: tabular-nums; }
+        .stat.modified { color: var(--clay-soft); }
+        .stat.added { color: var(--added); }
+        .stat.removed { color: var(--removed); }
+        .change-navigation { display: flex; align-items: center; gap: 6px; margin-left: auto; }
+        .change-navigation button { padding: 4px 9px; font-size: 15px; line-height: 1.3; }
+        #changePosition { min-width: 50px; color: var(--text-muted); font-size: 12px; text-align: center; font-variant-numeric: tabular-nums; }
 
-        ::-webkit-scrollbar-thumb {
-            background: var(--border);
-            border-radius: 5px;
-            border: 2px solid var(--bg);
-        }
+        .view-toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: 16px; padding: 12px 20px; background: rgba(0, 0, 0, 0.08); }
+        .view-toggle { display: inline-flex; padding: 2px; border: 1px solid var(--border); border-radius: 6px; }
+        .view-toggle button { border: none; background: transparent; color: var(--text-muted); padding: 4px 10px; }
+        .view-toggle button[aria-pressed="true"] { background: var(--surface-strong); color: var(--clay-soft); }
+        select { padding: 5px 24px 5px 8px; font-size: 12px; }
+        .checkbox-label { display: inline-flex; align-items: center; gap: 6px; color: var(--text-muted); font-size: 12px; cursor: pointer; }
+        input[type="checkbox"] { accent-color: var(--clay); }
 
-        ::-webkit-scrollbar-thumb:hover {
-            background: var(--border-hover);
-        }
+        .column-headings { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); font-size: 11px; }
+        .column-headings > div { padding: 8px 16px; display: flex; justify-content: space-between; gap: 8px; }
+        .column-headings > div:first-child { border-right: 1px solid var(--border); }
+        .column-headings span { color: var(--text-dim); font-variant-numeric: tabular-nums; }
+        .diff-output { max-height: 72vh; min-height: 100px; overflow: auto; background: #1C1A17; overflow-anchor: none; }
+        .diff-row { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+        .diff-cell { display: grid; grid-template-columns: 5ch 2ch minmax(0, 1fr); font: 13px/22px var(--mono); min-width: 0; }
+        .diff-cell:first-child { border-right: 1px solid var(--border); }
+        .line-number { padding: 1px 6px 1px 4px; color: var(--text-dim); text-align: right; background: rgba(0, 0, 0, 0.08); user-select: none; font-variant-numeric: tabular-nums; }
+        .line-sign { padding-top: 1px; text-align: center; user-select: none; }
+        .line-code { padding: 1px 12px 1px 4px; font: inherit; white-space: pre-wrap; overflow-wrap: anywhere; tab-size: 4; min-width: 0; }
+        .unchanged { color: var(--text-muted); }
+        .removed { background: var(--removed-bg); }
+        .added { background: var(--added-bg); }
+        .removed .line-sign { color: var(--removed); }
+        .added .line-sign { color: var(--added); }
+        .removed .line-number { color: #C58B85; }
+        .added .line-number { color: #7CAE8D; }
+        mark { color: inherit; border-radius: 2px; }
+        .removed mark { background: #763D38; color: #FFE6E2; }
+        .added mark { background: #326044; color: #E0FFEA; }
+        .placeholder { background: repeating-linear-gradient(-45deg, transparent, transparent 4px, rgba(255, 255, 255, 0.025) 4px, rgba(255, 255, 255, 0.025) 5px); }
+        .empty-line { color: var(--text-dim); }
+        .eof-note { display: block; width: fit-content; color: var(--text-muted); font: italic 11px/1.8 var(--sans); user-select: none; }
+        .eof-note::before { content: '↳ '; }
+        .visible-space, .visible-tab { position: relative; }
+        .visible-space::before, .visible-tab::before { position: absolute; inset-inline-start: 0; color: var(--text-dim); pointer-events: none; }
+        .visible-space::before { content: '·'; }
+        .visible-tab::before { content: '→'; }
+        .change-heading { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 4px 16px; padding: 7px 14px; background: #2C2822; border-block: 1px solid var(--border); color: var(--text-muted); font-size: 11px; }
+        .change-heading.current { color: var(--clay-soft); border-left: 3px solid var(--clay); padding-left: 11px; }
+        .fold-button { display: block; width: 100%; border: 0; border-block: 1px solid var(--border); border-radius: 0; padding: 8px 16px; background: #24211C; color: var(--text-dim); font-size: 11px; text-align: center; }
+        .fold-button:hover:not(:disabled) { color: var(--clay-soft); background: var(--surface-strong); }
+        .fold-button span { margin-right: 6px; }
+        [data-view="unified"] .diff-row { grid-template-columns: minmax(0, 1fr); }
+        [data-view="unified"] .diff-cell { grid-template-columns: 5ch 5ch 2ch minmax(0, 1fr); border-right: 0; }
+        .identical-message { display: flex; flex-direction: column; align-items: center; padding: 44px 20px; gap: 8px; }
+        .identical-message > span { color: var(--added); font-size: 24px; }
+        .identical-message strong { font-weight: 500; }
+        .identical-message p { color: var(--text-muted); font-size: 12px; }
 
-        :focus-visible {
-            outline: 2px solid var(--clay);
-            outline-offset: 2px;
-            border-radius: 3px;
-        }
+        ::selection { background: rgba(213, 132, 76, 0.35); color: var(--text); }
+        :focus-visible { outline: 2px solid var(--clay); outline-offset: 3px; }
+        textarea:focus-visible { outline: none; }
+        ::-webkit-scrollbar { width: 10px; height: 10px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: var(--border-hover); border: 3px solid var(--bg); border-radius: 6px; }
 
-        button:focus-visible,
-        a:focus-visible {
-            outline-offset: 3px;
+        @media (max-width: 760px) {
+            body { padding: 20px 12px 32px; }
+            h1 { font-size: 26px; }
+            .subtitle { font-size: 13px; margin-bottom: 20px; }
+            .card { padding: 14px; }
+            .input-grid { grid-template-columns: minmax(0, 1fr); }
+            textarea { height: 160px; }
+            .keyboard-hint { display: none; }
+            .status { flex-basis: 100%; margin-left: 0; }
+            .result-card { padding: 0; }
+            .result-heading, .view-toolbar { padding: 12px; gap: 12px; }
+            .stats { gap: 8px; font-size: 11px; }
+            h2 { font-size: 18px; }
+            .diff-cell { font-size: 12px; }
+            .line-code { padding-right: 8px; }
+            .change-heading { font-size: 10px; }
         }
     </style>
 </head>
 <body>
-<div class="container">
+<main class="container">
     <a class="back-link" href="index.html">← Back to Tools</a>
     <h1>Text Diff Tool</h1>
-    <p class="subtitle">Compare two texts and highlight the differences</p>
+    <p class="subtitle">Aligned lines. Precise highlights. A clearer view of every change.</p>
 
-    <div class="card">
+    <section class="card" aria-label="Texts to compare">
         <div class="input-grid">
             <div class="input-section">
-                <label for="text1">Original Text</label>
+                <div class="input-heading"><label for="text1">Original</label><span id="inputCount1">1 line</span></div>
                 <div class="editor-container">
-                    <div class="line-numbers" id="lineNumbers1">
-                        <div>1</div>
-                    </div>
-                    <textarea id="text1" placeholder="Enter original text..."></textarea>
+                    <div class="line-numbers" aria-hidden="true"><div class="line-number-track" id="lineNumbers1"></div></div>
+                    <textarea id="text1" wrap="off" spellcheck="false" autocomplete="off" autocapitalize="off" placeholder="Paste the original text…"></textarea>
                 </div>
             </div>
             <div class="input-section">
-                <label for="text2">Modified Text</label>
+                <div class="input-heading"><label for="text2">Modified</label><span id="inputCount2">1 line</span></div>
                 <div class="editor-container">
-                    <div class="line-numbers" id="lineNumbers2">
-                        <div>1</div>
-                    </div>
-                    <textarea id="text2" placeholder="Enter modified text..."></textarea>
+                    <div class="line-numbers" aria-hidden="true"><div class="line-number-track" id="lineNumbers2"></div></div>
+                    <textarea id="text2" wrap="off" spellcheck="false" autocomplete="off" autocapitalize="off" placeholder="Paste the modified text…"></textarea>
                 </div>
             </div>
         </div>
-
-        <div class="button-group">
-            <button class="btn-compare" onclick="compare()">Compare</button>
-            <button class="btn-swap" onclick="swap()">Swap</button>
-            <button class="btn-clear" onclick="clearAll()">Clear</button>
+        <div class="action-bar">
+            <button class="btn-compare" id="compareBtn" type="button">Compare</button>
+            <button id="swapBtn" type="button">Swap</button>
+            <button id="clearBtn" type="button">Clear</button>
+            <span class="keyboard-hint">⌘ / Ctrl + Enter to compare</span>
+            <span class="status" id="status" role="status" aria-live="polite"></span>
         </div>
-    </div>
+    </section>
 
-    <div class="result-section" id="result">
-        <div class="card">
-            <div class="card-title">Diff Result</div>
-
-            <div class="mode-toggle">
-                <button class="mode-btn active" id="modeLineBtn" onclick="setMode('line')">Line by Line</button>
-                <button class="mode-btn" id="modeCharBtn" onclick="setMode('char')">Character</button>
-            </div>
-
+    <section class="card result-card" id="result" aria-labelledby="resultTitle" hidden>
+        <div class="result-heading">
+            <h2 id="resultTitle">Comparison</h2>
             <div class="stats" id="stats"></div>
-            <div class="diff-output" id="diffOutput"></div>
+            <nav class="change-navigation" aria-label="Change navigation">
+                <button id="prevChange" type="button" aria-label="Previous change" title="Previous change (Alt + ↑)">↑</button>
+                <span id="changePosition" aria-live="polite"></span>
+                <button id="nextChange" type="button" aria-label="Next change" title="Next change (Alt + ↓)">↓</button>
+            </nav>
         </div>
-    </div>
-</div>
+        <div class="view-toolbar">
+            <div class="view-toggle" role="group" aria-label="Comparison layout">
+                <button id="viewSplit" type="button" aria-pressed="true">Split</button>
+                <button id="viewUnified" type="button" aria-pressed="false">Unified</button>
+            </div>
+            <select id="detailMode" aria-label="Highlight detail"><option value="word">Word changes</option><option value="char">Character changes</option></select>
+            <label class="checkbox-label"><input id="showUnchanged" type="checkbox">Show all lines</label>
+            <label class="checkbox-label"><input id="showWhitespace" type="checkbox">Show whitespace</label>
+        </div>
+        <div class="column-headings" id="columnHeadings"><div>Original<span id="oldLineCount"></span></div><div>Modified<span id="newLineCount"></span></div></div>
+        <div class="diff-output" id="diffOutput" role="region" aria-label="Text differences" tabindex="0"></div>
+    </section>
+</main>
 
+<script id="diff-engine">
+/*
+jsdiff 9.0.0 — diffArrays only, bundled with esbuild (IIFE, ES2020).
+Source: https://github.com/kpdecker/jsdiff
+Rebuild: export { diffArrays } from "diff"; bundle with globalName "Diff".
+
+BSD 3-Clause License
+
+Copyright (c) 2009-2015, Kevin Decker <kpdecker@gmail.com>
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+
+1. Redistributions of source code must retain the above copyright notice, this
+   list of conditions and the following disclaimer.
+
+2. Redistributions in binary form must reproduce the above copyright notice,
+   this list of conditions and the following disclaimer in the documentation
+   and/or other materials provided with the distribution.
+
+3. Neither the name of the copyright holder nor the names of its
+   contributors may be used to endorse or promote products derived from
+   this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+*/
+var Diff=(()=>{var E=Object.defineProperty;var M=Object.getOwnPropertyDescriptor;var S=Object.getOwnPropertyNames;var O=Object.prototype.hasOwnProperty;var W=(l,e)=>{for(var o in e)E(l,o,{get:e[o],enumerable:!0})},z=(l,e,o,t)=>{if(e&&typeof e=="object"||typeof e=="function")for(let n of S(e))!O.call(l,n)&&n!==o&&E(l,n,{get:()=>e[n],enumerable:!(t=M(e,n))||t.enumerable});return l};var _=l=>z(E({},"__esModule",{value:!0}),l);var R={};W(R,{diffArrays:()=>y});var v=class{diff(e,o,t={}){let n;typeof t=="function"?(n=t,t={}):"callback"in t&&(n=t.callback);let m=this.castInput(e,t),a=this.castInput(o,t),d=this.removeEmpty(this.tokenize(m,t)),s=this.removeEmpty(this.tokenize(a,t));return this.diffWithOptionsObj(d,s,t,n)}diffWithOptionsObj(e,o,t,n){var m;let a=i=>{if(i=this.postProcess(i,t),n){setTimeout(function(){n(i)},0);return}else return i},d=o.length,s=e.length,f=1,r=d+s;t.maxEditLength!=null&&(r=Math.min(r,t.maxEditLength));let p=(m=t.timeout)!==null&&m!==void 0?m:1/0,P=Date.now()+p,c=[{oldPos:-1,lastComponent:void 0}],u=this.extractCommon(c[0],o,e,0,t);if(c[0].oldPos+1>=s&&u+1>=d)return a(this.buildValues(c[0].lastComponent,o,e));let x=-1/0,L=1/0,j=()=>{for(let i=Math.max(x,-f);i<=Math.min(L,f);i+=2){let h,C=c[i-1],g=c[i+1];C&&(c[i-1]=void 0);let D=!1;if(g){let A=g.oldPos-i;D=g&&0<=A&&A<d}let T=C&&C.oldPos+1<s;if(!D&&!T){c[i]=void 0;continue}if(!T||D&&C.oldPos<g.oldPos?h=this.addToPath(g,!0,!1,0,t):h=this.addToPath(C,!1,!0,1,t),u=this.extractCommon(h,o,e,i,t),h.oldPos+1>=s&&u+1>=d)return a(this.buildValues(h.lastComponent,o,e))||!0;c[i]=h,h.oldPos+1>=s&&(L=Math.min(L,i-1)),u+1>=d&&(x=Math.max(x,i+1))}f++};if(n)(function i(){setTimeout(function(){if(f>r||Date.now()>P)return n(void 0);j()||i()},0)})();else for(;f<=r&&Date.now()<=P;){let i=j();if(i)return i}}addToPath(e,o,t,n,m){let a=e.lastComponent;return a&&!m.oneChangePerToken&&a.added===o&&a.removed===t?{oldPos:e.oldPos+n,lastComponent:{count:a.count+1,added:o,removed:t,previousComponent:a.previousComponent}}:{oldPos:e.oldPos+n,lastComponent:{count:1,added:o,removed:t,previousComponent:a}}}extractCommon(e,o,t,n,m){let a=o.length,d=t.length,s=e.oldPos,f=s-n,r=0;for(;f+1<a&&s+1<d&&this.equals(t[s+1],o[f+1],m);)f++,s++,r++,m.oneChangePerToken&&(e.lastComponent={count:1,previousComponent:e.lastComponent,added:!1,removed:!1});return r&&!m.oneChangePerToken&&(e.lastComponent={count:r,previousComponent:e.lastComponent,added:!1,removed:!1}),e.oldPos=s,f}equals(e,o,t){return t.comparator?t.comparator(e,o):e===o||!!t.ignoreCase&&e.toLowerCase()===o.toLowerCase()}removeEmpty(e){let o=[];for(let t=0;t<e.length;t++)e[t]&&o.push(e[t]);return o}castInput(e,o){return e}tokenize(e,o){return Array.from(e)}join(e){return e.join("")}postProcess(e,o){return e}get useLongestToken(){return!1}buildValues(e,o,t){let n=[],m;for(;e;)n.push(e),m=e.previousComponent,delete e.previousComponent,e=m;n.reverse();let a=n.length,d=0,s=0,f=0;for(;d<a;d++){let r=n[d];if(r.removed)r.value=this.join(t.slice(f,f+r.count)),f+=r.count;else{if(!r.added&&this.useLongestToken){let p=o.slice(s,s+r.count);p=p.map(function(P,c){let u=t[f+c];return u.length>P.length?u:P}),r.value=this.join(p)}else r.value=this.join(o.slice(s,s+r.count));s+=r.count,r.added||(f+=r.count)}}return n}};var w=class extends v{tokenize(e){return e.slice()}join(e){return e}removeEmpty(e){return e}},I=new w;function y(l,e,o){return I.diff(l,e,o)}return _(R);})();
+
+</script>
 <script>
+async function computeModel(original, modified, granularity) {
+    const splitLines = text => text === '' ? [] : (text.endsWith('\n') ? text.slice(0, -1) : text).split('\n');
+    const oldLines = splitLines(original);
+    const newLines = splitLines(modified);
+    const operations = [];
+    const lineDeadline = performance.now() + 1500;
+    let simplified = false;
+    let detailLimited = false;
+
+    function append(type, count) {
+        if (!count) return;
+        const previous = operations[operations.length - 1];
+        if (previous?.type === type) previous.count += count;
+        else operations.push({type, count});
+    }
+
+    function uniqueLines(lines, start, end) {
+        const positions = new Map();
+        for (let i = start; i < end; i++) positions.set(lines[i], positions.has(lines[i]) ? -1 : i);
+        return positions;
+    }
+
+    // Unique lines anchor whole sections, so repeated braces and blank lines cannot pull unrelated code together.
+    function anchors(aStart, aEnd, bStart, bEnd) {
+        const oldPositions = uniqueLines(oldLines, aStart, aEnd);
+        const newPositions = uniqueLines(newLines, bStart, bEnd);
+        const candidates = [];
+        for (let i = aStart; i < aEnd; i++) {
+            const j = newPositions.get(oldLines[i]);
+            if (oldLines[i].trim() && oldPositions.get(oldLines[i]) === i && j !== undefined && j !== -1) candidates.push([i, j]);
+        }
+        const tails = [];
+        const predecessors = new Int32Array(candidates.length).fill(-1);
+        for (let i = 0; i < candidates.length; i++) {
+            let low = 0, high = tails.length;
+            while (low < high) {
+                const mid = (low + high) >>> 1;
+                if (candidates[tails[mid]][1] < candidates[i][1]) low = mid + 1;
+                else high = mid;
+            }
+            if (low) predecessors[i] = tails[low - 1];
+            tails[low] = i;
+        }
+        const result = [];
+        for (let i = tails[tails.length - 1]; i !== undefined && i !== -1; i = predecessors[i]) result.push(candidates[i]);
+        return result.reverse();
+    }
+
+    function diffRange(aStart, aEnd, bStart, bEnd, depth = 0) {
+        let prefix = 0;
+        while (aStart < aEnd && bStart < bEnd && oldLines[aStart] === newLines[bStart]) {
+            prefix++;
+            aStart++;
+            bStart++;
+        }
+        append('equal', prefix);
+        let suffix = 0;
+        while (aStart < aEnd && bStart < bEnd && oldLines[aEnd - 1] === newLines[bEnd - 1]) {
+            suffix++;
+            aEnd--;
+            bEnd--;
+        }
+        if (aStart === aEnd) append('add', bEnd - bStart);
+        else if (bStart === bEnd) append('remove', aEnd - aStart);
+        else {
+            const remaining = lineDeadline - performance.now();
+            const matches = depth < 32 && remaining > 0 ? anchors(aStart, aEnd, bStart, bEnd) : [];
+            if (matches.length) {
+                for (const [a, b] of matches) {
+                    diffRange(aStart, a, bStart, b, depth + 1);
+                    append('equal', 1);
+                    aStart = a + 1;
+                    bStart = b + 1;
+                }
+                diffRange(aStart, aEnd, bStart, bEnd, depth + 1);
+            } else {
+                const changes = remaining > 0 ? Diff.diffArrays(oldLines.slice(aStart, aEnd), newLines.slice(bStart, bEnd), {timeout: Math.min(150, remaining), maxEditLength: 1500}) : undefined;
+                if (changes) {
+                    for (const change of changes) append(change.added ? 'add' : change.removed ? 'remove' : 'equal', change.count);
+                } else {
+                    append('remove', aEnd - aStart);
+                    append('add', bEnd - bStart);
+                    simplified = true;
+                }
+            }
+        }
+        append('equal', suffix);
+    }
+
+    diffRange(0, oldLines.length, 0, newLines.length);
+
+    function signature(text) {
+        const value = text.trim();
+        const chars = Array.from(value.length > 800 ? value.slice(0, 400) + value.slice(-400) : value);
+        const grams = new Map();
+        for (let i = 1; i < chars.length; i++) {
+            const gram = chars[i - 1] + chars[i];
+            grams.set(gram, (grams.get(gram) || 0) + 1);
+        }
+        return {value, grams, size: Math.max(0, chars.length - 1)};
+    }
+
+    function similarity(a, b) {
+        if (a.value === b.value) return 1;
+        if (!a.size || !b.size) return 0;
+        let common = 0;
+        for (const [gram, count] of a.grams) common += Math.min(count, b.grams.get(gram) || 0);
+        return 2 * common / (a.size + b.size);
+    }
+
+    function alignLines(removed, added) {
+        const m = removed.length, n = added.length;
+        if (!m || !n) return removed.map(i => [i, null]).concat(added.map(j => [null, j]));
+        if (m === 1 && n === 1) return [[removed[0], added[0]]];
+        // Similarity alignment is local and capped; a large replacement never allocates an unbounded matrix.
+        if (m * n > 4096 || performance.now() > detailDeadline) {
+            simplified = true;
+            return Array.from({length: Math.max(m, n)}, (_, i) => [removed[i] ?? null, added[i] ?? null]);
+        }
+        const left = removed.map(i => signature(oldLines[i]));
+        const right = added.map(i => signature(newLines[i]));
+        const stride = n + 1;
+        const scores = new Float32Array(m * n);
+        const dp = new Float32Array((m + 1) * stride);
+        for (let i = 1; i <= m; i++) {
+            for (let j = 1; j <= n; j++) {
+                const score = similarity(left[i - 1], right[j - 1]);
+                scores[(i - 1) * n + j - 1] = score;
+                dp[i * stride + j] = Math.max(dp[(i - 1) * stride + j], dp[i * stride + j - 1], score >= 0.35 ? dp[(i - 1) * stride + j - 1] + score : -1);
+            }
+        }
+        const pairs = [];
+        let i = m, j = n;
+        while (i || j) {
+            const score = i && j ? scores[(i - 1) * n + j - 1] : 0;
+            if (i && j && score >= 0.35 && Math.abs(dp[i * stride + j] - dp[(i - 1) * stride + j - 1] - score) < 0.0001) pairs.push([removed[--i], added[--j]]);
+            else if (i && (!j || dp[(i - 1) * stride + j] > dp[i * stride + j - 1])) pairs.push([removed[--i], null]);
+            else pairs.push([null, added[--j]]);
+        }
+        return pairs.reverse();
+    }
+
+    const segmenter = typeof Intl.Segmenter === 'function' ? new Intl.Segmenter(undefined, {granularity: granularity === 'char' ? 'grapheme' : 'word'}) : null;
+    const detailDeadline = performance.now() + 1200;
+
+    function tokenize(text) {
+        if (segmenter) return Array.from(segmenter.segment(text), item => item.segment);
+        return granularity === 'char' ? Array.from(text) : (text.match(/[\p{L}\p{N}_]+|[^\p{L}\p{N}_]/gu) || []);
+    }
+
+    function inlineDiff(left, right) {
+        if (left === right) return [[{text: left, changed: false}], [{text: right, changed: false}]];
+        const remaining = detailDeadline - performance.now();
+        const changes = remaining > 0 && left.length + right.length <= 200000 ? Diff.diffArrays(tokenize(left), tokenize(right), {timeout: Math.min(30, remaining), maxEditLength: 512}) : undefined;
+        if (!changes) {
+            detailLimited = true;
+            return [[{text: left, changed: true}], [{text: right, changed: true}]];
+        }
+        const before = [], after = [];
+        for (const change of changes) {
+            const part = {text: change.value.join(''), changed: !!(change.added || change.removed)};
+            if (!change.added) before.push(part);
+            if (!change.removed) after.push(part);
+        }
+        return [before, after];
+    }
+
+    const rows = [];
+    const oldEndsWithNewline = original.endsWith('\n');
+    const newEndsWithNewline = modified.endsWith('\n');
+    const line = (lines, index, endsWithNewline) => index === null ? null : {text: lines[index], number: index + 1, noNewline: index === lines.length - 1 && !endsWithNewline};
+    let oldIndex = 0, newIndex = 0;
+    let yieldDeadline = performance.now() + 30;
+    for (let op = 0; op < operations.length; op++) {
+        const operation = operations[op];
+        if (operation.type === 'equal') {
+            for (let i = 0; i < operation.count; i++) {
+                const left = line(oldLines, oldIndex++, oldEndsWithNewline);
+                const right = line(newLines, newIndex++, newEndsWithNewline);
+                rows.push({kind: left.noNewline === right.noNewline ? 'equal' : 'modified', left, right});
+            }
+        } else {
+            const removed = [], added = [];
+            while (op < operations.length && operations[op].type !== 'equal') {
+                const change = operations[op++];
+                for (let i = 0; i < change.count; i++) {
+                    if (change.type === 'remove') removed.push(oldIndex++);
+                    else added.push(newIndex++);
+                }
+            }
+            op--;
+            for (const [a, b] of alignLines(removed, added)) {
+                const left = line(oldLines, a, oldEndsWithNewline);
+                const right = line(newLines, b, newEndsWithNewline);
+                if (left && right) [left.parts, right.parts] = inlineDiff(left.text, right.text);
+                rows.push({kind: !left ? 'added' : !right ? 'removed' : 'modified', left, right});
+                if (performance.now() > yieldDeadline) {
+                    if (globalThis.scheduler?.yield) await globalThis.scheduler.yield();
+                    else await new Promise(resolve => setTimeout(resolve, 0));
+                    yieldDeadline = performance.now() + 30;
+                }
+            }
+        }
+    }
+
+    const changes = [];
+    const stats = {modified: 0, added: 0, removed: 0};
+    for (let i = 0; i < rows.length; i++) {
+        const row = rows[i];
+        if (row.kind === 'equal') continue;
+        stats[row.kind]++;
+        if (i === 0 || rows[i - 1].kind === 'equal') changes.push({start: i, end: i + 1});
+        else changes[changes.length - 1].end = i + 1;
+        row.change = changes.length - 1;
+    }
+    return {rows, changes, stats, oldLineCount: oldLines.length, newLineCount: newLines.length, simplified, detailLimited};
+}
+
+
     const text1El = document.getElementById('text1');
     const text2El = document.getElementById('text2');
     const resultEl = document.getElementById('result');
     const diffOutputEl = document.getElementById('diffOutput');
-    const statsEl = document.getElementById('stats');
-    const lineNumbers1 = document.getElementById('lineNumbers1');
-    const lineNumbers2 = document.getElementById('lineNumbers2');
-
-    let currentMode = 'line';
-
-    // Update line numbers for a textarea
-    function updateLineNumbers(textarea, lineNumbersEl) {
-        const lines = textarea.value.split('\n');
-        const count = lines.length;
-        let html = '';
-        for (let i = 1; i <= count; i++) {
-            html += `<div>${i}</div>`;
-        }
-        lineNumbersEl.innerHTML = html;
-    }
-
-    // Sync scroll between textarea and line numbers
-    function syncScroll(textarea, lineNumbersEl) {
-        lineNumbersEl.scrollTop = textarea.scrollTop;
-    }
-
-    // Initialize line numbers and event listeners
-    function initEditor(textarea, lineNumbersEl) {
-        updateLineNumbers(textarea, lineNumbersEl);
-        textarea.addEventListener('input', () => {
-            autoResize(textarea);
-            updateLineNumbers(textarea, lineNumbersEl);
-        });
-        textarea.addEventListener('scroll', () => syncScroll(textarea, lineNumbersEl));
-        // Initial resize
-        autoResize(textarea);
-    }
-
-    // Auto-resize textarea
-    function autoResize(textarea) {
-        textarea.style.height = 'auto';
-        textarea.style.height = textarea.scrollHeight + 'px';
-    }
-
-    initEditor(text1El, lineNumbers1);
-    initEditor(text2El, lineNumbers2);
-
-    function setMode(mode) {
-        currentMode = mode;
-        document.getElementById('modeLineBtn').classList.toggle('active', mode === 'line');
-        document.getElementById('modeCharBtn').classList.toggle('active', mode === 'char');
-        if (resultEl.classList.contains('show')) {
-            displayDiff(text1El.value, text2El.value);
-        }
-    }
-
-    // Longest Common Subsequence for diff
-    function lcs(a, b) {
-        const m = a.length;
-        const n = b.length;
-        const dp = Array(m + 1).fill(null).map(() => Array(n + 1).fill(0));
-
-        for (let i = 1; i <= m; i++) {
-            for (let j = 1; j <= n; j++) {
-                if (a[i - 1] === b[j - 1]) {
-                    dp[i][j] = dp[i - 1][j - 1] + 1;
-                } else {
-                    dp[i][j] = Math.max(dp[i - 1][j], dp[i][j - 1]);
-                }
-            }
-        }
-
-        // Backtrack to find diff
-        const diff = [];
-        let i = m, j = n;
-        while (i > 0 || j > 0) {
-            if (i > 0 && j > 0 && a[i - 1] === b[j - 1]) {
-                diff.unshift({type: 'unchanged', value: a[i - 1]});
-                i--;
-                j--;
-            } else if (j > 0 && (i === 0 || dp[i][j - 1] >= dp[i - 1][j])) {
-                diff.unshift({type: 'added', value: b[j - 1]});
-                j--;
-            } else {
-                diff.unshift({type: 'removed', value: a[i - 1]});
-                i--;
-            }
-        }
-
-        return diff;
-    }
-
-    const MAX_LINES_WARNING = 5000;
-    const MAX_CHARS_WARNING = 100000;
-
-    function compare() {
-        const t1 = text1El.value;
-        const t2 = text2El.value;
-
-        if (!t1 && !t2) {
-            return;
-        }
-
-        // Performance warning for large texts
-        const lines1 = t1.split('\n').length;
-        const lines2 = t2.split('\n').length;
-        const totalChars = t1.length + t2.length;
-
-        if (lines1 > MAX_LINES_WARNING || lines2 > MAX_LINES_WARNING || totalChars > MAX_CHARS_WARNING) {
-            if (!confirm(`Warning: Large text detected (${Math.max(lines1, lines2)} lines, ${totalChars} characters). This may cause the browser to slow down. Continue?`)) {
-                return;
-            }
-        }
-
-        resultEl.classList.add('show');
-        displayDiff(t1, t2);
-    }
-
-    function displayDiff(t1, t2) {
-        if (t1 === t2) {
-            statsEl.innerHTML = '';
-            diffOutputEl.innerHTML = '<div class="identical-message">Texts are identical</div>';
-            return;
-        }
-
-        if (currentMode === 'line') {
-            displayLineDiff(t1, t2);
-        } else {
-            displayCharDiff(t1, t2);
-        }
-    }
-
-    function displayLineDiff(t1, t2) {
-        // Normalize: remove trailing empty line from split result if text doesn't end with newline
-        const lines1 = t1.split('\n');
-        const lines2 = t2.split('\n');
-
-        // Track if texts end with newline
-        const t1EndsWithNewline = t1.endsWith('\n');
-        const t2EndsWithNewline = t2.endsWith('\n');
-
-        // Remove the trailing empty string that split creates for trailing newlines
-        // We'll handle newline endings separately
-        if (t1EndsWithNewline && lines1[lines1.length - 1] === '') lines1.pop();
-        if (t2EndsWithNewline && lines2[lines2.length - 1] === '') lines2.pop();
-
-        const diff = lcs(lines1, lines2);
-
-        let added = 0, removed = 0, unchanged = 0;
-        let html = '';
-        let lineNum1 = 1, lineNum2 = 1;
-
-        diff.forEach(item => {
-            const escaped = escapeHtml(item.value);
-            const displayValue = escaped === '' ? '<span style="opacity:0.5;font-style:italic">(empty line)</span>' : escaped;
-
-            if (item.type === 'added') {
-                html += `<div class="diff-line added"><span class="line-num">+${lineNum2}</span>${displayValue}</div>`;
-                lineNum2++;
-                added++;
-            } else if (item.type === 'removed') {
-                html += `<div class="diff-line removed"><span class="line-num">-${lineNum1}</span>${displayValue}</div>`;
-                lineNum1++;
-                removed++;
-            } else {
-                html += `<div class="diff-line unchanged"><span class="line-num">${lineNum1}</span>${displayValue}</div>`;
-                lineNum1++;
-                lineNum2++;
-                unchanged++;
-            }
-        });
-
-        // Show trailing newline difference
-        if (t1EndsWithNewline !== t2EndsWithNewline) {
-            if (t1EndsWithNewline && !t2EndsWithNewline) {
-                html += `<div class="diff-line removed"><span class="line-num">-</span><span style="opacity:0.7;font-style:italic">⏎ (trailing newline)</span></div>`;
-                removed++;
-            } else {
-                html += `<div class="diff-line added"><span class="line-num">+</span><span style="opacity:0.7;font-style:italic">⏎ (trailing newline)</span></div>`;
-                added++;
-            }
-        }
-
-        statsEl.innerHTML = `
-                <div class="stat-item added">
-                    <div>
-                        <div class="stat-value" style="color: var(--success)">${added}</div>
-                        <div class="stat-label">Added</div>
-                    </div>
-                </div>
-                <div class="stat-item removed">
-                    <div>
-                        <div class="stat-value" style="color: var(--danger)">${removed}</div>
-                        <div class="stat-label">Removed</div>
-                    </div>
-                </div>
-                <div class="stat-item unchanged">
-                    <div>
-                        <div class="stat-value" style="color: var(--text-dim)">${unchanged}</div>
-                        <div class="stat-label">Unchanged</div>
-                    </div>
-                </div>
-            `;
-
-        diffOutputEl.innerHTML = html;
-    }
-
-    function displayCharDiff(t1, t2) {
-        const chars1 = t1.split('');
-        const chars2 = t2.split('');
-        const diff = lcs(chars1, chars2);
-
-        let added = 0, removed = 0;
-        let lineNum = 1;
-        let html = '<div class="char-diff-container">';
-        html += `<span class="char-line-num">${lineNum}</span>`;
-
-        diff.forEach(item => {
-            const escaped = escapeHtml(item.value);
-
-            if (item.type === 'added') {
-                if (item.value === '\n') {
-                    html += `<span class="char-added char-newline">↵</span><br>`;
-                    lineNum++;
-                    html += `<span class="char-line-num">${lineNum}</span>`;
-                } else if (item.value === ' ') {
-                    html += `<span class="char-added char-space">·</span>`;
-                } else if (item.value === '\t') {
-                    html += `<span class="char-added char-tab">→</span>`;
-                } else {
-                    html += `<span class="char-added">${escaped}</span>`;
-                }
-                added++;
-            } else if (item.type === 'removed') {
-                if (item.value === '\n') {
-                    html += `<span class="char-removed char-newline">↵</span>`;
-                } else if (item.value === ' ') {
-                    html += `<span class="char-removed char-space">·</span>`;
-                } else if (item.value === '\t') {
-                    html += `<span class="char-removed char-tab">→</span>`;
-                } else {
-                    html += `<span class="char-removed">${escaped}</span>`;
-                }
-                removed++;
-            } else {
-                if (item.value === '\n') {
-                    html += '<br>';
-                    lineNum++;
-                    html += `<span class="char-line-num">${lineNum}</span>`;
-                } else {
-                    html += escaped;
-                }
-            }
-        });
-
-        html += '</div>';
-
-        statsEl.innerHTML = `
-                <div class="stat-item added">
-                    <div>
-                        <div class="stat-value" style="color: var(--success)">${added}</div>
-                        <div class="stat-label">Characters Added</div>
-                    </div>
-                </div>
-                <div class="stat-item removed">
-                    <div>
-                        <div class="stat-value" style="color: var(--danger)">${removed}</div>
-                        <div class="stat-label">Characters Removed</div>
-                    </div>
-                </div>
-            `;
-
-        diffOutputEl.innerHTML = html;
-    }
+    const statusEl = document.getElementById('status');
+    const compareBtn = document.getElementById('compareBtn');
+    const narrowScreen = matchMedia('(max-width: 760px)');
+    const expanded = new Map();
+    const editorCounts = new WeakMap();
+    let model = null;
+    let preferredView = 'split';
+    let selectedChange = 0;
+    let renderStart = 0;
+    let renderLimit = 1000;
+    let requestId = 0;
+    let runningWorker = null;
+    let workerUrl = null;
+    let resolvePending = null;
+    let hasCompared = false;
 
     function escapeHtml(text) {
-        const div = document.createElement('div');
-        div.textContent = text;
-        return div.innerHTML;
+        return text.replace(/[&<>"']/g, char => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'}[char]));
     }
 
+    function updateEditor(textarea, recount = false) {
+        if (recount) editorCounts.set(textarea, textarea.value.split('\n').length);
+        const count = editorCounts.get(textarea) || 1;
+        const lineHeight = parseFloat(getComputedStyle(textarea).lineHeight);
+        const first = Math.max(0, Math.floor((textarea.scrollTop - 12) / lineHeight));
+        const last = Math.min(count, first + Math.ceil(textarea.clientHeight / lineHeight) + 2);
+        const gutter = document.getElementById(textarea.id === 'text1' ? 'lineNumbers1' : 'lineNumbers2');
+        gutter.innerHTML = Array.from({length: Math.max(0, last - first)}, (_, i) => `<div>${first + i + 1}</div>`).join('');
+        gutter.style.transform = `translateY(${first * lineHeight - textarea.scrollTop}px)`;
+        textarea.parentElement.style.setProperty('--gutter-width', `${Math.max(3, String(count).length) + 2}ch`);
+        document.getElementById(textarea.id === 'text1' ? 'inputCount1' : 'inputCount2').textContent = `${count.toLocaleString()} ${count === 1 ? 'line' : 'lines'}`;
+    }
+
+    function cancelComparison() {
+        requestId++;
+        runningWorker?.terminate();
+        runningWorker = null;
+        if (workerUrl) URL.revokeObjectURL(workerUrl);
+        workerUrl = null;
+        resolvePending?.(null);
+        resolvePending = null;
+        compareBtn.disabled = false;
+        compareBtn.textContent = 'Compare';
+        compareBtn.removeAttribute('aria-busy');
+    }
+
+    function invalidate() {
+        cancelComparison();
+        model = null;
+        resultEl.hidden = true;
+        statusEl.textContent = hasCompared ? 'Text changed. Compare to update the result.' : '';
+    }
+
+    for (const textarea of [text1El, text2El]) {
+        textarea.addEventListener('input', () => {
+            updateEditor(textarea, true);
+            invalidate();
+        });
+        textarea.addEventListener('scroll', () => updateEditor(textarea));
+        updateEditor(textarea, true);
+    }
+    const editorObserver = new ResizeObserver(entries => entries.forEach(entry => updateEditor(entry.target)));
+    editorObserver.observe(text1El);
+    editorObserver.observe(text2El);
+
+    async function calculate(original, modified, granularity) {
+        // Embed the same bundled engine in a disposable worker so opening this file needs no server or network.
+        if (typeof Worker !== 'function') return computeModel(original, modified, granularity);
+        const source = `${document.getElementById('diff-engine').textContent}\n${computeModel.toString()}\nonmessage = async event => { try { postMessage({model: await computeModel(...event.data)}); } catch (error) { postMessage({error: error.message}); } };`;
+        return new Promise((resolve, reject) => {
+            resolvePending = resolve;
+            workerUrl = URL.createObjectURL(new Blob([source], {type: 'text/javascript'}));
+            try {
+                runningWorker = new Worker(workerUrl);
+                runningWorker.onmessage = event => event.data.error ? reject(new Error(event.data.error)) : resolve(event.data.model);
+                runningWorker.onerror = () => reject(new Error('The comparison could not run. Please try again.'));
+                runningWorker.postMessage([original, modified, granularity]);
+            } catch (error) {
+                URL.revokeObjectURL(workerUrl);
+                workerUrl = null;
+                resolvePending = null;
+                computeModel(original, modified, granularity).then(resolve, reject);
+            }
+        });
+    }
+
+    async function compare() {
+        cancelComparison();
+        model = null;
+        const id = requestId;
+        const original = text1El.value, modified = text2El.value;
+        if (original.length + modified.length > 2000000) {
+            resultEl.hidden = true;
+            statusEl.textContent = 'Please compare up to 2 million characters at a time.';
+            return;
+        }
+        const countLines = text => text === '' ? 0 : text.split('\n').length - Number(text.endsWith('\n'));
+        if (countLines(original) + countLines(modified) > 100000) {
+            resultEl.hidden = true;
+            statusEl.textContent = 'Please compare up to 100,000 lines in total at a time.';
+            return;
+        }
+        resultEl.hidden = true;
+        compareBtn.disabled = true;
+        compareBtn.textContent = 'Comparing…';
+        compareBtn.setAttribute('aria-busy', 'true');
+        statusEl.textContent = 'Comparing…';
+        try {
+            const next = await calculate(original, modified, document.getElementById('detailMode').value);
+            if (id !== requestId || !next) return;
+            model = next;
+            hasCompared = true;
+            selectedChange = 0;
+            renderStart = 0;
+            renderLimit = 1000;
+            expanded.clear();
+            render();
+            resultEl.hidden = false;
+            diffOutputEl.scrollTop = 0;
+            statusEl.textContent = model.simplified || model.detailLimited ? 'Some large changes are shown as whole-line replacements.' : '';
+        } catch (error) {
+            if (id === requestId) statusEl.textContent = error.message;
+        } finally {
+            if (id === requestId) {
+                runningWorker?.terminate();
+                runningWorker = null;
+                if (workerUrl) URL.revokeObjectURL(workerUrl);
+                workerUrl = null;
+                resolvePending = null;
+                compareBtn.disabled = false;
+                compareBtn.textContent = 'Compare';
+                compareBtn.removeAttribute('aria-busy');
+            }
+        }
+    }
+
+    function textHtml(text) {
+        const escaped = escapeHtml(text);
+        if (!document.getElementById('showWhitespace').checked) return escaped;
+        return escaped.replace(/ /g, '<span class="visible-space"> </span>').replace(/\t/g, '<span class="visible-tab">\t</span>');
+    }
+
+    function contentHtml(line, changed) {
+        let html = line.parts ? line.parts.map(part => part.changed ? `<mark>${textHtml(part.text)}</mark>` : textHtml(part.text)).join('') : textHtml(line.text);
+        if (line.text === '') html = '<span class="empty-line" aria-label="Empty line">↵</span>';
+        if (changed && line.noNewline) html += '<span class="eof-note">No newline at end of file</span>';
+        return html;
+    }
+
+    function cellHtml(line, side, row, unified) {
+        if (!line) return '<div class="diff-cell placeholder" aria-label="No corresponding line"></div>';
+        const changed = row.kind !== 'equal';
+        const color = changed ? side === 'left' ? 'removed' : 'added' : 'unchanged';
+        const sign = changed ? side === 'left' ? '−' : '+' : '';
+        const numbers = unified ? `<span class="line-number">${side === 'left' || !changed ? row.left?.number ?? '' : ''}</span><span class="line-number">${side === 'right' || !changed ? row.right?.number ?? '' : ''}</span>` : `<span class="line-number">${line.number}</span>`;
+        return `<div class="diff-cell ${color}">${numbers}<span class="line-sign" aria-hidden="true">${sign}</span><pre class="line-code">${contentHtml(line, changed)}</pre></div>`;
+    }
+
+    function rowHtml(row, index, unified) {
+        const attrs = `data-row="${index}"${row.change === undefined ? '' : ` data-change="${row.change}"`}`;
+        if (!unified) return `<div class="diff-row" ${attrs}>${cellHtml(row.left, 'left', row, false)}${cellHtml(row.right, 'right', row, false)}</div>`;
+        if (row.kind === 'equal') return `<div class="diff-row" ${attrs}>${cellHtml(row.right, 'right', row, true)}</div>`;
+        return `${row.left ? `<div class="diff-row" ${attrs}>${cellHtml(row.left, 'left', row, true)}</div>` : ''}${row.right ? `<div class="diff-row" ${attrs}>${cellHtml(row.right, 'right', row, true)}</div>` : ''}`;
+    }
+
+    function changeHeading(index) {
+        const change = model.changes[index];
+        const changedRows = model.rows.slice(change.start, change.end);
+        const range = side => {
+            const lines = changedRows.filter(row => row[side]).map(row => row[side].number);
+            if (!lines.length) return '—';
+            return lines.length === 1 ? String(lines[0]) : `${lines[0]}–${lines[lines.length - 1]}`;
+        };
+        return `<div class="change-heading${index === selectedChange ? ' current' : ''}" id="change-${index}"><span>Change ${index + 1}</span><span>Original ${range('left')} · Modified ${range('right')}</span></div>`;
+    }
+
+    function updateNavigation() {
+        const count = model?.changes.length || 0;
+        const position = document.getElementById('changePosition');
+        position.textContent = count ? `${selectedChange + 1} / ${count}` : '0 changes';
+        position.setAttribute('aria-label', count ? `Change ${selectedChange + 1} of ${count}` : 'No changes');
+        document.getElementById('prevChange').disabled = !count;
+        document.getElementById('nextChange').disabled = !count;
+    }
+
+    function render() {
+        if (!model) return;
+        const unified = narrowScreen.matches || preferredView === 'unified';
+        const scrollTop = diffOutputEl.scrollTop;
+        document.getElementById('viewSplit').disabled = narrowScreen.matches;
+        document.getElementById('viewSplit').setAttribute('aria-pressed', String(!unified));
+        document.getElementById('viewUnified').setAttribute('aria-pressed', String(unified));
+        diffOutputEl.dataset.view = unified ? 'unified' : 'split';
+        document.getElementById('columnHeadings').hidden = unified;
+        document.getElementById('oldLineCount').textContent = `${model.oldLineCount.toLocaleString()} ${model.oldLineCount === 1 ? 'line' : 'lines'}`;
+        document.getElementById('newLineCount').textContent = `${model.newLineCount.toLocaleString()} ${model.newLineCount === 1 ? 'line' : 'lines'}`;
+        const stats = model.stats;
+        document.getElementById('stats').innerHTML = `<span class="stat modified">${stats.modified.toLocaleString()} modified</span><span class="stat added">+${stats.added.toLocaleString()} added</span><span class="stat removed">−${stats.removed.toLocaleString()} removed</span>`;
+        updateNavigation();
+        if (!model.changes.length) {
+            diffOutputEl.innerHTML = `<div class="identical-message"><span aria-hidden="true">✓</span><strong>${model.oldLineCount ? 'No differences' : 'Both texts are empty'}</strong><p>${model.oldLineCount ? 'The two texts match exactly.' : 'Paste text above to start a comparison.'}</p></div>`;
+            return;
+        }
+        const keep = new Uint8Array(model.rows.length);
+        if (document.getElementById('showUnchanged').checked) keep.fill(1);
+        else for (const change of model.changes) keep.fill(1, Math.max(0, change.start - 3), Math.min(model.rows.length, change.end + 3));
+        const html = [];
+        if (renderStart) html.push('<button class="fold-button" data-action="earlier">↑ Show earlier lines</button>');
+        let i = renderStart, rendered = 0;
+        const addRow = index => {
+            const row = model.rows[index];
+            if (row.change !== undefined && model.changes[row.change].start === index) html.push(changeHeading(row.change));
+            html.push(rowHtml(row, index, unified));
+            rendered++;
+        };
+        while (i < model.rows.length && rendered < renderLimit) {
+            if (keep[i]) addRow(i++);
+            else {
+                const start = i;
+                while (i < model.rows.length && !keep[i]) i++;
+                const end = i;
+                const revealed = Math.min(expanded.get(start) || 0, end - start);
+                let j = start;
+                for (; j < start + revealed && rendered < renderLimit; j++) addRow(j);
+                if (j < start + revealed) {
+                    i = j;
+                    break;
+                }
+                if (end > j) {
+                    const count = end - j;
+                    html.push(`<button class="fold-button" data-action="expand" data-start="${start}" data-end="${end}"><span aria-hidden="true">⋯</span> ${count > 200 ? `Show next 200 of ${count.toLocaleString()}` : `Show ${count}`} unchanged ${count === 1 ? 'line' : 'lines'}</button>`);
+                }
+            }
+        }
+        if (i < model.rows.length) html.push('<button class="fold-button" data-action="more">↓ Show more lines</button>');
+        diffOutputEl.innerHTML = html.join('');
+        diffOutputEl.scrollTop = scrollTop;
+    }
+
+    function setView(view) {
+        preferredView = view;
+        render();
+    }
+
+    function navigateChange(direction) {
+        if (!model?.changes.length) return;
+        selectedChange = (selectedChange + direction + model.changes.length) % model.changes.length;
+        if (!document.getElementById(`change-${selectedChange}`)) {
+            renderStart = Math.max(0, model.changes[selectedChange].start - 3);
+            renderLimit = 1000;
+            render();
+        }
+        for (const heading of diffOutputEl.querySelectorAll('.change-heading')) heading.classList.toggle('current', heading.id === `change-${selectedChange}`);
+        updateNavigation();
+        document.getElementById(`change-${selectedChange}`)?.scrollIntoView({block: 'nearest'});
+    }
+
+    diffOutputEl.addEventListener('click', event => {
+        const button = event.target.closest('button[data-action]');
+        if (!button) return;
+        if (button.dataset.action === 'expand') {
+            const start = Number(button.dataset.start);
+            expanded.set(start, Math.min(Number(button.dataset.end) - start, (expanded.get(start) || 0) + 200));
+        } else if (button.dataset.action === 'more') renderLimit += 1000;
+        else if (button.dataset.action === 'earlier') {
+            renderStart = Math.max(0, renderStart - 1000);
+            renderLimit = 1000;
+        }
+        render();
+        diffOutputEl.focus({preventScroll: true});
+    });
+
     function swap() {
-        const temp = text1El.value;
-        text1El.value = text2El.value;
-        text2El.value = temp;
-        updateLineNumbers(text1El, lineNumbers1);
-        updateLineNumbers(text2El, lineNumbers2);
-        autoResize(text1El);
-        autoResize(text2El);
+        const shouldCompare = hasCompared || compareBtn.disabled;
+        [text1El.value, text2El.value] = [text2El.value, text1El.value];
+        updateEditor(text1El, true);
+        updateEditor(text2El, true);
+        invalidate();
+        if (shouldCompare) compare();
     }
 
     function clearAll() {
         text1El.value = '';
         text2El.value = '';
-        resultEl.classList.remove('show');
-        updateLineNumbers(text1El, lineNumbers1);
-        updateLineNumbers(text2El, lineNumbers2);
-        autoResize(text1El);
-        autoResize(text2El);
+        invalidate();
+        hasCompared = false;
+        statusEl.textContent = '';
+        updateEditor(text1El, true);
+        updateEditor(text2El, true);
+        text1El.focus();
     }
+
+    compareBtn.addEventListener('click', compare);
+    document.getElementById('swapBtn').addEventListener('click', swap);
+    document.getElementById('clearBtn').addEventListener('click', clearAll);
+    document.getElementById('viewSplit').addEventListener('click', () => setView('split'));
+    document.getElementById('viewUnified').addEventListener('click', () => setView('unified'));
+    document.getElementById('prevChange').addEventListener('click', () => navigateChange(-1));
+    document.getElementById('nextChange').addEventListener('click', () => navigateChange(1));
+    document.getElementById('showWhitespace').addEventListener('change', render);
+    document.getElementById('showUnchanged').addEventListener('change', () => {
+        expanded.clear();
+        renderStart = 0;
+        renderLimit = 1000;
+        render();
+    });
+    document.getElementById('detailMode').addEventListener('change', () => { if (hasCompared || compareBtn.disabled) compare(); });
+    narrowScreen.addEventListener('change', render);
+    document.addEventListener('keydown', event => {
+        if ((event.metaKey || event.ctrlKey) && event.key === 'Enter') {
+            event.preventDefault();
+            compare();
+        } else if (event.altKey && (event.key === 'ArrowDown' || event.key === 'ArrowUp') && model?.changes.length) {
+            event.preventDefault();
+            navigateChange(event.key === 'ArrowDown' ? 1 : -1);
+        }
+    });
+
 </script>
 </body>
 </html>
